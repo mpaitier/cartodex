@@ -23,9 +23,9 @@ lib/
 │   ├── theme/
 │   └── widgets/          # Composants UI génériques réutilisables
 ├── domain/                # Règles métier pures, aucune dépendance Flutter
-│   ├── entities/
-│   ├── repositories/      # Interfaces abstraites
-│   └── usecases/
+│   ├── entities/           # CardCategory, CardSet, PokemonCard
+│   ├── repositories/       # Interfaces abstraites (CardRepository)
+│   └── usecases/           # Un fichier par action (SyncCardCatalog, GetCardSets...)
 ├── data/                   # Implémentation technique du domaine
 │   ├── datasources/
 │   │   ├── local/          # DAO Drift
@@ -41,9 +41,18 @@ lib/
 
 Règle de dépendance : `presentation` → `domain` ← `data`. Le domaine ne connaît jamais Flutter, Drift ou l'API ; il ne dépend que de ses propres interfaces.
 
+Note de nommage : l'entité carte s'appelle `PokemonCard` (et non `Card`) pour éviter toute collision avec le widget Material `Card`, qui sera importé dans une bonne partie des écrans.
+
 ## État actuel
 
-Les fondations sont posées : structure du projet, thème, gestion d'erreurs, squelette d'injection de dépendances, composants UI génériques. Les couches domaine et data pour le catalogue de cartes arrivent à l'étape suivante.
+Les fondations sont posées : structure du projet, thème, gestion d'erreurs, squelette d'injection de dépendances, composants UI génériques.
+
+La couche domaine du catalogue de cartes est posée :
+- entités `CardCategory`, `CardSet`, `PokemonCard` ;
+- interface `CardRepository`, séparant explicitement référentiel (TCGdex) et possession (local) ;
+- use cases `SyncCardCatalog`, `GetCardSets`, `GetCardsBySet`, `GetOwnedCardIds`, `SetCardOwned`.
+
+Prochaine étape : la couche data (modèles TCGdex, DAO Drift, implémentation de `CardRepository`), puis le câblage dans `injection_container.dart`.
 
 ## Mise en route
 
