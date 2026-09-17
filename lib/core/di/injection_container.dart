@@ -7,6 +7,12 @@ import '../../data/datasources/local/card_local_data_source.dart';
 import '../../data/datasources/remote/card_remote_data_source.dart';
 import '../../data/repositories/card_repository_impl.dart';
 import '../../domain/repositories/card_repository.dart';
+import '../../domain/usecases/get_cards.dart';
+import '../../domain/usecases/get_cards_by_set.dart';
+import '../../domain/usecases/get_owned_cards_id.dart';
+import '../../domain/usecases/set_card_owned.dart';
+import '../../domain/usecases/sync_card_catalog.dart';
+import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
 import '../network/network_info.dart';
 
 /// Instance unique du service locator, utilisée dans toute
@@ -46,9 +52,17 @@ Future<void> init() async {
   );
 
   // Use cases
-  // TODO: enregistrer les use cases (SyncCardCatalog, GetCardSets,
-  // GetCardsBySet, GetOwnedCardIds, SetCardOwned).
+  sl.registerLazySingleton(() => SyncCardCatalog(sl()));
+  sl.registerLazySingleton(() => GetCardSets(sl()));
+  sl.registerLazySingleton(() => GetCardsBySet(sl()));
+  sl.registerLazySingleton(() => GetOwnedCardIds(sl()));
+  sl.registerLazySingleton(() => SetCardOwned(sl()));
 
   // Blocs / Cubits
-  // TODO: enregistrer les Blocs (factory, une instance par écran).
+  sl.registerFactory(
+    () => CardSetsBloc(
+      getCardSets: sl(),
+      syncCardCatalog: sl(),
+    ),
+  );
 }

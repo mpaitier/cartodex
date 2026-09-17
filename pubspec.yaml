@@ -31,6 +31,9 @@ dependencies:
   path_provider: ^2.1.4
   path: ^1.9.0
 
+  # Affichage des images distantes (logos de sets, illustrations)
+  cached_network_image: ^3.4.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
