@@ -28,10 +28,10 @@ lib/
 │   └── usecases/           # Un fichier par action (SyncCardCatalog, GetCardSets...)
 ├── data/                   # Implémentation technique du domaine
 │   ├── datasources/
-│   │   ├── local/          # DAO Drift
-│   │   └── remote/         # Client API TCGdex
-│   ├── models/              # DTO avec fromJson/toJson
-│   └── repositories/         # Implémentations concrètes
+│   │   ├── local/          # Base Drift (tables, DAO) : possession + cache du catalogue
+│   │   └── remote/         # Client API TCGdex : catalogue uniquement
+│   ├── models/              # DTO avec fromJson/toJson (CardModel, CardSetModel)
+│   └── repositories/         # CardRepositoryImpl
 └── presentation/
     └── <feature>/
         ├── bloc/              # ViewModel (Bloc/Cubit)
@@ -41,18 +41,21 @@ lib/
 
 Règle de dépendance : `presentation` → `domain` ← `data`. Le domaine ne connaît jamais Flutter, Drift ou l'API ; il ne dépend que de ses propres interfaces.
 
-Note de nommage : l'entité carte s'appelle `PokemonCard` (et non `Card`) pour éviter toute collision avec le widget Material `Card`, qui sera importé dans une bonne partie des écrans.
+Note de nommage : l'entité carte s'appelle `PokemonCard` (et non `Card`) pour éviter toute collision avec le widget Material `Card`. Pour la même raison, la ligne Drift générée pour la table `Cards` est explicitement nommée `CardRow` via `@DataClassName`.
 
 ## État actuel
 
-Les fondations sont posées : structure du projet, thème, gestion d'erreurs, squelette d'injection de dépendances, composants UI génériques.
+Les fondations sont posées : structure du projet, thème, gestion d'erreurs, composants UI génériques.
 
-La couche domaine du catalogue de cartes est posée :
-- entités `CardCategory`, `CardSet`, `PokemonCard` ;
-- interface `CardRepository`, séparant explicitement référentiel (TCGdex) et possession (local) ;
-- use cases `SyncCardCatalog`, `GetCardSets`, `GetCardsBySet`, `GetOwnedCardIds`, `SetCardOwned`.
+La couche domaine du catalogue de cartes est posée : entités `CardCategory`, `CardSet`, `PokemonCard` ; interface `CardRepository` ; use cases `SyncCardCatalog`, `GetCardSets`, `GetCardsBySet`, `GetOwnedCardIds`, `SetCardOwned`.
 
-Prochaine étape : la couche data (modèles TCGdex, DAO Drift, implémentation de `CardRepository`), puis le câblage dans `injection_container.dart`.
+La couche data du catalogue de cartes est posée :
+- **Remote** : `CardRemoteDataSource`, qui interroge TCGdex (`/series/tcgp` pour les sets, `/sets/{id}` puis `/cards/{id}` pour le détail complet de chaque carte — l'API ne renvoie que des références légères au niveau d'un set).
+- **Local** : base Drift (`AppDatabase`) avec trois tables — `CardSets`, `Cards` (référentiel) et `OwnedCards` (possession, volontairement séparée et jamais affectée par une resynchronisation) — exposées via `CardLocalDataSource`.
+- **Repository** : `CardRepositoryImpl`, qui synchronise depuis TCGdex vers Drift, et qui ne lit/écrit plus qu'en local une fois la synchronisation faite.
+- Câblage dans `injection_container.dart` (core, datasources, repository).
+
+Prochaine étape : enregistrer les use cases dans `injection_container.dart`, puis la couche présentation (Bloc/Cubit + écrans) de la liste des sets et de la collection.
 
 ## Mise en route
 
@@ -62,6 +65,5 @@ Ce projet a été rédigé à la main, sans exécution locale de `flutter create
 2. Remplacer le `pubspec.yaml` généré par celui fourni ici, et copier le contenu de `lib/` par-dessus celui généré.
 3. Copier `analysis_options.yaml` et `.gitignore` à la racine.
 4. Installer les dépendances : `flutter pub get`
-5. Lancer l'application : `flutter run`
-
-Une fois la couche data (Drift) ajoutée, une étape supplémentaire sera nécessaire : `dart run build_runner build --delete-conflicting-outputs` pour générer le code de la base de données.
+5. Générer le code Drift : `dart run build_runner build --delete-conflicting-outputs`
+6. Lancer l'application : `flutter run`
