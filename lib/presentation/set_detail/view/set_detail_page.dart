@@ -78,7 +78,7 @@ class _SetDetailView extends StatelessWidget {
     if (state.cards.isEmpty) return set.name;
     final owned =
         state.cards.where((card) => state.ownedCardIds.contains(card.id));
-    return '${set.name} - ${owned.length} acquis / ${state.cards.length}';
+    return '${set.name} - ${owned.length} / ${state.cards.length}';
   }
 
   Widget _buildBody(BuildContext context, SetDetailState state) {

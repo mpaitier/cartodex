@@ -6,6 +6,7 @@ import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
+import '../../accounts/view/accounts_page.dart';
 import '../../set_detail/view/set_detail_page.dart';
 import '../bloc/card_sets_bloc.dart';
 import '../bloc/card_sets_event.dart';
@@ -16,8 +17,9 @@ import '../widgets/sync_catalog_action.dart';
 
 /// Écran d'accueil : liste des sets du référentiel TCG Pocket.
 ///
-/// Point d'entrée de la feature catalogue. Un appui sur une tuile
-/// ouvre [SetDetailPage] pour ce set.
+/// Point d'entrée de la feature catalogue et de la gestion de
+/// comptes. Un appui sur une tuile ouvre [SetDetailPage] pour ce
+/// set ; l'action dédiée de l'AppBar ouvre [AccountsPage].
 class CardSetsPage extends StatelessWidget {
   const CardSetsPage({super.key});
 
@@ -40,6 +42,13 @@ class _CardSetsView extends StatelessWidget {
         return AppScaffold(
           title: 'Cartodex',
           actions: [
+            IconButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AccountsPage()),
+              ),
+              icon: const Icon(Icons.people_alt_outlined),
+              tooltip: 'Comptes',
+            ),
             SyncCatalogAction(
               isSyncing: state.status == CardSetsStatus.syncing,
               onPressed: () => context

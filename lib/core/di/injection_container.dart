@@ -2,16 +2,23 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 
+import '../../data/datasources/local/account_local_data_source.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/card_local_data_source.dart';
 import '../../data/datasources/remote/card_remote_data_source.dart';
+import '../../data/repositories/account_repository_impl.dart';
 import '../../data/repositories/card_repository_impl.dart';
+import '../../domain/repositories/account_repository.dart';
 import '../../domain/repositories/card_repository.dart';
+import '../../domain/usecases/add_account.dart';
+import '../../domain/usecases/get_accounts.dart';
 import '../../domain/usecases/get_cards.dart';
 import '../../domain/usecases/get_cards_by_set.dart';
 import '../../domain/usecases/get_owned_cards_id.dart';
 import '../../domain/usecases/set_card_owned.dart';
+import '../../domain/usecases/set_primary_account.dart';
 import '../../domain/usecases/sync_card_catalog.dart';
+import '../../presentation/accounts/bloc/accounts_bloc.dart';
 import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
 import '../../presentation/set_detail/bloc/set_detail_bloc.dart';
 import '../network/network_info.dart';
@@ -42,6 +49,9 @@ Future<void> init() async {
   sl.registerLazySingleton<CardLocalDataSource>(
     () => CardLocalDataSourceImpl(sl()),
   );
+  sl.registerLazySingleton<AccountLocalDataSource>(
+    () => AccountLocalDataSourceImpl(sl()),
+  );
 
   // Repositories
   sl.registerLazySingleton<CardRepository>(
@@ -51,6 +61,9 @@ Future<void> init() async {
       networkInfo: sl(),
     ),
   );
+  sl.registerLazySingleton<AccountRepository>(
+    () => AccountRepositoryImpl(sl()),
+  );
 
   // Use cases
   sl.registerLazySingleton(() => SyncCardCatalog(sl()));
@@ -58,6 +71,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetCardsBySet(sl()));
   sl.registerLazySingleton(() => GetOwnedCardIds(sl()));
   sl.registerLazySingleton(() => SetCardOwned(sl()));
+  sl.registerLazySingleton(() => GetAccounts(sl()));
+  sl.registerLazySingleton(() => AddAccount(sl()));
+  sl.registerLazySingleton(() => SetPrimaryAccount(sl()));
 
   // Blocs / Cubits
   sl.registerFactory(
@@ -71,6 +87,13 @@ Future<void> init() async {
       getCardsBySet: sl(),
       getOwnedCardIds: sl(),
       setCardOwned: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => AccountsBloc(
+      getAccounts: sl(),
+      addAccount: sl(),
+      setPrimaryAccount: sl(),
     ),
   );
 }
