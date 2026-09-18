@@ -1,4 +1,20 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
+
+import '../../data/datasources/local/app_database.dart';
+import '../../data/datasources/local/card_local_data_source.dart';
+import '../../data/datasources/remote/card_remote_data_source.dart';
+import '../../data/repositories/card_repository_impl.dart';
+import '../../domain/repositories/card_repository.dart';
+import '../../domain/usecases/get_cards.dart';
+import '../../domain/usecases/get_cards_by_set.dart';
+import '../../domain/usecases/get_owned_cards_id.dart';
+import '../../domain/usecases/set_card_owned.dart';
+import '../../domain/usecases/sync_card_catalog.dart';
+import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
+import '../../presentation/set_detail/bloc/set_detail_bloc.dart';
+import '../network/network_info.dart';
 
 /// Instance unique du service locator, utilisée dans toute
 /// l'application pour résoudre les dépendances.
@@ -14,19 +30,47 @@ final GetIt sl = GetIt.instance;
 /// dessous d'elle.
 Future<void> init() async {
   // Core
-  // TODO: enregistrer NetworkInfo une fois la connectivité utilisée.
-  // TODO: enregistrer la base de données Drift (AppDatabase).
+  sl.registerLazySingleton<Connectivity>(Connectivity.new);
+  sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
+  sl.registerLazySingleton<AppDatabase>(AppDatabase.new);
+  sl.registerLazySingleton<http.Client>(http.Client.new);
 
   // Data sources
-  // TODO: enregistrer le datasource distant (API TCGdex).
-  // TODO: enregistrer le datasource local (DAO Drift).
+  sl.registerLazySingleton<CardRemoteDataSource>(
+    () => CardRemoteDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<CardLocalDataSource>(
+    () => CardLocalDataSourceImpl(sl()),
+  );
 
   // Repositories
-  // TODO: enregistrer les implémentations de repository.
+  sl.registerLazySingleton<CardRepository>(
+    () => CardRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
 
   // Use cases
-  // TODO: enregistrer les use cases.
+  sl.registerLazySingleton(() => SyncCardCatalog(sl()));
+  sl.registerLazySingleton(() => GetCardSets(sl()));
+  sl.registerLazySingleton(() => GetCardsBySet(sl()));
+  sl.registerLazySingleton(() => GetOwnedCardIds(sl()));
+  sl.registerLazySingleton(() => SetCardOwned(sl()));
 
   // Blocs / Cubits
-  // TODO: enregistrer les Blocs (factory, une instance par écran).
+  sl.registerFactory(
+    () => CardSetsBloc(
+      getCardSets: sl(),
+      syncCardCatalog: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => SetDetailBloc(
+      getCardsBySet: sl(),
+      getOwnedCardIds: sl(),
+      setCardOwned: sl(),
+    ),
+  );
 }

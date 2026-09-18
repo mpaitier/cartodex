@@ -10,4 +10,6 @@ abstract class AppColors {
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFF1E1E1E);
   static const Color error = Color(0xFFB3261E);
+
+  static const Color ownedByPrimaryAccount = Color(0xFF4A148C);
 }
