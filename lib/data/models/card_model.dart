@@ -1,8 +1,10 @@
 import '../../domain/entities/card_category.dart';
 import '../../domain/entities/pokemon_card.dart';
 
-/// DTO de la carte, tel que reçu depuis TCGdex (`GET /cards/{id}`)
-/// ou relu depuis le cache local.
+/// DTO de la carte, tel que reçu depuis `cards.json` /
+/// `cards.extra.json`
+/// (https://github.com/flibustier/pokemon-tcg-pocket-database) ou
+/// relu depuis le cache local.
 class CardModel extends PokemonCard {
   const CardModel({
     required super.id,
@@ -16,52 +18,84 @@ class CardModel extends PokemonCard {
     super.hp,
     super.types,
     super.illustrator,
+    super.packs,
   });
 
-  factory CardModel.fromJson(Map<String, dynamic> json) {
-    final set = json['set'] as Map<String, dynamic>?;
+  /// `cards.json` ne contient pas le nom du set ni la catégorie de
+  /// la carte (Pokémon / Dresseur / Énergie) : le nom est retrouvé
+  /// après coup via [copyWith] (le repository connaît déjà les
+  /// sets), et [category] est passée séparément ici, croisée avec
+  /// `cards.extra.json` par le datasource distant.
+  ///
+  /// Exemple d'entrée `cards.json` :
+  /// ```json
+  /// {
+  ///   "set": "A1",
+  ///   "number": 1,
+  ///   "rarity": "C",
+  ///   "name": "Bulbasaur",
+  ///   "image": "cPK_10_000010_00_FUSHIGIDANE_C.webp",
+  ///   "packs": ["Mewtwo"]
+  /// }
+  /// ```
+  factory CardModel.fromJson(Map<String, dynamic> json, {String? category}) {
+    final setId = json['set'] as String;
+    final number = json['number'].toString();
     return CardModel(
-      id: json['id'] as String,
-      localId: json['localId'] as String,
+      id: '$setId-$number',
+      localId: number,
       name: json['name'] as String,
-      category: _categoryFromApi(json['category'] as String?),
-      setId: set?['id'] as String? ?? '',
-      setName: set?['name'] as String? ?? '',
-      imageUrl: json['image'] as String?,
+      category: _categoryFromApi(category),
+      setId: setId,
+      // Renseigné par le repository (voir CardRepositoryImpl.syncCardCatalog),
+      // qui dispose déjà des noms de sets au moment du groupement par set.
+      setName: '',
+      // Le jeu de données ne fournit qu'un nom de fichier, pas une URL :
+      // héberger/brancher une source d'images reste à faire (voir README).
+      imageUrl: null,
       rarity: json['rarity'] as String?,
-      hp: (json['hp'] as num?)?.toInt(),
-      types: (json['types'] as List<dynamic>?)?.cast<String>() ?? const [],
-      illustrator: json['illustrator'] as String?,
+      packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],
+    );
+  }
+
+  CardModel copyWith({String? setName}) {
+    return CardModel(
+      id: id,
+      localId: localId,
+      name: name,
+      category: category,
+      setId: setId,
+      setName: setName ?? this.setName,
+      imageUrl: imageUrl,
+      rarity: rarity,
+      hp: hp,
+      types: types,
+      illustrator: illustrator,
+      packs: packs,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'localId': localId,
+      'set': setId,
+      'number': localId,
       'name': name,
-      'category': category.name,
-      'set': {'id': setId, 'name': setName},
-      'image': imageUrl,
       'rarity': rarity,
-      'hp': hp,
-      'types': types,
-      'illustrator': illustrator,
+      'packs': packs,
     };
   }
 
-  /// Convertit la chaîne brute renvoyée par TCGdex (`"Pokemon"`,
-  /// `"Trainer"`, `"Energy"`) en [CardCategory]. Toute valeur
-  /// inconnue retombe sur [CardCategory.trainer] plutôt que de
-  /// planter la synchronisation entière pour une seule carte.
+  /// Convertit le `type` brut de `cards.extra.json` (`"pokemon"`,
+  /// `"trainer"`, `"energy"`) en [CardCategory]. Absent ou inconnu
+  /// retombe sur [CardCategory.trainer] plutôt que de planter la
+  /// synchronisation entière pour une seule carte.
   static CardCategory _categoryFromApi(String? raw) {
     switch (raw) {
-      case 'Pokemon':
-      case 'Pokémon':
+      case 'pokemon':
         return CardCategory.pokemon;
-      case 'Energy':
+      case 'energy':
         return CardCategory.energy;
-      case 'Trainer':
+      case 'trainer':
       default:
         return CardCategory.trainer;
     }

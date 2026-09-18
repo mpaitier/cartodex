@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 /// Table Drift du référentiel des sets de cartes, alimentée depuis
-/// TCGdex.
+/// `pokemon-tcg-pocket-database`.
 ///
 /// Le nom de la classe générée est explicitement fixé à
 /// [CardSetRow] (plutôt que le "CardSet" que Drift déduirait par
@@ -15,6 +15,9 @@ class CardSets extends Table {
   TextColumn get logoUrl => text().nullable()();
   IntColumn get officialCardCount => integer().nullable()();
 
+  /// Boosters disponibles pour ce set (ex: "Charizard,Mewtwo,Pikachu").
+  TextColumn get packs => text().withDefault(const Constant(''))();
+
   @override
   Set<Column> get primaryKey => {id};
-} 
+}

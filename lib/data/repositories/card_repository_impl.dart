@@ -37,9 +37,18 @@ class CardRepositoryImpl implements CardRepository {
     try {
       final sets = await _remoteDataSource.fetchCardSets();
       await _localDataSource.cacheCardSets(sets);
+
+      // Le référentiel distant renvoie toutes les cartes en un seul
+      // fichier (voir CardRemoteDataSource) : on les répartit par set
+      // ici, sans appel réseau supplémentaire, et on en profite pour
+      // renseigner le nom du set (absent de cards.json).
+      final allCards = await _remoteDataSource.fetchAllCards();
       for (final set in sets) {
-        final cards = await _remoteDataSource.fetchCardsBySet(set.id);
-        await _localDataSource.cacheCards(set.id, cards);
+        final cardsForSet = allCards
+            .where((card) => card.setId == set.id)
+            .map((card) => card.copyWith(setName: set.name))
+            .toList();
+        await _localDataSource.cacheCards(set.id, cardsForSet);
       }
       return const Right(null);
     } on ServerException catch (e) {

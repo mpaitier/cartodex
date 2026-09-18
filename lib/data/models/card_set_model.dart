@@ -1,8 +1,8 @@
 import '../../domain/entities/card_set.dart';
 
-/// DTO du set de carte, tel que reçu depuis TCGdex
-/// (`GET /series/tcgp`, chaque élément du tableau `sets`) ou relu
-/// depuis le cache local.
+/// DTO du set de carte, tel que reçu depuis `sets.json`
+/// (https://github.com/flibustier/pokemon-tcg-pocket-database) ou
+/// relu depuis le cache local.
 class CardSetModel extends CardSet {
   const CardSetModel({
     required super.id,
@@ -10,28 +10,36 @@ class CardSetModel extends CardSet {
     required super.totalCardCount,
     super.logoUrl,
     super.officialCardCount,
+    super.packs,
   });
 
+  /// `sets.json` regroupe les sets par série (clé "A", "B", ...) ;
+  /// chaque élément individuel a cette forme :
+  /// ```json
+  /// {
+  ///   "code": "A1",
+  ///   "releaseDate": "2024-10-30",
+  ///   "count": 286,
+  ///   "name": { "en": "Genetic Apex", "fr": "Puissance Génétique", ... },
+  ///   "packs": ["Charizard", "Mewtwo", "Pikachu"]
+  /// }
+  /// ```
   factory CardSetModel.fromJson(Map<String, dynamic> json) {
-    final cardCount = json['cardCount'] as Map<String, dynamic>?;
+    final names = json['name'] as Map<String, dynamic>?;
     return CardSetModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      logoUrl: json['logo'] as String?,
-      totalCardCount: (cardCount?['total'] as num?)?.toInt() ?? 0,
-      officialCardCount: (cardCount?['official'] as num?)?.toInt(),
+      id: json['code'] as String,
+      name: (names?['en'] as String?) ?? json['code'] as String,
+      totalCardCount: (json['count'] as num?)?.toInt() ?? 0,
+      packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'name': name,
-      'logo': logoUrl,
-      'cardCount': {
-        'total': totalCardCount,
-        'official': officialCardCount,
-      },
+      'code': id,
+      'name': {'en': name},
+      'count': totalCardCount,
+      'packs': packs,
     };
   }
 }

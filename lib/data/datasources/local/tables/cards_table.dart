@@ -1,11 +1,12 @@
 import 'package:drift/drift.dart';
 
-/// Table Drift du référentiel des cartes, alimentée depuis TCGdex.
+/// Table Drift du référentiel des cartes, alimentée depuis
+/// `pokemon-tcg-pocket-database`.
 ///
-/// [types] est stocké sous forme de chaîne, les valeurs étant
-/// séparées par une virgule : une carte n'a jamais plus de
-/// quelques types, une vraie table relationnelle serait
-/// disproportionnée ici.
+/// [types] et [packs] sont stockés sous forme de chaîne, les
+/// valeurs étant séparées par une virgule : une carte n'a jamais
+/// plus de quelques types ou boosters, une vraie table
+/// relationnelle serait disproportionnée ici.
 ///
 /// Le nom de la classe générée est explicitement fixé à [CardRow]
 /// pour éviter toute ambiguïté avec l'entité domaine `PokemonCard`
@@ -27,6 +28,10 @@ class Cards extends Table {
   IntColumn get hp => integer().nullable()();
   TextColumn get types => text().withDefault(const Constant(''))();
   TextColumn get illustrator => text().nullable()();
+
+  /// Boosters dans lesquels la carte peut être tirée (ex:
+  /// "Mewtwo,Pikachu").
+  TextColumn get packs => text().withDefault(const Constant(''))();
 
   @override
   Set<Column> get primaryKey => {id};

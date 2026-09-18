@@ -38,6 +38,11 @@ class CardSetGridItem extends StatelessWidget {
                     '${set.totalCardCount} cartes',
                     style: theme.textTheme.bodySmall,
                   ),
+                  if (set.packs.isNotEmpty)
+                    Text(
+                      '${set.packs.length} boosters',
+                      style: theme.textTheme.bodySmall,
+                    ),
                 ],
               ),
             ),
@@ -48,9 +53,15 @@ class CardSetGridItem extends StatelessWidget {
   }
 }
 
-/// Logo du set, avec repli sur une icône générique quand TCGdex
-/// n'en fournit pas (sets promotionnels) ou que le chargement
-/// échoue.
+/// Logo du set, avec repli sur une icône générique tant que
+/// [url] est `null`.
+///
+/// Le référentiel actuellement utilisé
+/// (`pokemon-tcg-pocket-database`) ne fournit pas d'URL de logo :
+/// [CardSet.logoUrl] reste donc toujours `null` pour l'instant, et
+/// cette tuile affiche systématiquement l'icône de repli. Le
+/// chemin `CachedNetworkImage` reste en place pour le jour où une
+/// source d'images sera branchée (voir README).
 class _SetLogo extends StatelessWidget {
   const _SetLogo({required this.url});
 
@@ -68,7 +79,7 @@ class _SetLogo extends StatelessWidget {
     return ColoredBox(
       color: Colors.black12,
       child: CachedNetworkImage(
-        imageUrl: url,
+        imageUrl: '$url.webp',
         fit: BoxFit.contain,
         placeholder: (context, _) => const Center(
           child: SizedBox(

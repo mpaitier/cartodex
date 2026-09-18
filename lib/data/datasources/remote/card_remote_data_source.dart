@@ -7,17 +7,30 @@ import '../../../core/error/exceptions.dart';
 import '../../models/card_model.dart';
 import '../../models/card_set_model.dart';
 
-/// Accès à l'API TCGdex pour le référentiel de cartes.
+/// Accès au référentiel distant de cartes.
 ///
 /// Ne connaît rien de la possession des cartes : c'est strictement
 /// le catalogue distant, tel que décrit dans le README.
+///
+/// S'appuie sur `pokemon-tcg-pocket-database`
+/// (https://github.com/flibustier/pokemon-tcg-pocket-database),
+/// trois fichiers JSON statiques servis par jsDelivr, plutôt que
+/// sur TCGdex : ce dernier ne modélisait pas la répartition des
+/// cartes par booster à l'intérieur d'un set, une donnée que ce
+/// jeu-ci fournit nativement (`sets.json.packs`,
+/// `cards.json.packs`). Trois requêtes suffisent à tout récupérer,
+/// contre une par carte auparavant.
 abstract class CardRemoteDataSource {
-  /// Récupère tous les sets de la série TCG Pocket.
+  /// Récupère tous les sets TCG Pocket, tous groupes de série
+  /// confondus.
   Future<List<CardSetModel>> fetchCardSets();
 
-  /// Récupère toutes les cartes d'un set, avec leur détail complet
-  /// (catégorie, rareté, HP, types...).
-  Future<List<CardModel>> fetchCardsBySet(String setId);
+  /// Récupère l'intégralité des cartes, tous sets confondus. Le
+  /// tri par set est fait par l'appelant (voir
+  /// `CardRepositoryImpl.syncCardCatalog`), qui a besoin des deux
+  /// listes de toute façon pour associer chaque carte au nom de
+  /// son set.
+  Future<List<CardModel>> fetchAllCards();
 }
 
 class CardRemoteDataSourceImpl implements CardRemoteDataSource {
@@ -25,54 +38,40 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
 
   final http.Client _client;
 
-  /// Nombre de cartes détaillées récupérées en parallèle.
-  ///
-  /// `GET /sets/{id}` ne renvoie que des références légères (id,
-  /// image, localId, name) : pour obtenir catégorie, rareté, HP et
-  /// types, il faut rappeler `GET /cards/{id}` carte par carte. On
-  /// limite le parallélisme pour rester raisonnable vis-à-vis de
-  /// l'API plutôt que de tirer toutes les requêtes d'un coup.
-  static const int _detailBatchSize = 10;
-
   @override
   Future<List<CardSetModel>> fetchCardSets() async {
-    final uri = Uri.parse(
-      '${AppConstants.tcgdexBaseUrl}/en/series/${AppConstants.tcgPocketSeriesId}',
-    );
+    final uri = Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/sets.json');
     final response = await _get(uri);
     final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final sets = (body['sets'] as List<dynamic>?) ?? const [];
-    return sets
-        .cast<Map<String, dynamic>>()
+    // sets.json groupe les sets par série ({"A": [...], "B": [...]}) :
+    // on aplatit puisque l'app ne distingue pas les séries pour l'instant.
+    return body.values
+        .cast<List<dynamic>>()
+        .expand((series) => series.cast<Map<String, dynamic>>())
         .map(CardSetModel.fromJson)
         .toList();
   }
 
   @override
-  Future<List<CardModel>> fetchCardsBySet(String setId) async {
-    final setUri = Uri.parse('${AppConstants.tcgdexBaseUrl}/en/sets/$setId');
-    final setResponse = await _get(setUri);
-    final setBody = jsonDecode(setResponse.body) as Map<String, dynamic>;
-    final briefCards = (setBody['cards'] as List<dynamic>?) ?? const [];
-    final cardIds = briefCards
-        .cast<Map<String, dynamic>>()
-        .map((json) => json['id'] as String)
-        .toList();
+  Future<List<CardModel>> fetchAllCards() async {
+    final cardsUri = Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/cards.json');
+    final extraUri =
+        Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/cards.extra.json');
+    final cardsBody = jsonDecode((await _get(cardsUri)).body) as List<dynamic>;
+    final extraBody = jsonDecode((await _get(extraUri)).body) as List<dynamic>;
 
-    final cards = <CardModel>[];
-    for (var i = 0; i < cardIds.length; i += _detailBatchSize) {
-      final batch = cardIds.skip(i).take(_detailBatchSize);
-      final batchResults = await Future.wait(batch.map(_fetchCardDetail));
-      cards.addAll(batchResults);
-    }
-    return cards;
-  }
+    // cards.json ne porte pas la catégorie (Pokémon / Dresseur / Énergie) ;
+    // seul cards.extra.json l'a, sous le champ `type`. On construit un index
+    // set-numéro -> type pour croiser les deux sans jointure O(n²).
+    final categoryByKey = <String, String?>{
+      for (final raw in extraBody.cast<Map<String, dynamic>>())
+        '${raw['set']}-${raw['number']}': raw['type'] as String?,
+    };
 
-  Future<CardModel> _fetchCardDetail(String cardId) async {
-    final uri = Uri.parse('${AppConstants.tcgdexBaseUrl}/en/cards/$cardId');
-    final response = await _get(uri);
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    return CardModel.fromJson(body);
+    return cardsBody.cast<Map<String, dynamic>>().map((raw) {
+      final key = '${raw['set']}-${raw['number']}';
+      return CardModel.fromJson(raw, category: categoryByKey[key]);
+    }).toList();
   }
 
   Future<http.Response> _get(Uri uri) async {
@@ -80,7 +79,7 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
       final response = await _client.get(uri);
       if (response.statusCode != 200) {
         throw ServerException(
-          'TCGdex a répondu ${response.statusCode} pour $uri.',
+          'Le référentiel de cartes a répondu ${response.statusCode} pour $uri.',
         );
       }
       return response;

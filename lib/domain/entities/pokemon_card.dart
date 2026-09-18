@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'card_category.dart';
 
-/// Représente une carte du référentiel TCGdex.
+/// Représente une carte du référentiel.
 ///
 /// Nommée `PokemonCard` plutôt que `Card` pour éviter toute
 /// collision avec le widget `Card` de Material
@@ -21,12 +21,13 @@ class PokemonCard extends Equatable {
     this.hp,
     this.types = const [],
     this.illustrator,
+    this.packs = const [],
   });
 
-  /// Identifiant unique TCGdex de la carte (ex: "A1-001").
+  /// Identifiant unique de la carte (ex: "A1-001").
   final String id;
 
-  /// Numéro de la carte au sein de son set (ex: "001").
+  /// Numéro de la carte au sein de son set (ex: "1").
   final String localId;
 
   final String name;
@@ -42,12 +43,9 @@ class PokemonCard extends Equatable {
 
   final String? imageUrl;
 
-  /// Rareté brute renvoyée par TCGdex (ex: "◊◊", "☆☆☆", "Rare").
-  ///
-  /// Conservée en chaîne libre plutôt qu'en enum fermé : la
-  /// nomenclature exacte utilisée par TCG Pocket sera confirmée à
-  /// l'implémentation du datasource distant, sur un vrai payload
-  /// d'API, plutôt que d'être devinée ici.
+  /// Code de rareté brut renvoyé par la source (ex: "C", "RR",
+  /// "SAR"). Conservé en chaîne libre plutôt qu'en enum fermé : le
+  /// référentiel distant fait foi sur la nomenclature.
   final String? rarity;
 
   /// Points de vie. Non pertinent (null) pour les cartes qui ne
@@ -57,6 +55,12 @@ class PokemonCard extends Equatable {
   final List<String> types;
 
   final String? illustrator;
+
+  /// Boosters dans lesquels cette carte peut être tirée (ex:
+  /// ["Mewtwo"], ou plusieurs pour les cartes communes à tout le
+  /// set). Vide pour certaines cartes hors-booster (crossover
+  /// rares).
+  final List<String> packs;
 
   @override
   List<Object?> get props => [
@@ -71,5 +75,6 @@ class PokemonCard extends Equatable {
         hp,
         types,
         illustrator,
+        packs,
       ];
 }

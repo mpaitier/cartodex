@@ -118,6 +118,7 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
       totalCardCount: set.totalCardCount,
       logoUrl: Value(set.logoUrl),
       officialCardCount: Value(set.officialCardCount),
+      packs: Value(set.packs.join(',')),
     );
   }
 
@@ -128,6 +129,7 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
       totalCardCount: row.totalCardCount,
       logoUrl: row.logoUrl,
       officialCardCount: row.officialCardCount,
+      packs: row.packs.isEmpty ? const [] : row.packs.split(','),
     );
   }
 
@@ -144,6 +146,7 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
       hp: Value(card.hp),
       types: Value(card.types.join(',')),
       illustrator: Value(card.illustrator),
+      packs: Value(card.packs.join(',')),
     );
   }
 
@@ -160,6 +163,7 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
       hp: row.hp,
       types: row.types.isEmpty ? const [] : row.types.split(','),
       illustrator: row.illustrator,
+      packs: row.packs.isEmpty ? const [] : row.packs.split(','),
     );
   }
 }
