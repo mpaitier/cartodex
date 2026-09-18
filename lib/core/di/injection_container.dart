@@ -13,6 +13,7 @@ import '../../domain/usecases/get_owned_cards_id.dart';
 import '../../domain/usecases/set_card_owned.dart';
 import '../../domain/usecases/sync_card_catalog.dart';
 import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
+import '../../presentation/set_detail/bloc/set_detail_bloc.dart';
 import '../network/network_info.dart';
 
 /// Instance unique du service locator, utilisée dans toute
@@ -63,6 +64,13 @@ Future<void> init() async {
     () => CardSetsBloc(
       getCardSets: sl(),
       syncCardCatalog: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => SetDetailBloc(
+      getCardsBySet: sl(),
+      getOwnedCardIds: sl(),
+      setCardOwned: sl(),
     ),
   );
 }

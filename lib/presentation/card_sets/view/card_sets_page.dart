@@ -6,6 +6,7 @@ import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
+import '../../set_detail/view/set_detail_page.dart';
 import '../bloc/card_sets_bloc.dart';
 import '../bloc/card_sets_event.dart';
 import '../bloc/card_sets_state.dart';
@@ -15,10 +16,8 @@ import '../widgets/sync_catalog_action.dart';
 
 /// Écran d'accueil : liste des sets du référentiel TCG Pocket.
 ///
-/// Point d'entrée de la feature catalogue. La navigation vers le
-/// détail d'un set (liste des cartes, possession) arrive à l'étape
-/// suivante ; pour l'instant, un appui sur une tuile se contente de
-/// le signaler.
+/// Point d'entrée de la feature catalogue. Un appui sur une tuile
+/// ouvre [SetDetailPage] pour ce set.
 class CardSetsPage extends StatelessWidget {
   const CardSetsPage({super.key});
 
@@ -87,8 +86,8 @@ class _CardSetsView extends StatelessWidget {
   }
 
   void _onSetTap(BuildContext context, CardSet set) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Détail de "${set.name}" à venir.')),
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => SetDetailPage(set: set)),
     );
   }
 }
