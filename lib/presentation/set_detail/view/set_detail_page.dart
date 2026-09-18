@@ -53,7 +53,7 @@ class _SetDetailView extends StatelessWidget {
       },
       builder: (context, state) {
         return AppScaffold(
-          title: set.name,
+          title: _title(state),
           body: Column(
             children: [
               PackFilterBar(
@@ -69,6 +69,16 @@ class _SetDetailView extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// "<nom du set> - X acquis / total", une fois les cartes
+  /// chargées ; juste le nom du set avant ça, pour ne pas afficher
+  /// "0 acquis / 0" le temps du chargement.
+  String _title(SetDetailState state) {
+    if (state.cards.isEmpty) return set.name;
+    final owned =
+        state.cards.where((card) => state.ownedCardIds.contains(card.id));
+    return '${set.name} - ${owned.length} acquis / ${state.cards.length}';
   }
 
   Widget _buildBody(BuildContext context, SetDetailState state) {

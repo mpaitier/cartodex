@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
 /// Une tuile de la grille de cartes : nom, numéro, rareté, et un
@@ -18,6 +19,10 @@ class CardGridItem extends StatelessWidget {
   final PokemonCard card;
   final bool owned;
   final VoidCallback onToggleOwned;
+
+  /// Numéro affiché sur 3 chiffres (ex: "#007"), quelle que soit la
+  /// largeur du numéro brut renvoyé par la source.
+  String get _formattedNumber => '#${card.localId.padLeft(3, '0')}';
 
   @override
   Widget build(BuildContext context) {
@@ -44,8 +49,8 @@ class CardGridItem extends StatelessWidget {
                       ),
                       Text(
                         card.rarity == null
-                            ? '#${card.localId}'
-                            : '#${card.localId} · ${card.rarity}',
+                            ? _formattedNumber
+                            : '$_formattedNumber · ${card.rarity}',
                         style: theme.textTheme.labelSmall,
                       ),
                     ],
@@ -88,6 +93,12 @@ class _CardArtPlaceholder extends StatelessWidget {
   }
 }
 
+/// Badge de possession affiché sur chaque tuile.
+///
+/// Violet profond au tap : couleur du compte principal. Le tap
+/// simple ne distingue pas encore les comptes secondaires — ça
+/// arrive avec la gestion de comptes (voir README), qui ajoutera
+/// une variante bleue pour le double-tap.
 class _OwnershipBadge extends StatelessWidget {
   const _OwnershipBadge({required this.owned});
 
@@ -97,7 +108,8 @@ class _OwnershipBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return CircleAvatar(
       radius: 12,
-      backgroundColor: owned ? Colors.green : Colors.black45,
+      backgroundColor:
+          owned ? AppColors.ownedByPrimaryAccount : Colors.black45,
       child: Icon(
         owned ? Icons.check : Icons.add,
         size: 14,
