@@ -18,10 +18,10 @@ enum SetDetailStatus {
 }
 
 /// Sentinelle utilisée par [SetDetailState.copyWith] pour
-/// distinguer "ne pas toucher à [SetDetailState.selectedPack]" de
-/// "le remettre à `null`" (qui est une valeur valide : "tous les
-/// boosters"). Un paramètre nommé nullable ne peut pas porter cette
-/// distinction à lui seul.
+/// distinguer "ne pas toucher à ce champ" de "le remettre à
+/// `null`" (une valeur valide pour [SetDetailState.selectedPack]
+/// comme pour [SetDetailState.activeAccountId]). Un paramètre
+/// nommé nullable ne peut pas porter cette distinction à lui seul.
 const _unset = Object();
 
 /// État affiché par l'écran de détail d'un set.
@@ -31,16 +31,26 @@ class SetDetailState extends Equatable {
     this.cards = const [],
     this.ownedCardIds = const {},
     this.selectedPack,
+    this.activeAccountId,
     this.errorMessage,
   });
 
   final SetDetailStatus status;
   final List<PokemonCard> cards;
+
+  /// Cartes possédées par [activeAccountId] au sein de ce set.
   final Set<String> ownedCardIds;
 
   /// Booster actuellement sélectionné dans le filtre. `null`
   /// signifie "tous les boosters".
   final String? selectedPack;
+
+  /// Compte pour lequel [ownedCardIds] est valable, et sur lequel
+  /// portera le prochain tap de possession. `null` tant qu'aucun
+  /// compte n'existe encore (voir [SetDetailBloc._onStarted][../bloc/set_detail_bloc.dart]) :
+  /// les cartes restent consultables, mais la possession est
+  /// désactivée jusqu'à la création d'un premier compte.
+  final String? activeAccountId;
 
   final String? errorMessage;
 
@@ -59,6 +69,7 @@ class SetDetailState extends Equatable {
     List<PokemonCard>? cards,
     Set<String>? ownedCardIds,
     Object? selectedPack = _unset,
+    Object? activeAccountId = _unset,
     String? errorMessage,
   }) {
     return SetDetailState(
@@ -68,6 +79,9 @@ class SetDetailState extends Equatable {
       selectedPack: identical(selectedPack, _unset)
           ? this.selectedPack
           : selectedPack as String?,
+      activeAccountId: identical(activeAccountId, _unset)
+          ? this.activeAccountId
+          : activeAccountId as String?,
       errorMessage: errorMessage,
     );
   }
@@ -78,6 +92,7 @@ class SetDetailState extends Equatable {
         cards,
         ownedCardIds,
         selectedPack,
+        activeAccountId,
         errorMessage,
       ];
 }

@@ -81,9 +81,9 @@ class CardRepositoryImpl implements CardRepository {
   }
 
   @override
-  Future<Either<Failure, Set<String>>> getOwnedCardIds() async {
+  Future<Either<Failure, Set<String>>> getOwnedCardIds(String accountId) async {
     try {
-      final ids = await _localDataSource.getOwnedCardIds();
+      final ids = await _localDataSource.getOwnedCardIds(accountId);
       return Right(ids);
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
@@ -91,12 +91,17 @@ class CardRepositoryImpl implements CardRepository {
   }
 
   @override
-  Future<Either<Failure, void>> setCardOwned(
-    String cardId,
-    bool owned,
-  ) async {
+  Future<Either<Failure, void>> setCardOwned({
+    required String cardId,
+    required String accountId,
+    required bool owned,
+  }) async {
     try {
-      await _localDataSource.setCardOwned(cardId, owned);
+      await _localDataSource.setCardOwned(
+        cardId: cardId,
+        accountId: accountId,
+        owned: owned,
+      );
       return const Right(null);
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));

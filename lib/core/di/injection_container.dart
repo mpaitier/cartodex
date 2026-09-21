@@ -87,6 +87,7 @@ Future<void> init() async {
       getCardsBySet: sl(),
       getOwnedCardIds: sl(),
       setCardOwned: sl(),
+      getAccounts: sl(),
     ),
   );
   sl.registerFactory(

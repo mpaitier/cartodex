@@ -10,17 +10,17 @@ import '../entities/pokemon_card.dart';
 /// Deux responsabilités bien séparées, comme décrit dans le
 /// README :
 /// - le référentiel de cartes (sets, cartes, synchronisation),
-///   dont la source de vérité est l'API TCGdex ;
-/// - la possession de chaque carte, dont la source de vérité est
-///   uniquement la base locale Drift.
+///   dont la source de vérité est le référentiel distant ;
+/// - la possession de chaque carte par chaque compte, dont la
+///   source de vérité est uniquement la base locale Drift.
 ///
 /// L'implémentation concrète (couche data) est la seule à savoir
 /// qu'il existe deux datasources distincts derrière cette
 /// interface.
 abstract class CardRepository {
   /// Télécharge (ou met à jour) le référentiel de cartes TCG
-  /// Pocket depuis TCGdex et le persiste en local. N'affecte jamais
-  /// les cartes marquées comme possédées.
+  /// Pocket et le persiste en local. N'affecte jamais les cartes
+  /// marquées comme possédées.
   Future<Either<Failure, void>> syncCardCatalog();
 
   /// Retourne tous les sets déjà synchronisés en local.
@@ -30,11 +30,17 @@ abstract class CardRepository {
   /// local.
   Future<Either<Failure, List<PokemonCard>>> getCardsBySet(String setId);
 
-  /// Retourne les identifiants de toutes les cartes marquées comme
-  /// possédées par l'utilisateur.
-  Future<Either<Failure, Set<String>>> getOwnedCardIds();
+  /// Retourne les identifiants des cartes marquées comme possédées
+  /// par le compte [accountId]. La possession est par compte, pas
+  /// globale.
+  Future<Either<Failure, Set<String>>> getOwnedCardIds(String accountId);
 
-  /// Marque (ou démarque) une carte comme possédée. N'appelle
-  /// jamais l'API : écrit uniquement en local.
-  Future<Either<Failure, void>> setCardOwned(String cardId, bool owned);
+  /// Marque (ou démarque) une carte comme possédée par
+  /// [accountId]. N'appelle jamais l'API : écrit uniquement en
+  /// local.
+  Future<Either<Failure, void>> setCardOwned({
+    required String cardId,
+    required String accountId,
+    required bool owned,
+  });
 }

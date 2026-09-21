@@ -23,9 +23,15 @@ abstract class CardLocalDataSource {
 
   Future<List<CardModel>> getCachedCardsBySet(String setId);
 
-  Future<Set<String>> getOwnedCardIds();
+  /// Cartes possédées par le compte [accountId] uniquement : la
+  /// possession n'est plus globale (voir [OwnedCards][tables/owned_cards_table.dart]).
+  Future<Set<String>> getOwnedCardIds(String accountId);
 
-  Future<void> setCardOwned(String cardId, bool owned);
+  Future<void> setCardOwned({
+    required String cardId,
+    required String accountId,
+    required bool owned,
+  });
 }
 
 class CardLocalDataSourceImpl implements CardLocalDataSource {
@@ -42,8 +48,8 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
           sets.map(_setToCompanion).toList(),
         );
       });
-    } on Exception {
-      throw const CacheException('Échec de la mise en cache des sets.');
+    } on Exception catch (e) {
+      throw CacheException('Échec de la mise en cache des sets : $e');
     }
   }
 
@@ -57,8 +63,8 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
           cards.map(_cardToCompanion).toList(),
         );
       });
-    } on Exception {
-      throw const CacheException('Échec de la mise en cache des cartes.');
+    } on Exception catch (e) {
+      throw CacheException('Échec de la mise en cache des cartes : $e');
     }
   }
 
@@ -67,8 +73,8 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
     try {
       final rows = await _database.select(_database.cardSets).get();
       return rows.map(_setFromRow).toList();
-    } on Exception {
-      throw const CacheException('Échec de la lecture des sets en cache.');
+    } on Exception catch (e) {
+      throw CacheException('Échec de la lecture des sets en cache : $e');
     }
   }
 
@@ -79,35 +85,45 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
         ..where((t) => t.setId.equals(setId));
       final rows = await query.get();
       return rows.map(_cardFromRow).toList();
-    } on Exception {
-      throw const CacheException('Échec de la lecture des cartes en cache.');
+    } on Exception catch (e) {
+      throw CacheException('Échec de la lecture des cartes en cache : $e');
     }
   }
 
   @override
-  Future<Set<String>> getOwnedCardIds() async {
+  Future<Set<String>> getOwnedCardIds(String accountId) async {
     try {
-      final rows = await _database.select(_database.ownedCards).get();
+      final id = int.parse(accountId);
+      final rows = await (_database.select(_database.ownedCards)
+            ..where((t) => t.accountId.equals(id)))
+          .get();
       return rows.map((row) => row.cardId).toSet();
-    } on Exception {
-      throw const CacheException('Échec de la lecture des cartes possédées.');
+    } on Exception catch (e) {
+      throw CacheException('Échec de la lecture des cartes possédées : $e');
     }
   }
 
   @override
-  Future<void> setCardOwned(String cardId, bool owned) async {
+  Future<void> setCardOwned({
+    required String cardId,
+    required String accountId,
+    required bool owned,
+  }) async {
     try {
+      final id = int.parse(accountId);
       if (owned) {
         await _database.into(_database.ownedCards).insertOnConflictUpdate(
-              OwnedCardsCompanion.insert(cardId: cardId),
+              OwnedCardsCompanion.insert(cardId: cardId, accountId: id),
             );
       } else {
         await (_database.delete(_database.ownedCards)
-              ..where((t) => t.cardId.equals(cardId)))
+              ..where(
+                (t) => t.cardId.equals(cardId) & t.accountId.equals(id),
+              ))
             .go();
       }
-    } on Exception {
-      throw const CacheException('Échec de la mise à jour de la possession.');
+    } on Exception catch (e) {
+      throw CacheException('Échec de la mise à jour de la possession : $e');
     }
   }
 
