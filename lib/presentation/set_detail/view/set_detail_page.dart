@@ -9,15 +9,17 @@ import '../../../domain/entities/card_set.dart';
 import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
-import '../widgets/card_grid.dart';
+import '../widgets/card_grid_pager.dart';
 import '../widgets/pack_filter_bar.dart';
 import '../widgets/rarity_filter_bar.dart';
 import '../widgets/secondary_account_picker_dialog.dart';
 
 /// Écran de détail d'un set : ses cartes, filtrables par booster et
-/// par rareté (multi-sélection). Le tap simple bascule la
-/// possession pour le compte principal ; le double-tap ouvre un
-/// popup pour choisir un compte secondaire.
+/// par rareté (multi-sélection), avec un swipe gauche/droite pour
+/// isoler les cartes losange ou non-losange (voir
+/// [CardGridPager][../widgets/card_grid_pager.dart]). Le tap simple
+/// bascule la possession pour le compte principal ; le double-tap
+/// ouvre un popup pour choisir un compte secondaire.
 class SetDetailPage extends StatelessWidget {
   const SetDetailPage({required this.set, super.key});
 
@@ -107,7 +109,7 @@ class _SetDetailView extends StatelessWidget {
       );
     }
 
-    return CardGrid(
+    return CardGridPager(
       cards: state.visibleCards,
       primaryOwnedCardIds: state.primaryOwnedCardIds,
       secondaryOwnedCardIds: state.secondaryOwnedCardIds,
