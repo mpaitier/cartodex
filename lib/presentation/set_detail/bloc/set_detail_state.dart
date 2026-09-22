@@ -123,6 +123,54 @@ class SetDetailState extends Equatable {
     return result;
   }
 
+  /// Nombre de cartes de la "collection de base" (rareté losange)
+  /// dans ce set, et combien le compte principal en possède — pour
+  /// `SetProgressSummary`. Ignore les filtres de booster/rareté :
+  /// c'est une mesure de progression sur tout le set, pas sur ce qui
+  /// est actuellement affiché.
+  int get baseTotal => cards.where(_isBase).length;
+
+  int get baseOwned =>
+      cards.where((c) => _isBase(c) && primaryOwnedCardIds.contains(c.id)).length;
+
+  /// Symétrique de [baseTotal]/[baseOwned] pour les "cartes
+  /// alternatives" (tout ce qui n'est pas losange : étoile, couronne,
+  /// chromatique). Les cartes sans rareté connue (rares promos) ne
+  /// comptent ni dans l'un ni dans l'autre.
+  int get alternativeTotal => cards.where(_isAlternative).length;
+
+  int get alternativeOwned => cards
+      .where((c) => _isAlternative(c) && primaryOwnedCardIds.contains(c.id))
+      .length;
+
+  /// [baseOwned] plus les cartes losange possédées par au moins un
+  /// compte secondaire mais pas par le principal — jamais les deux
+  /// à la fois pour une même carte (pas de double-comptage), et
+  /// jamais plus d'une fois même si plusieurs secondaires la
+  /// possèdent. Ne dépasse donc jamais [baseTotal].
+  int get baseOwnedAllAccounts {
+    final secondaryOnly = secondaryOwnedCardIds.difference(primaryOwnedCardIds);
+    final extra = cards.where((c) => _isBase(c) && secondaryOnly.contains(c.id));
+    return baseOwned + extra.length;
+  }
+
+  /// Symétrique de [baseOwnedAllAccounts] pour les cartes
+  /// alternatives.
+  int get alternativeOwnedAllAccounts {
+    final secondaryOnly = secondaryOwnedCardIds.difference(primaryOwnedCardIds);
+    final extra =
+        cards.where((c) => _isAlternative(c) && secondaryOnly.contains(c.id));
+    return alternativeOwned + extra.length;
+  }
+
+  static bool _isBase(PokemonCard card) =>
+      CardRarity.fromCode(card.rarity)?.group == RarityGroup.diamond;
+
+  static bool _isAlternative(PokemonCard card) {
+    final rarity = CardRarity.fromCode(card.rarity);
+    return rarity != null && rarity.group != RarityGroup.diamond;
+  }
+
   /// Ne préserve jamais l'ancien message d'erreur : toute
   /// transition qui ne le fournit pas explicitement le réinitialise,
   /// pour ne pas réafficher une erreur déjà résolue.

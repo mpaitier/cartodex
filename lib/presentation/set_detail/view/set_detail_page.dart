@@ -13,6 +13,7 @@ import '../widgets/card_grid_pager.dart';
 import '../widgets/pack_filter_bar.dart';
 import '../widgets/rarity_filter_bar.dart';
 import '../widgets/secondary_account_picker_dialog.dart';
+import '../widgets/set_progress_summary.dart';
 
 /// Écran de détail d'un set : ses cartes, filtrables par booster et
 /// par rareté (multi-sélection), avec un swipe gauche/droite pour
@@ -59,7 +60,8 @@ class _SetDetailView extends StatelessWidget {
       },
       builder: (context, state) {
         return AppScaffold(
-          title: _title(state),
+          title: set.name,
+          titleWidget: _titleWidget(state),
           body: Column(
             children: [
               PackFilterBar(
@@ -84,15 +86,20 @@ class _SetDetailView extends StatelessWidget {
     );
   }
 
-  /// "<nom du set> - X acquis / total", une fois les cartes
-  /// chargées ; juste le nom du set avant ça, pour ne pas afficher
-  /// "0 acquis / 0" le temps du chargement. "Acquis" compte la
-  /// possession du compte principal.
-  String _title(SetDetailState state) {
-    if (state.cards.isEmpty) return set.name;
-    final owned = state.cards
-        .where((card) => state.primaryOwnedCardIds.contains(card.id));
-    return '${set.name} - ${owned.length} acquis / ${state.cards.length}';
+  /// `null` tant que les cartes ne sont pas chargées, pour laisser
+  /// `AppScaffold` retomber sur le simple nom du set le temps du
+  /// chargement plutôt que d'afficher "0/0" partout.
+  Widget? _titleWidget(SetDetailState state) {
+    if (state.cards.isEmpty) return null;
+    return SetProgressSummary(
+      setName: set.name,
+      baseOwnedPrimary: state.baseOwned,
+      baseOwnedAllAccounts: state.baseOwnedAllAccounts,
+      baseTotal: state.baseTotal,
+      alternativeOwnedPrimary: state.alternativeOwned,
+      alternativeOwnedAllAccounts: state.alternativeOwnedAllAccounts,
+      alternativeTotal: state.alternativeTotal,
+    );
   }
 
   Widget _buildBody(BuildContext context, SetDetailState state) {
