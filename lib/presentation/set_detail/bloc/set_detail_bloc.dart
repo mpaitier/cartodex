@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../domain/entities/account.dart';
 import '../../../domain/usecase.dart';
 import '../../../domain/usecases/get_accounts.dart';
 import '../../../domain/usecases/get_cards_by_set.dart';
@@ -11,17 +10,19 @@ import 'set_detail_state.dart';
 
 /// ViewModel de l'écran de détail d'un set.
 ///
-/// La possession est scopée par compte : ce Bloc résout le compte
-/// principal à l'ouverture de l'écran et l'utilise comme compte
-/// actif pour la lecture et l'écriture de la possession — le tap
-/// simple agit toujours sur le principal, en attendant le
-/// double-tap (choix d'un compte secondaire, prochaine étape).
+/// La possession est par compte : ce Bloc charge, à l'ouverture de
+/// l'écran, tous les comptes existants et ce que chacun possède
+/// dans ce set. Le tap simple bascule toujours la possession pour
+/// le compte principal ; le double-tap ouvre un popup pour choisir
+/// un compte secondaire précis (voir
+/// [SecondaryAccountPickerDialog][../widgets/secondary_account_picker_dialog.dart]).
 ///
-/// La possession se met à jour de façon optimiste : l'UI change
-/// immédiatement au tap, avant même la réponse du use case. En cas
-/// d'échec de la persistance locale, l'état revient en arrière et
-/// un message d'erreur est exposé — la vue l'affiche en SnackBar
-/// plutôt que de remplacer toute la grille.
+/// La possession se met à jour de façon optimiste, quel que soit
+/// le compte visé : l'UI change immédiatement, avant même la
+/// réponse du use case. En cas d'échec de la persistance locale,
+/// l'état revient en arrière et un message d'erreur est exposé — la
+/// vue l'affiche en SnackBar plutôt que de remplacer toute la
+/// grille.
 class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
   SetDetailBloc({
     required GetCardsBySet getCardsBySet,
@@ -35,6 +36,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
         super(const SetDetailState()) {
     on<SetDetailStarted>(_onStarted);
     on<CardOwnershipToggled>(_onCardOwnershipToggled);
+    on<SecondaryOwnershipToggled>(_onSecondaryOwnershipToggled);
     on<PackFilterChanged>(_onPackFilterChanged);
   }
 
@@ -67,48 +69,36 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
 
     final cards = cardsResult.getOrElse(() => const []);
     final accounts = accountsResult.getOrElse(() => const []);
-    Account? primaryAccount;
+
+    // La possession de chaque compte est lue séparément : peu de
+    // comptes en pratique, et ça garde le use case simple (un seul
+    // compte à la fois, réutilisé tel quel pour le tap comme pour
+    // le double-tap plus bas).
+    final ownershipByAccountId = <String, Set<String>>{};
     for (final account in accounts) {
-      if (account.isPrimary) {
-        primaryAccount = account;
-        break;
+      final ownedResult = await _getOwnedCardIds(
+        GetOwnedCardIdsParams(accountId: account.id),
+      );
+      final ownedFailure = ownedResult.fold((f) => f, (_) => null);
+      if (ownedFailure != null) {
+        emit(
+          state.copyWith(
+            status: SetDetailStatus.error,
+            errorMessage: ownedFailure.message,
+          ),
+        );
+        return;
       }
-    }
-
-    if (primaryAccount == null) {
-      // Aucun compte encore créé : les cartes restent consultables,
-      // seule la possession est indisponible pour l'instant.
-      emit(
-        state.copyWith(
-          status: SetDetailStatus.loaded,
-          cards: cards,
-          ownedCardIds: const <String>{},
-          activeAccountId: null,
-        ),
-      );
-      return;
-    }
-
-    final ownedResult = await _getOwnedCardIds(
-      GetOwnedCardIdsParams(accountId: primaryAccount.id),
-    );
-    final ownedFailure = ownedResult.fold((f) => f, (_) => null);
-    if (ownedFailure != null) {
-      emit(
-        state.copyWith(
-          status: SetDetailStatus.error,
-          errorMessage: ownedFailure.message,
-        ),
-      );
-      return;
+      ownershipByAccountId[account.id] =
+          ownedResult.getOrElse(() => const <String>{});
     }
 
     emit(
       state.copyWith(
         status: SetDetailStatus.loaded,
         cards: cards,
-        ownedCardIds: ownedResult.getOrElse(() => const <String>{}),
-        activeAccountId: primaryAccount.id,
+        accounts: accounts,
+        ownershipByAccountId: ownershipByAccountId,
       ),
     );
   }
@@ -117,7 +107,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     CardOwnershipToggled event,
     Emitter<SetDetailState> emit,
   ) async {
-    final accountId = state.activeAccountId;
+    final accountId = state.primaryAccountId;
     if (accountId == null) {
       emit(
         state.copyWith(
@@ -127,20 +117,37 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
       );
       return;
     }
+    await _toggleOwnershipForAccount(accountId, event.cardId, emit);
+  }
 
-    final previousIds = state.ownedCardIds;
-    final wasOwned = previousIds.contains(event.cardId);
-    final optimisticIds = Set<String>.from(previousIds);
+  Future<void> _onSecondaryOwnershipToggled(
+    SecondaryOwnershipToggled event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    await _toggleOwnershipForAccount(event.accountId, event.cardId, emit);
+  }
+
+  Future<void> _toggleOwnershipForAccount(
+    String accountId,
+    String cardId,
+    Emitter<SetDetailState> emit,
+  ) async {
+    final previousMap = state.ownershipByAccountId;
+    final currentIds = previousMap[accountId] ?? const <String>{};
+    final wasOwned = currentIds.contains(cardId);
+    final optimisticIds = Set<String>.from(currentIds);
     if (wasOwned) {
-      optimisticIds.remove(event.cardId);
+      optimisticIds.remove(cardId);
     } else {
-      optimisticIds.add(event.cardId);
+      optimisticIds.add(cardId);
     }
-    emit(state.copyWith(ownedCardIds: optimisticIds));
+    final optimisticMap = Map<String, Set<String>>.from(previousMap)
+      ..[accountId] = optimisticIds;
+    emit(state.copyWith(ownershipByAccountId: optimisticMap));
 
     final result = await _setCardOwned(
       SetCardOwnedParams(
-        cardId: event.cardId,
+        cardId: cardId,
         accountId: accountId,
         owned: !wasOwned,
       ),
@@ -148,7 +155,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     result.fold(
       (failure) => emit(
         state.copyWith(
-          ownedCardIds: previousIds,
+          ownershipByAccountId: previousMap,
           errorMessage: failure.message,
         ),
       ),

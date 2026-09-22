@@ -11,14 +11,25 @@ import 'card_grid_item.dart';
 class CardGrid extends StatelessWidget {
   const CardGrid({
     required this.cards,
-    required this.ownedCardIds,
-    required this.onToggleOwned,
+    required this.primaryOwnedCardIds,
+    required this.secondaryOwnedCardIds,
+    required this.onTap,
+    required this.onDoubleTap,
     super.key,
   });
 
   final List<PokemonCard> cards;
-  final Set<String> ownedCardIds;
-  final ValueChanged<String> onToggleOwned;
+
+  /// Cartes possédées par le compte principal (tap simple).
+  final Set<String> primaryOwnedCardIds;
+
+  /// Cartes possédées par au moins un compte secondaire (peu
+  /// importe lequel, ici — le détail se choisit dans le popup
+  /// ouvert par [onDoubleTap]).
+  final Set<String> secondaryOwnedCardIds;
+
+  final ValueChanged<String> onTap;
+  final ValueChanged<String> onDoubleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +46,10 @@ class CardGrid extends StatelessWidget {
         final card = cards[index];
         return CardGridItem(
           card: card,
-          owned: ownedCardIds.contains(card.id),
-          onToggleOwned: () => onToggleOwned(card.id),
+          ownedByPrimary: primaryOwnedCardIds.contains(card.id),
+          ownedBySecondary: secondaryOwnedCardIds.contains(card.id),
+          onTap: () => onTap(card.id),
+          onDoubleTap: () => onDoubleTap(card.id),
         );
       },
     );

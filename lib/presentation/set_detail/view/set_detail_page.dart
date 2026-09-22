@@ -11,9 +11,11 @@ import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
 import '../widgets/card_grid.dart';
 import '../widgets/pack_filter_bar.dart';
+import '../widgets/secondary_account_picker_dialog.dart';
 
-/// Écran de détail d'un set : ses cartes, filtrables par booster,
-/// avec bascule de possession au tap sur une carte.
+/// Écran de détail d'un set : ses cartes, filtrables par booster.
+/// Le tap simple bascule la possession pour le compte principal ;
+/// le double-tap ouvre un popup pour choisir un compte secondaire.
 class SetDetailPage extends StatelessWidget {
   const SetDetailPage({required this.set, super.key});
 
@@ -73,12 +75,13 @@ class _SetDetailView extends StatelessWidget {
 
   /// "<nom du set> - X acquis / total", une fois les cartes
   /// chargées ; juste le nom du set avant ça, pour ne pas afficher
-  /// "0 acquis / 0" le temps du chargement.
+  /// "0 acquis / 0" le temps du chargement. "Acquis" compte la
+  /// possession du compte principal.
   String _title(SetDetailState state) {
     if (state.cards.isEmpty) return set.name;
-    final owned =
-        state.cards.where((card) => state.ownedCardIds.contains(card.id));
-    return '${set.name} - ${owned.length} / ${state.cards.length}';
+    final owned = state.cards
+        .where((card) => state.primaryOwnedCardIds.contains(card.id));
+    return '${set.name} - ${owned.length} acquis / ${state.cards.length}';
   }
 
   Widget _buildBody(BuildContext context, SetDetailState state) {
@@ -97,9 +100,35 @@ class _SetDetailView extends StatelessWidget {
 
     return CardGrid(
       cards: state.visibleCards,
-      ownedCardIds: state.ownedCardIds,
-      onToggleOwned: (cardId) =>
+      primaryOwnedCardIds: state.primaryOwnedCardIds,
+      secondaryOwnedCardIds: state.secondaryOwnedCardIds,
+      onTap: (cardId) =>
           context.read<SetDetailBloc>().add(CardOwnershipToggled(cardId)),
+      onDoubleTap: (cardId) => _onCardDoubleTap(context, state, cardId),
+    );
+  }
+
+  void _onCardDoubleTap(
+    BuildContext context,
+    SetDetailState state,
+    String cardId,
+  ) {
+    final bloc = context.read<SetDetailBloc>();
+    final ownedByAccountId = <String>{
+      for (final account in state.secondaryAccounts)
+        if ((state.ownershipByAccountId[account.id] ?? const {})
+            .contains(cardId))
+          account.id,
+    };
+    showDialog<void>(
+      context: context,
+      builder: (_) => SecondaryAccountPickerDialog(
+        accounts: state.secondaryAccounts,
+        ownedByAccountId: ownedByAccountId,
+        onAccountSelected: (accountId) => bloc.add(
+          SecondaryOwnershipToggled(cardId: cardId, accountId: accountId),
+        ),
+      ),
     );
   }
 }

@@ -12,4 +12,5 @@ abstract class AppColors {
   static const Color error = Color(0xFFB3261E);
 
   static const Color ownedByPrimaryAccount = Color(0xFF4A148C);
+  static const Color ownedBySecondaryAccount = Color(0xFF1565C0);
 }

@@ -19,7 +19,8 @@ class SetDetailStarted extends SetDetailEvent {
   List<Object?> get props => [setId];
 }
 
-/// Déclenché par un appui sur une carte : bascule sa possession.
+/// Déclenché par un appui simple sur une carte : bascule sa
+/// possession pour le compte principal.
 class CardOwnershipToggled extends SetDetailEvent {
   const CardOwnershipToggled(this.cardId);
 
@@ -27,6 +28,22 @@ class CardOwnershipToggled extends SetDetailEvent {
 
   @override
   List<Object?> get props => [cardId];
+}
+
+/// Déclenché par la sélection d'un compte dans le popup ouvert au
+/// double-tap : bascule la possession de la carte pour ce compte
+/// secondaire précis.
+class SecondaryOwnershipToggled extends SetDetailEvent {
+  const SecondaryOwnershipToggled({
+    required this.cardId,
+    required this.accountId,
+  });
+
+  final String cardId;
+  final String accountId;
+
+  @override
+  List<Object?> get props => [cardId, accountId];
 }
 
 /// Déclenché par la sélection d'un booster dans le filtre.

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../domain/entities/account.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
 /// Étape du cycle de vie de [SetDetailState].
@@ -18,10 +19,10 @@ enum SetDetailStatus {
 }
 
 /// Sentinelle utilisée par [SetDetailState.copyWith] pour
-/// distinguer "ne pas toucher à ce champ" de "le remettre à
-/// `null`" (une valeur valide pour [SetDetailState.selectedPack]
-/// comme pour [SetDetailState.activeAccountId]). Un paramètre
-/// nommé nullable ne peut pas porter cette distinction à lui seul.
+/// distinguer "ne pas toucher à [SetDetailState.selectedPack]" de
+/// "le remettre à `null`" (qui est une valeur valide : "tous les
+/// boosters"). Un paramètre nommé nullable ne peut pas porter cette
+/// distinction à lui seul.
 const _unset = Object();
 
 /// État affiché par l'écran de détail d'un set.
@@ -29,30 +30,61 @@ class SetDetailState extends Equatable {
   const SetDetailState({
     this.status = SetDetailStatus.initial,
     this.cards = const [],
-    this.ownedCardIds = const {},
+    this.accounts = const [],
+    this.ownershipByAccountId = const {},
     this.selectedPack,
-    this.activeAccountId,
     this.errorMessage,
   });
 
   final SetDetailStatus status;
   final List<PokemonCard> cards;
 
-  /// Cartes possédées par [activeAccountId] au sein de ce set.
-  final Set<String> ownedCardIds;
+  /// Tous les comptes existants (principal et secondaires).
+  final List<Account> accounts;
+
+  /// Cartes possédées, par compte : `ownershipByAccountId[accountId]`
+  /// donne les identifiants de cartes de ce set que ce compte
+  /// possède.
+  final Map<String, Set<String>> ownershipByAccountId;
 
   /// Booster actuellement sélectionné dans le filtre. `null`
   /// signifie "tous les boosters".
   final String? selectedPack;
 
-  /// Compte pour lequel [ownedCardIds] est valable, et sur lequel
-  /// portera le prochain tap de possession. `null` tant qu'aucun
-  /// compte n'existe encore (voir [SetDetailBloc._onStarted][../bloc/set_detail_bloc.dart]) :
-  /// les cartes restent consultables, mais la possession est
-  /// désactivée jusqu'à la création d'un premier compte.
-  final String? activeAccountId;
-
   final String? errorMessage;
+
+  /// Le compte principal, s'il en existe un. `null` tant qu'aucun
+  /// compte n'a été créé.
+  Account? get primaryAccount {
+    for (final account in accounts) {
+      if (account.isPrimary) return account;
+    }
+    return null;
+  }
+
+  String? get primaryAccountId => primaryAccount?.id;
+
+  List<Account> get secondaryAccounts =>
+      accounts.where((account) => !account.isPrimary).toList();
+
+  /// Cartes possédées par le compte principal — ce que le tap
+  /// simple bascule.
+  Set<String> get primaryOwnedCardIds {
+    final id = primaryAccountId;
+    return id == null ? const {} : (ownershipByAccountId[id] ?? const {});
+  }
+
+  /// Union des cartes possédées par au moins un compte secondaire,
+  /// pour le badge de la grille — le détail par compte se lit dans
+  /// [ownershipByAccountId] au moment d'ouvrir le popup de
+  /// double-tap.
+  Set<String> get secondaryOwnedCardIds {
+    final result = <String>{};
+    for (final account in secondaryAccounts) {
+      result.addAll(ownershipByAccountId[account.id] ?? const {});
+    }
+    return result;
+  }
 
   /// Cartes à afficher compte tenu du filtre courant.
   List<PokemonCard> get visibleCards {
@@ -67,21 +99,19 @@ class SetDetailState extends Equatable {
   SetDetailState copyWith({
     SetDetailStatus? status,
     List<PokemonCard>? cards,
-    Set<String>? ownedCardIds,
+    List<Account>? accounts,
+    Map<String, Set<String>>? ownershipByAccountId,
     Object? selectedPack = _unset,
-    Object? activeAccountId = _unset,
     String? errorMessage,
   }) {
     return SetDetailState(
       status: status ?? this.status,
       cards: cards ?? this.cards,
-      ownedCardIds: ownedCardIds ?? this.ownedCardIds,
+      accounts: accounts ?? this.accounts,
+      ownershipByAccountId: ownershipByAccountId ?? this.ownershipByAccountId,
       selectedPack: identical(selectedPack, _unset)
           ? this.selectedPack
           : selectedPack as String?,
-      activeAccountId: identical(activeAccountId, _unset)
-          ? this.activeAccountId
-          : activeAccountId as String?,
       errorMessage: errorMessage,
     );
   }
@@ -90,9 +120,9 @@ class SetDetailState extends Equatable {
   List<Object?> get props => [
         status,
         cards,
-        ownedCardIds,
+        accounts,
+        ownershipByAccountId,
         selectedPack,
-        activeAccountId,
         errorMessage,
       ];
 }

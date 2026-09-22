@@ -4,21 +4,26 @@ import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
 /// Une tuile de la grille de cartes : nom, numéro, rareté, et un
-/// badge de possession qui bascule au tap.
+/// badge de possession.
 ///
 /// Composant purement visuel, sans connaissance du Bloc parent :
-/// toute interaction remonte via [onToggleOwned].
+/// le tap simple (compte principal) remonte via [onTap], le
+/// double-tap (choix d'un compte secondaire) via [onDoubleTap].
 class CardGridItem extends StatelessWidget {
   const CardGridItem({
     required this.card,
-    required this.owned,
-    required this.onToggleOwned,
+    required this.ownedByPrimary,
+    required this.ownedBySecondary,
+    required this.onTap,
+    required this.onDoubleTap,
     super.key,
   });
 
   final PokemonCard card;
-  final bool owned;
-  final VoidCallback onToggleOwned;
+  final bool ownedByPrimary;
+  final bool ownedBySecondary;
+  final VoidCallback onTap;
+  final VoidCallback onDoubleTap;
 
   /// Numéro affiché sur 3 chiffres (ex: "#007"), quelle que soit la
   /// largeur du numéro brut renvoyé par la source.
@@ -27,10 +32,12 @@ class CardGridItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final owned = ownedByPrimary || ownedBySecondary;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onToggleOwned,
+        onTap: onTap,
+        onDoubleTap: onDoubleTap,
         child: Stack(
           children: [
             Column(
@@ -61,7 +68,10 @@ class CardGridItem extends StatelessWidget {
             Positioned(
               top: 4,
               right: 4,
-              child: _OwnershipBadge(owned: owned),
+              child: _OwnershipBadge(
+                ownedByPrimary: ownedByPrimary,
+                ownedBySecondary: ownedBySecondary,
+              ),
             ),
           ],
         ),
@@ -95,26 +105,39 @@ class _CardArtPlaceholder extends StatelessWidget {
 
 /// Badge de possession affiché sur chaque tuile.
 ///
-/// Violet profond au tap : couleur du compte principal. Le tap
-/// simple ne distingue pas encore les comptes secondaires — ça
-/// arrive avec la gestion de comptes (voir README), qui ajoutera
-/// une variante bleue pour le double-tap.
+/// Le principal l'emporte visuellement si la carte est possédée à
+/// la fois par le compte principal et par un compte secondaire :
+/// violet profond (tap simple) prioritaire sur bleu (double-tap,
+/// compte secondaire), lui-même prioritaire sur l'état neutre.
 class _OwnershipBadge extends StatelessWidget {
-  const _OwnershipBadge({required this.owned});
+  const _OwnershipBadge({
+    required this.ownedByPrimary,
+    required this.ownedBySecondary,
+  });
 
-  final bool owned;
+  final bool ownedByPrimary;
+  final bool ownedBySecondary;
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
+    if (ownedByPrimary) {
+      return const CircleAvatar(
+        radius: 12,
+        backgroundColor: AppColors.ownedByPrimaryAccount,
+        child: Icon(Icons.check, size: 14, color: Colors.white),
+      );
+    }
+    if (ownedBySecondary) {
+      return const CircleAvatar(
+        radius: 12,
+        backgroundColor: AppColors.ownedBySecondaryAccount,
+        child: Icon(Icons.arrow_upward, size: 14, color: Colors.white),
+      );
+    }
+    return const CircleAvatar(
       radius: 12,
-      backgroundColor:
-          owned ? AppColors.ownedByPrimaryAccount : Colors.black45,
-      child: Icon(
-        owned ? Icons.check : Icons.add,
-        size: 14,
-        color: Colors.white,
-      ),
+      backgroundColor: Colors.black45,
+      child: Icon(Icons.add, size: 14, color: Colors.white),
     );
   }
 }
