@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/card_rarities.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
@@ -33,6 +34,7 @@ class CardGridItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final owned = ownedByPrimary || ownedBySecondary;
+    final rarity = CardRarity.fromCode(card.rarity);
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -55,9 +57,9 @@ class CardGridItem extends StatelessWidget {
                         style: theme.textTheme.labelMedium,
                       ),
                       Text(
-                        card.rarity == null
+                        rarity == null
                             ? _formattedNumber
-                            : '$_formattedNumber · ${card.rarity}',
+                            : '$_formattedNumber · ${rarity.symbol}',
                         style: theme.textTheme.labelSmall,
                       ),
                     ],

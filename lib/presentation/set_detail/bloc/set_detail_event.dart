@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/constants/card_rarities.dart';
+
 /// Événements gérés par [SetDetailBloc][set_detail_bloc.dart].
 abstract class SetDetailEvent extends Equatable {
   const SetDetailEvent();
@@ -55,4 +57,15 @@ class PackFilterChanged extends SetDetailEvent {
 
   @override
   List<Object?> get props => [pack];
+}
+
+/// Déclenché par un changement dans le filtre de rareté (multi-
+/// sélection). Un ensemble vide signifie "toutes les raretés".
+class RarityFilterChanged extends SetDetailEvent {
+  const RarityFilterChanged(this.rarities);
+
+  final Set<CardRarity> rarities;
+
+  @override
+  List<Object?> get props => [rarities];
 }

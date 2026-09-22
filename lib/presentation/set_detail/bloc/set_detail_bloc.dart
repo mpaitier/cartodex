@@ -38,6 +38,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<CardOwnershipToggled>(_onCardOwnershipToggled);
     on<SecondaryOwnershipToggled>(_onSecondaryOwnershipToggled);
     on<PackFilterChanged>(_onPackFilterChanged);
+    on<RarityFilterChanged>(_onRarityFilterChanged);
   }
 
   final GetCardsBySet _getCardsBySet;
@@ -168,5 +169,12 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     Emitter<SetDetailState> emit,
   ) async {
     emit(state.copyWith(selectedPack: event.pack));
+  }
+
+  Future<void> _onRarityFilterChanged(
+    RarityFilterChanged event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    emit(state.copyWith(selectedRarities: event.rarities));
   }
 }

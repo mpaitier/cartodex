@@ -71,23 +71,24 @@ La couche présentation de l'écran d'accueil est posée :
 - `injection_container.dart` enregistre les cinq use cases et `CardSetsBloc` (en factory, une instance par écran).
 - `CardSetsPage` remplace `HomePage` comme écran d'accueil de `CartodexApp`.
 
-**Changement de schéma local** : `Cards` et `CardSets` ont chacune une nouvelle colonne `packs`, et une nouvelle table `Accounts` a été ajoutée. Aucune migration Drift n'est en place à ce stade du projet (`schemaVersion` reste à 1) : après avoir appliqué ces changements, désinstaller l'app du téléphone/émulateur (ou vider ses données) avant de relancer `flutter run`, pour repartir d'une base vierge.
+**Changement de schéma local** : `Cards` et `CardSets` ont chacune une nouvelle colonne `packs`, `Accounts` est une nouvelle table, et `OwnedCards` passe d'une clé simple (`cardId`) à une clé composite (`cardId`, `accountId`) — la possession est désormais par compte. Aucune migration Drift n'est en place à ce stade du projet (`schemaVersion` reste à 1) : après avoir appliqué ces changements, désinstaller l'app du téléphone/émulateur (ou vider ses données) avant de relancer `flutter run`, pour repartir d'une base vierge.
 
 La couche présentation de l'écran de détail d'un set est posée :
-- `SetDetailBloc` charge en parallèle les cartes du set (`GetCardsBySet`) et l'ensemble des cartes possédées (`GetOwnedCardIds`). La possession se bascule de façon optimiste au tap : l'état local change immédiatement, `SetCardOwned` persiste en arrière-plan, et un échec revient en arrière sans vider toute la grille.
+- `SetDetailBloc` charge les cartes du set (`GetCardsBySet`), tous les comptes (`GetAccounts`) et, pour chacun, les cartes qu'il possède (`GetOwnedCardIds`). Le tap simple bascule toujours la possession pour le compte principal (violet profond) ; le double-tap ouvre `SecondaryAccountPickerDialog` pour choisir un compte secondaire précis (bleu, icône flèche vers le haut). Les deux passent par le même use case (`SetCardOwned`) et la même mise à jour optimiste factorisée dans le Bloc : l'état local change immédiatement, un échec revient en arrière sans vider toute la grille. Sans compte encore créé, le tap simple affiche un message invitant à en créer un ; sans compte secondaire, le popup de double-tap fait de même.
 - Le filtre par booster (`PackFilterChanged`) s'appuie directement sur `CardSet.packs`, connu dès l'ouverture de l'écran (passé depuis `CardSetsPage`, pas besoin d'attendre le chargement des cartes) ; il se masque de lui-même quand un set n'a qu'un seul booster.
-- Composants dédiés : `CardGrid`, `CardGridItem` (nom, numéro au format `#XXX`, rareté, badge de possession), `PackFilterBar`.
-- Un appui sur une tuile de `CardSetsPage` ouvre désormais `SetDetailPage` pour ce set, dont le titre affiche "`<nom> - X acquis / total`" une fois les cartes chargées.
+- Composants dédiés : `CardGrid`, `CardGridItem` (nom, numéro au format `#XXX`, rareté affichée avec les symboles du jeu, badge de possession à deux états), `PackFilterBar`, `RarityFilterBar` (multi-sélection, "Tout"), `SecondaryAccountPickerDialog`.
+- `CardRarity` (`core/constants/card_rarities.dart`) convertit les codes bruts de la source (`C`, `SR`, `UR`...) vers la représentation du jeu : 1 à 4 losanges, 1 à 3 étoiles, 1 couronne, 1 à 2 étoiles chromatiques (table tirée de `rarities.json` de la source). `SR` et `SAR` partagent le même rendu (★★) — indissociables visuellement dans le jeu, seule la bordure (non reproduite ici) les distingue.
+- Un appui sur une tuile de `CardSetsPage` ouvre désormais `SetDetailPage` pour ce set, dont le titre affiche "`<nom> - X acquis / total`" une fois les cartes chargées (compte principal).
 
 La gestion de comptes est posée — première brique d'une future collection multi-comptes :
 - Entité `Account` (`id` local, `name` affiché, `gameAccountId` stocké mais jamais affiché ailleurs dans l'app, `isPrimary`) ; interface `AccountRepository` ; use cases `GetAccounts`, `AddAccount`, `SetPrimaryAccount`.
 - Table Drift `Accounts` : le premier compte créé devient principal automatiquement, une seule opération transactionnelle échange ensuite le rôle entre deux comptes (jamais deux principaux à la fois, jamais aucun dès qu'il en existe un).
-- `AccountsBloc`, `AccountsPage` (liste + FAB d'ajout), `AccountListItem` (couronne pleine pour le principal, en transparence et cliquable pour les autres — Material n'a pas d'icône de couronne native, choix pragmatique à revoir si besoin), `AddAccountDialog` (formulaire nom + identifiant).
+- `AccountsBloc`, `AccountsPage` (liste + FAB d'ajout), `AccountListItem` (étoile pleine jaune pour le principal, en contour gris et cliquable pour les autres), `AddAccountDialog` (formulaire nom + identifiant).
 - Accessible depuis une action dédiée dans l'AppBar de `CardSetsPage`.
 
 **Limitation connue** : `pokemon-tcg-pocket-database` ne fournit aucune URL d'image (ni logo de set, ni illustration de carte — seulement un nom de fichier). `CardSet.logoUrl` reste donc toujours `null` pour l'instant, et la grille affiche une icône générique à la place du logo. Trouver/brancher une source d'images est un point ouvert, pas encore résolu.
 
-Prochaine étape, dans l'ordre convenu : possession par compte (la table `OwnedCards` actuelle est un simple booléen par carte, sans notion de compte — il faut la faire évoluer vers un couple carte/compte) ; puis tap simple (principal, violet) / double-tap (popup de choix d'un compte secondaire, bleu) sur les cartes ; puis filtre par rareté multi-sélection ; puis swipe gauche/droite entre cartes de base et cartes secrètes dans le détail d'un set.
+Prochaine étape, dans l'ordre convenu : swipe gauche/droite entre cartes de base et cartes secrètes dans le détail d'un set.
 
 ## Mise en route
 

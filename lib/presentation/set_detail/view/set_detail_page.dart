@@ -11,11 +11,13 @@ import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
 import '../widgets/card_grid.dart';
 import '../widgets/pack_filter_bar.dart';
+import '../widgets/rarity_filter_bar.dart';
 import '../widgets/secondary_account_picker_dialog.dart';
 
-/// Écran de détail d'un set : ses cartes, filtrables par booster.
-/// Le tap simple bascule la possession pour le compte principal ;
-/// le double-tap ouvre un popup pour choisir un compte secondaire.
+/// Écran de détail d'un set : ses cartes, filtrables par booster et
+/// par rareté (multi-sélection). Le tap simple bascule la
+/// possession pour le compte principal ; le double-tap ouvre un
+/// popup pour choisir un compte secondaire.
 class SetDetailPage extends StatelessWidget {
   const SetDetailPage({required this.set, super.key});
 
@@ -64,6 +66,13 @@ class _SetDetailView extends StatelessWidget {
                 onPackSelected: (pack) => context
                     .read<SetDetailBloc>()
                     .add(PackFilterChanged(pack)),
+              ),
+              RarityFilterBar(
+                availableRarities: state.availableRarities,
+                selectedRarities: state.selectedRarities,
+                onSelectionChanged: (rarities) => context
+                    .read<SetDetailBloc>()
+                    .add(RarityFilterChanged(rarities)),
               ),
               Expanded(child: _buildBody(context, state)),
             ],

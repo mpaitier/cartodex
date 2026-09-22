@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/constants/card_rarities.dart';
 import '../../../domain/entities/account.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
@@ -33,6 +34,7 @@ class SetDetailState extends Equatable {
     this.accounts = const [],
     this.ownershipByAccountId = const {},
     this.selectedPack,
+    this.selectedRarities = const {},
     this.errorMessage,
   });
 
@@ -50,6 +52,12 @@ class SetDetailState extends Equatable {
   /// Booster actuellement sélectionné dans le filtre. `null`
   /// signifie "tous les boosters".
   final String? selectedPack;
+
+  /// Raretés cochées dans le filtre. Vide signifie "toutes les
+  /// raretés" — contrairement à [selectedPack], pas besoin de
+  /// sentinelle ici : un ensemble vide est déjà la valeur "aucun
+  /// filtre", jamais une valeur "ne pas toucher".
+  final Set<CardRarity> selectedRarities;
 
   final String? errorMessage;
 
@@ -86,11 +94,33 @@ class SetDetailState extends Equatable {
     return result;
   }
 
-  /// Cartes à afficher compte tenu du filtre courant.
+  /// Raretés effectivement présentes dans ce set, dans l'ordre
+  /// croissant de rareté, pour peupler le filtre — un sous-ensemble
+  /// des 10 paliers possibles ([CardRarity.allTiers]).
+  List<CardRarity> get availableRarities {
+    final present = <CardRarity>{};
+    for (final card in cards) {
+      final rarity = CardRarity.fromCode(card.rarity);
+      if (rarity != null) present.add(rarity);
+    }
+    return CardRarity.allTiers.where(present.contains).toList();
+  }
+
+  /// Cartes à afficher compte tenu des filtres courants (booster et
+  /// rareté, cumulatifs).
   List<PokemonCard> get visibleCards {
+    var result = cards;
     final pack = selectedPack;
-    if (pack == null) return cards;
-    return cards.where((card) => card.packs.contains(pack)).toList();
+    if (pack != null) {
+      result = result.where((card) => card.packs.contains(pack)).toList();
+    }
+    if (selectedRarities.isNotEmpty) {
+      result = result.where((card) {
+        final rarity = CardRarity.fromCode(card.rarity);
+        return rarity != null && selectedRarities.contains(rarity);
+      }).toList();
+    }
+    return result;
   }
 
   /// Ne préserve jamais l'ancien message d'erreur : toute
@@ -102,6 +132,7 @@ class SetDetailState extends Equatable {
     List<Account>? accounts,
     Map<String, Set<String>>? ownershipByAccountId,
     Object? selectedPack = _unset,
+    Set<CardRarity>? selectedRarities,
     String? errorMessage,
   }) {
     return SetDetailState(
@@ -112,6 +143,7 @@ class SetDetailState extends Equatable {
       selectedPack: identical(selectedPack, _unset)
           ? this.selectedPack
           : selectedPack as String?,
+      selectedRarities: selectedRarities ?? this.selectedRarities,
       errorMessage: errorMessage,
     );
   }
@@ -123,6 +155,7 @@ class SetDetailState extends Equatable {
         accounts,
         ownershipByAccountId,
         selectedPack,
+        selectedRarities,
         errorMessage,
       ];
 }
