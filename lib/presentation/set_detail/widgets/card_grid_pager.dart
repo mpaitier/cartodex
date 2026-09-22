@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/card_rarities.dart';
 import '../../../domain/entities/pokemon_card.dart';
 import 'card_grid.dart';
+import 'page_dots_indicator.dart';
 
 /// Grille de cartes à 3 volets, navigables au swipe :
 /// - à gauche, uniquement les cartes de rareté losange (◆ à ◆◆◆◆) ;
@@ -43,6 +44,7 @@ class CardGridPager extends StatefulWidget {
 
 class _CardGridPagerState extends State<CardGridPager> {
   final PageController _controller = PageController(initialPage: 1);
+  int _currentPage = 1;
 
   @override
   void dispose() {
@@ -62,18 +64,32 @@ class _CardGridPagerState extends State<CardGridPager> {
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
-      controller: _controller,
+    return Column(
       children: [
-        _grid(_diamondCards),
-        _grid(widget.cards),
-        _grid(_nonDiamondCards),
+        PageDotsIndicator(currentPage: _currentPage),
+        Expanded(
+          child: PageView(
+            controller: _controller,
+            onPageChanged: (page) => setState(() => _currentPage = page),
+            children: [
+              _grid('diamond', _diamondCards),
+              _grid('all', widget.cards),
+              _grid('non_diamond', _nonDiamondCards),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _grid(List<PokemonCard> cards) {
+  /// [pageKey] donne à chaque volet une [PageStorageKey] distincte :
+  /// sans elle, rien ne garantit formellement que Flutter associe le
+  /// bon offset de défilement au bon volet d'un swipe à l'autre — la
+  /// clé le fixe explicitement plutôt que de compter sur un
+  /// comportement implicite.
+  Widget _grid(String pageKey, List<PokemonCard> cards) {
     return CardGrid(
+      key: PageStorageKey<String>(pageKey),
       cards: cards,
       primaryOwnedCardIds: widget.primaryOwnedCardIds,
       secondaryOwnedCardIds: widget.secondaryOwnedCardIds,
