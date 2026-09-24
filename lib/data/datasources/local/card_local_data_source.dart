@@ -72,7 +72,11 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
   Future<List<CardSetModel>> getCachedCardSets() async {
     try {
       final rows = await _database.select(_database.cardSets).get();
-      return rows.map(_setFromRow).toList();
+      // Sans colonne de date de sortie en local, on s'appuie sur
+      // l'ordre d'insertion (proche de l'ordre chronologique de la
+      // source) et on l'inverse : les sets les plus récents en
+      // premier plutôt que les plus anciens.
+      return rows.reversed.map(_setFromRow).toList();
     } on Exception catch (e) {
       throw CacheException('Échec de la lecture des sets en cache : $e');
     }

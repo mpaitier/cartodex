@@ -42,6 +42,9 @@ class RarityFilterBar extends StatelessWidget {
             return ChoiceChip(
               label: const Text('Tout'),
               selected: allSelected,
+              showCheckmark: false,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+              visualDensity: VisualDensity.compact,
               onSelected: (_) => onSelectionChanged(const {}),
             );
           }
@@ -50,6 +53,9 @@ class RarityFilterBar extends StatelessWidget {
           return FilterChip(
             label: Text(rarity.symbol),
             selected: selected,
+            showCheckmark: false,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+            visualDensity: VisualDensity.compact,
             onSelected: (isSelected) {
               final updated = Set<CardRarity>.from(selectedRarities);
               if (isSelected) {

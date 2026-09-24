@@ -64,19 +64,22 @@ class _CardGridPagerState extends State<CardGridPager> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        PageDotsIndicator(currentPage: _currentPage),
-        Expanded(
-          child: PageView(
-            controller: _controller,
-            onPageChanged: (page) => setState(() => _currentPage = page),
-            children: [
-              _grid('diamond', _diamondCards),
-              _grid('all', widget.cards),
-              _grid('non_diamond', _nonDiamondCards),
-            ],
-          ),
+        PageView(
+          controller: _controller,
+          onPageChanged: (page) => setState(() => _currentPage = page),
+          children: [
+            _grid('diamond', _diamondCards),
+            _grid('all', widget.cards),
+            _grid('non_diamond', _nonDiamondCards),
+          ],
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 16,
+          child: Center(child: PageDotsIndicator(currentPage: _currentPage)),
         ),
       ],
     );
