@@ -44,12 +44,13 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
     final response = await _get(uri);
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     // sets.json groupe les sets par série ({"A": [...], "B": [...]}) :
-    // on aplatit puisque l'app ne distingue pas les séries pour l'instant.
-    return body.values
-        .cast<List<dynamic>>()
-        .expand((series) => series.cast<Map<String, dynamic>>())
-        .map(CardSetModel.fromJson)
-        .toList();
+    // on aplatit pour l'affichage, mais en gardant la clé de groupe
+    // (voir CardSetModel.seriesId) pour le filtre par série.
+    return body.entries.expand((entry) {
+      final seriesId = entry.key;
+      final sets = (entry.value as List<dynamic>).cast<Map<String, dynamic>>();
+      return sets.map((json) => CardSetModel.fromJson(json, seriesId: seriesId));
+    }).toList();
   }
 
   @override

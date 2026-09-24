@@ -163,13 +163,13 @@ class SetDetailState extends Equatable {
     return alternativeOwned + extra.length;
   }
 
-  static bool _isBase(PokemonCard card) =>
-      CardRarity.fromCode(card.rarity)?.group == RarityGroup.diamond;
+  static bool _isBase(PokemonCard card) => CardRarity.isBase(card.rarity);
 
-  static bool _isAlternative(PokemonCard card) {
-    final rarity = CardRarity.fromCode(card.rarity);
-    return rarity != null && rarity.group != RarityGroup.diamond;
-  }
+  /// Tout ce qui n'est pas losange, sans rareté connue y compris —
+  /// exclure les cartes sans rareté ici les faisait disparaître à
+  /// la fois de [baseTotal] et d'[alternativeTotal] (c'était le bug
+  /// des totaux à 0 sur "Promo B").
+  static bool _isAlternative(PokemonCard card) => !_isBase(card);
 
   /// Ne préserve jamais l'ancien message d'erreur : toute
   /// transition qui ne le fournit pas explicitement le réinitialise,

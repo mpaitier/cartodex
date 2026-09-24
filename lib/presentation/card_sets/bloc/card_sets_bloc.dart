@@ -20,6 +20,7 @@ class CardSetsBloc extends Bloc<CardSetsEvent, CardSetsState> {
         super(const CardSetsState()) {
     on<CardSetsStarted>(_onStarted);
     on<CardSetsSyncRequested>(_onSyncRequested);
+    on<SeriesFilterChanged>(_onSeriesFilterChanged);
   }
 
   final GetCardSets _getCardSets;
@@ -59,7 +60,27 @@ class CardSetsBloc extends Bloc<CardSetsEvent, CardSetsState> {
           errorMessage: failure.message,
         ),
       ),
-      (sets) => emit(state.copyWith(status: CardSetsStatus.loaded, sets: sets)),
+      (sets) {
+        var next = state.copyWith(status: CardSetsStatus.loaded, sets: sets);
+        // Par défaut (ou si la série choisie a disparu, ex: après une
+        // resynchronisation), on retombe sur la plus récente : le
+        // premier onglet, seriesTabs plaçant toujours les séries
+        // lettrées les plus récentes en tête.
+        final tabs = next.seriesTabs;
+        final hasValidSelection =
+            tabs.any((tab) => tab.key == next.selectedSeriesKey);
+        if (!hasValidSelection && tabs.isNotEmpty) {
+          next = next.copyWith(selectedSeriesKey: tabs.first.key);
+        }
+        emit(next);
+      },
     );
+  }
+
+  Future<void> _onSeriesFilterChanged(
+    SeriesFilterChanged event,
+    Emitter<CardSetsState> emit,
+  ) async {
+    emit(state.copyWith(selectedSeriesKey: event.seriesKey));
   }
 }

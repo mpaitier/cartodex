@@ -11,6 +11,7 @@ class CardSet extends Equatable {
     required this.id,
     required this.name,
     required this.totalCardCount,
+    required this.seriesId,
     this.logoUrl,
     this.officialCardCount,
     this.packs = const [],
@@ -21,8 +22,17 @@ class CardSet extends Equatable {
 
   final String name;
 
-  /// Nombre total de cartes du set, variantes comprises.
+  /// Nombre total de cartes du set, variantes comprises. Calculé à
+  /// partir des cartes effectivement synchronisées (voir
+  /// `CardRepositoryImpl.syncCardCatalog`) plutôt que lu tel quel
+  /// depuis la source : celle-ci peut l'omettre (c'est le cas pour
+  /// "Promo B" par exemple) ou diverger du réel.
   final int totalCardCount;
+
+  /// Clé de série de la source (ex: "A", "B") — le regroupement de
+  /// haut niveau de `sets.json`, utilisé pour le filtre par série
+  /// (voir `SeriesFilterBar`).
+  final String seriesId;
 
   /// Url du logo du set. Le référentiel actuel n'en fournit pas :
   /// reste `null` tant qu'une source d'images n'est pas branchée.
@@ -39,11 +49,18 @@ class CardSet extends Equatable {
   /// cartes.
   final List<String> packs;
 
+  /// Vrai pour les sets promotionnels (code préfixé "PROMO-", ex:
+  /// "PROMO-B"). Dérivé de [id] plutôt que stocké séparément : pure
+  /// fonction de l'identifiant, pas une donnée indépendante à
+  /// synchroniser.
+  bool get isPromo => id.startsWith('PROMO-');
+
   @override
   List<Object?> get props => [
         id,
         name,
         totalCardCount,
+        seriesId,
         logoUrl,
         officialCardCount,
         packs,

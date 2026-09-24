@@ -8,6 +8,7 @@ import '../../domain/entities/pokemon_card.dart';
 import '../../domain/repositories/card_repository.dart';
 import '../datasources/local/card_local_data_source.dart';
 import '../datasources/remote/card_remote_data_source.dart';
+import '../models/card_set_model.dart';
 
 /// Implémentation de [CardRepository].
 ///
@@ -36,20 +37,38 @@ class CardRepositoryImpl implements CardRepository {
     }
     try {
       final sets = await _remoteDataSource.fetchCardSets();
-      await _localDataSource.cacheCardSets(sets);
 
       // Le référentiel distant renvoie toutes les cartes en un seul
       // fichier (voir CardRemoteDataSource) : on les répartit par set
       // ici, sans appel réseau supplémentaire, et on en profite pour
       // renseigner le nom du set (absent de cards.json).
       final allCards = await _remoteDataSource.fetchAllCards();
+
+      // Le total déclaré par la source (`sets.json`) peut manquer
+      // (ex: "Promo B" n'a pas de champ `count`) ou diverger du réel :
+      // le nombre de cartes effectivement récupérées fait foi. Les
+      // sets ne sont donc mis en cache qu'une fois ce total corrigé,
+      // pas avec la valeur brute de la source.
+      final correctedSets = <CardSetModel>[];
       for (final set in sets) {
         final cardsForSet = allCards
             .where((card) => card.setId == set.id)
             .map((card) => card.copyWith(setName: set.name))
             .toList();
         await _localDataSource.cacheCards(set.id, cardsForSet);
+        correctedSets.add(
+          CardSetModel(
+            id: set.id,
+            name: set.name,
+            totalCardCount: cardsForSet.length,
+            seriesId: set.seriesId,
+            logoUrl: set.logoUrl,
+            officialCardCount: set.officialCardCount,
+            packs: set.packs,
+          ),
+        );
       }
+      await _localDataSource.cacheCardSets(correctedSets);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

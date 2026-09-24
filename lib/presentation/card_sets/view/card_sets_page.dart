@@ -13,13 +13,16 @@ import '../bloc/card_sets_event.dart';
 import '../bloc/card_sets_state.dart';
 import '../widgets/card_set_grid.dart';
 import '../widgets/card_sets_empty_view.dart';
+import '../widgets/series_filter_bar.dart';
 import '../widgets/sync_catalog_action.dart';
 
 /// Écran d'accueil : liste des sets du référentiel TCG Pocket.
 ///
 /// Point d'entrée de la feature catalogue et de la gestion de
 /// comptes. Un appui sur une tuile ouvre [SetDetailPage] pour ce
-/// set ; l'action dédiée de l'AppBar ouvre [AccountsPage].
+/// set ; l'action dédiée de l'AppBar ouvre [AccountsPage] ; le
+/// menu flottant du bas ([SeriesFilterBar]) filtre la grille par
+/// série.
 class CardSetsPage extends StatelessWidget {
   const CardSetsPage({super.key});
 
@@ -44,7 +47,7 @@ class _CardSetsView extends StatelessWidget {
           actions: [
             IconButton(
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AccountsPage()),
+                MaterialPageRoute<void>(builder: (_) => const AccountsPage()),
               ),
               icon: const Icon(Icons.people_alt_outlined),
               tooltip: 'Comptes',
@@ -56,7 +59,23 @@ class _CardSetsView extends StatelessWidget {
                   .add(const CardSetsSyncRequested()),
             ),
           ],
-          body: _buildBody(context, state),
+          body: Stack(
+            children: [
+              _buildBody(context, state),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SeriesFilterBar(
+                  tabs: state.seriesTabs,
+                  selectedKey: state.selectedSeriesKey,
+                  onSelected: (key) => context
+                      .read<CardSetsBloc>()
+                      .add(SeriesFilterChanged(key)),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -88,15 +107,20 @@ class _CardSetsView extends StatelessWidget {
       );
     }
 
-    return CardSetGrid(
-      sets: state.sets,
-      onSetTap: (set) => _onSetTap(context, set),
+    // Marge basse pour que les dernières tuiles ne se retrouvent pas
+    // sous le menu flottant.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 72),
+      child: CardSetGrid(
+        sets: state.visibleSets,
+        onSetTap: (set) => _onSetTap(context, set),
+      ),
     );
   }
 
   void _onSetTap(BuildContext context, CardSet set) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => SetDetailPage(set: set)),
+      MaterialPageRoute<void>(builder: (_) => SetDetailPage(set: set)),
     );
   }
 }

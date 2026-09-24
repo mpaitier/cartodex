@@ -59,6 +59,15 @@ class CardRarity extends Equatable {
   /// promo n'ont pas de rareté.
   static CardRarity? fromCode(String? code) => _byCode[code];
 
+  /// Vrai si [code] correspond à la "collection de base" (rareté
+  /// losange). Toute carte qui ne l'est pas — étoile, couronne,
+  /// chromatique, ou sans rareté connue (certaines promos) — est
+  /// considérée "alternative" : point d'entrée unique pour cette
+  /// distinction, utilisée à la fois par `SetDetailState` (les
+  /// compteurs) et `CardGridPager` (les volets swipeables), pour
+  /// qu'ils s'accordent toujours.
+  static bool isBase(String? code) => fromCode(code)?.group == RarityGroup.diamond;
+
   /// Les 10 paliers visuels distincts, du plus commun au plus rare,
   /// pour peupler le filtre — indépendamment des codes bruts qui
   /// peuvent s'y superposer (`SR`/`SAR`).

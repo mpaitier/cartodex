@@ -8,6 +8,7 @@ class CardSetModel extends CardSet {
     required super.id,
     required super.name,
     required super.totalCardCount,
+    required super.seriesId,
     super.logoUrl,
     super.officialCardCount,
     super.packs,
@@ -24,12 +25,23 @@ class CardSetModel extends CardSet {
   ///   "packs": ["Charizard", "Mewtwo", "Pikachu"]
   /// }
   /// ```
-  factory CardSetModel.fromJson(Map<String, dynamic> json) {
+  /// [seriesId] n'est pas dans l'objet lui-même : c'est la clé du
+  /// groupe qui le contient dans `sets.json` (ex: "A"), fournie par
+  /// l'appelant plutôt que par le JSON individuel du set — voir
+  /// `CardRemoteDataSourceImpl.fetchCardSets`. `count` est absent
+  /// pour certains sets (ex: "Promo B") : `totalCardCount` retombe
+  /// alors à 0 ici, corrigé ensuite avec le vrai nombre de cartes
+  /// synchronisées (voir `CardRepositoryImpl.syncCardCatalog`).
+  factory CardSetModel.fromJson(
+    Map<String, dynamic> json, {
+    required String seriesId,
+  }) {
     final names = json['name'] as Map<String, dynamic>?;
     return CardSetModel(
       id: json['code'] as String,
       name: (names?['en'] as String?) ?? json['code'] as String,
       totalCardCount: (json['count'] as num?)?.toInt() ?? 0,
+      seriesId: seriesId,
       packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],
     );
   }

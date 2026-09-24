@@ -15,9 +15,11 @@ import 'page_dots_indicator.dart';
 /// [cards] est déjà filtrée en amont (booster, puces de rareté —
 /// voir [SetDetailState.visibleCards][../bloc/set_detail_state.dart]) :
 /// le swipe ajoute un troisième niveau de filtrage purement local à
-/// ce widget, sans passer par le Bloc. Les cartes sans rareté
-/// connue (certaines promos) n'apparaissent que sur le volet du
-/// milieu.
+/// ce widget, sans passer par le Bloc. Le partage losange /
+/// non-losange s'appuie sur [CardRarity.isBase], le même point
+/// d'entrée que les compteurs de `SetProgressSummary` — une carte
+/// sans rareté connue (certaines promos) est donc "non-losange" ici
+/// aussi, pas exclue des deux volets à la fois.
 ///
 /// `StatefulWidget` uniquement pour garder le [PageController] en
 /// vie d'un build à l'autre : recréé à chaque frame, il ramènerait
@@ -52,15 +54,11 @@ class _CardGridPagerState extends State<CardGridPager> {
     super.dispose();
   }
 
-  List<PokemonCard> get _diamondCards => widget.cards.where((card) {
-        final rarity = CardRarity.fromCode(card.rarity);
-        return rarity != null && rarity.group == RarityGroup.diamond;
-      }).toList();
+  List<PokemonCard> get _diamondCards =>
+      widget.cards.where((card) => CardRarity.isBase(card.rarity)).toList();
 
-  List<PokemonCard> get _nonDiamondCards => widget.cards.where((card) {
-        final rarity = CardRarity.fromCode(card.rarity);
-        return rarity != null && rarity.group != RarityGroup.diamond;
-      }).toList();
+  List<PokemonCard> get _nonDiamondCards =>
+      widget.cards.where((card) => !CardRarity.isBase(card.rarity)).toList();
 
   @override
   Widget build(BuildContext context) {
