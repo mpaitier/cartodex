@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
-import 'presentation/home/view/home_page.dart';
+import 'presentation/card_sets/view/card_sets_page.dart';
 
 class CartodexApp extends StatelessWidget {
   const CartodexApp({super.key});
@@ -14,7 +14,7 @@ class CartodexApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      home: const HomePage(),
+      home: const CardSetsPage(),
     );
   }
 }
