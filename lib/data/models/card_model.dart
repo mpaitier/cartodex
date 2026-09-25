@@ -1,3 +1,4 @@
+import '../../core/constants/app_constants.dart';
 import '../../domain/entities/card_category.dart';
 import '../../domain/entities/pokemon_card.dart';
 
@@ -50,9 +51,15 @@ class CardModel extends PokemonCard {
       // Renseigné par le repository (voir CardRepositoryImpl.syncCardCatalog),
       // qui dispose déjà des noms de sets au moment du groupement par set.
       setName: '',
-      // Le jeu de données ne fournit qu'un nom de fichier, pas une URL :
-      // héberger/brancher une source d'images reste à faire (voir README).
-      imageUrl: null,
+      // Le jeu de données ne fournit qu'un nom de fichier, pas une
+      // URL : on reconstruit celle-ci via la convention
+      // "cards-by-set" documentée depuis la v2.1.0 du package
+      // (cards-by-set/{set}/{number}.webp). Non vérifiée avec
+      // certitude côté hébergement (voir README) : si l'image ne
+      // charge pas, CardGridItem retombe sur le numéro affiché en
+      // grand, donc une URL incorrecte ne casse rien.
+      imageUrl:
+          '${AppConstants.pocketDatabaseBaseUrl}/cards-by-set/$setId/$number.webp',
       rarity: json['rarity'] as String?,
       packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],
     );

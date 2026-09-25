@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/card_rarities.dart';
@@ -27,9 +28,9 @@ class CardGridItem extends StatelessWidget {
   final VoidCallback onDoubleTap;
 
   /// Numéro sur 3 chiffres (ex: "007"), quelle que soit la largeur
-  /// du numéro brut renvoyé par la source. Sans `#` : affiché en
-  /// grand à la place de l'image tant qu'aucune source d'images
-  /// n'est branchée (voir README), le `#` n'apporterait rien.
+  /// du numéro brut renvoyé par la source. Sans `#` : c'est le
+  /// repli affiché à la place de l'image quand celle-ci ne charge
+  /// pas (voir [_CardArt]), le `#` n'y apporterait rien.
   String get _paddedNumber => card.localId.padLeft(3, '0');
 
   @override
@@ -47,7 +48,8 @@ class CardGridItem extends StatelessWidget {
             Column(
               children: [
                 Expanded(
-                  child: _CardArtPlaceholder(
+                  child: _CardArt(
+                    imageUrl: card.imageUrl,
                     owned: owned,
                     number: _paddedNumber,
                   ),
@@ -88,14 +90,53 @@ class CardGridItem extends StatelessWidget {
   }
 }
 
-/// Remplace l'illustration de la carte tant qu'aucune source
-/// d'images n'est branchée (voir README) : le numéro de la carte y
-/// est affiché en grand, plutôt qu'une icône générique identique
-/// pour toutes les cartes. Grisée quand la carte n'est pas
-/// possédée, pour distinguer les deux états au premier coup d'œil
-/// même sans visuel.
-class _CardArtPlaceholder extends StatelessWidget {
-  const _CardArtPlaceholder({required this.owned, required this.number});
+/// Illustration de la carte. [imageUrl] est reconstruit à partir de
+/// la convention "cards-by-set" du référentiel (voir
+/// `CardModel.fromJson`), sans certitude absolue sur l'hébergement
+/// exact (voir README) : si le chargement échoue, ou tant qu'aucune
+/// URL n'est disponible, retombe sur le numéro de la carte affiché
+/// en grand plutôt qu'une icône générique identique pour toutes les
+/// cartes. Grisée quand la carte n'est pas possédée, pour
+/// distinguer les deux états au premier coup d'œil même sans
+/// visuel.
+class _CardArt extends StatelessWidget {
+  const _CardArt({
+    required this.imageUrl,
+    required this.owned,
+    required this.number,
+  });
+
+  final String? imageUrl;
+  final bool owned;
+  final String number;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = imageUrl;
+    if (url == null) {
+      return _NumberFallback(owned: owned, number: number);
+    }
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      placeholder: (context, _) => ColoredBox(
+        color: owned ? Colors.black12 : Colors.black.withValues(alpha: 0.04),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      errorWidget: (context, _, __) =>
+          _NumberFallback(owned: owned, number: number),
+    );
+  }
+}
+
+class _NumberFallback extends StatelessWidget {
+  const _NumberFallback({required this.owned, required this.number});
 
   final bool owned;
   final String number;

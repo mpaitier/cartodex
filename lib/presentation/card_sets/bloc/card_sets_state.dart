@@ -24,6 +24,11 @@ enum CardSetsStatus {
   error,
 }
 
+/// Clé d'onglet réservée au groupe "Promo" (voir
+/// [CardSetsState.seriesTabs]) — ne peut pas entrer en collision
+/// avec une vraie clé de série ("A", "B"...) ni un id de set.
+const _promoKey = 'PROMO';
+
 /// Un onglet du filtre par série (voir
 /// [SeriesFilterBar][../widgets/series_filter_bar.dart]).
 ///
@@ -63,39 +68,38 @@ class CardSetsState extends Equatable {
   final String? errorMessage;
 
   /// Les onglets à proposer dans le filtre : un par série non-promo
-  /// (label = la clé elle-même, ex: "A"), puis un par set promo
-  /// (label = son nom, ex: "Promo B") — toujours après les séries
-  /// normales. [sets] étant déjà trié du plus récent au plus ancien
-  /// (voir `CardLocalDataSource.getCachedCardSets`), le premier
-  /// onglet rencontré pour une série donnée est le bon ordre sans
-  /// calcul de date supplémentaire.
+  /// (label = la clé elle-même, ex: "A"), puis un seul onglet
+  /// "Promo" regroupant tous les sets promo ensemble (ex: PROMO-A et
+  /// PROMO-B), toujours en dernier. [sets] étant déjà trié du plus
+  /// récent au plus ancien (voir
+  /// `CardLocalDataSource.getCachedCardSets`), le premier onglet
+  /// rencontré pour une série donnée est le bon ordre sans calcul de
+  /// date supplémentaire.
   List<SeriesTab> get seriesTabs {
     final letteredKeys = <String>[];
-    final promoSets = <CardSet>[];
+    var hasPromo = false;
     for (final set in sets) {
       if (set.isPromo) {
-        promoSets.add(set);
+        hasPromo = true;
       } else if (!letteredKeys.contains(set.seriesId)) {
         letteredKeys.add(set.seriesId);
       }
     }
     return [
       for (final key in letteredKeys) SeriesTab(key: key, label: key),
-      for (final promo in promoSets) SeriesTab(key: promo.id, label: promo.name),
+      if (hasPromo) const SeriesTab(key: _promoKey, label: 'Promo'),
     ];
   }
 
   /// Les sets à afficher dans la grille compte tenu de
   /// [selectedSeriesKey] : tous les sets non-promo de cette série,
-  /// ou seulement ce set promo précis si la clé correspond à un
-  /// onglet promo.
+  /// ou tous les sets promo confondus si l'onglet "Promo" est
+  /// sélectionné.
   List<CardSet> get visibleSets {
     final key = selectedSeriesKey;
     if (key == null) return sets;
-    return sets.where((set) {
-      if (set.isPromo) return set.id == key;
-      return set.seriesId == key;
-    }).toList();
+    if (key == _promoKey) return sets.where((set) => set.isPromo).toList();
+    return sets.where((set) => !set.isPromo && set.seriesId == key).toList();
   }
 
   /// Ne préserve jamais l'ancien message d'erreur : toute
