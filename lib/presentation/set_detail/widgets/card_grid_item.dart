@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/card_rarities.dart';
@@ -129,8 +130,17 @@ class _CardArt extends StatelessWidget {
           ),
         ),
       ),
-      errorWidget: (context, _, __) =>
-          _NumberFallback(owned: owned, number: number),
+      errorWidget: (context, failedUrl, error) {
+        // Volontairement seulement en debug (voir kDebugMode plus
+        // bas) : print sur des centaines de tuiles en production
+        // n'apporterait rien et coûterait des perfs pour rien.
+        // L'URL et l'erreur exacte permettent de tester le lien
+        // directement dans un navigateur.
+        if (kDebugMode) {
+          debugPrint('CardGridItem: image introuvable $failedUrl ($error)');
+        }
+        return _NumberFallback(owned: owned, number: number);
+      },
     );
   }
 }
