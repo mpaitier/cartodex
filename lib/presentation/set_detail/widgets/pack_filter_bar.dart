@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'pack_avatar.dart';
+
 /// Barre horizontale de filtre par booster, avec un choix "Tous"
 /// systématique en tête.
 ///
@@ -39,6 +41,7 @@ class PackFilterBar extends StatelessWidget {
           }
           final pack = packs[index - 1];
           return ChoiceChip(
+            avatar: PackAvatar(packName: pack),
             label: Text(pack),
             selected: selectedPack == pack,
             onSelected: (_) => onPackSelected(pack),

@@ -34,8 +34,11 @@ class CardSet extends Equatable {
   /// (voir `SeriesFilterBar`).
   final String seriesId;
 
-  /// Url du logo du set. Le référentiel actuel n'en fournit pas :
-  /// reste `null` tant qu'une source d'images n'est pas branchée.
+  /// Url du logo du set (sans extension, ajoutée par
+  /// `CardSetGridItem`), reconstruite depuis pocketcards.net à
+  /// partir du nom du set — voir `CardSetModel.fromJson`. Ne reste
+  /// `null` que pour un set relu depuis une base locale antérieure
+  /// à ce champ, ou en l'absence de nom exploitable.
   final String? logoUrl;
 
   /// Nombre de cartes "officielles" du set (hors variantes), quand
