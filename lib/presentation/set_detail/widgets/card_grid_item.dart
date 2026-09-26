@@ -1,9 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/card_rarities.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
 /// Une tuile de la grille de cartes : nom, numéro, rareté, et un
@@ -100,6 +100,12 @@ class CardGridItem extends StatelessWidget {
 /// cartes. Grisée quand la carte n'est pas possédée, pour
 /// distinguer les deux états au premier coup d'œil même sans
 /// visuel.
+///
+/// Chaque URL tentée est loguée (voir [AppLogger]) : en INFO au
+/// moment de la construction, en ERROR si `CachedNetworkImage`
+/// échoue à la charger — le but est de pouvoir vérifier d'un coup
+/// d'œil dans la console si le lien reconstruit est correct, sans
+/// devoir copier-coller chaque URL à la main.
 class _CardArt extends StatelessWidget {
   const _CardArt({
     required this.imageUrl,
@@ -117,6 +123,7 @@ class _CardArt extends StatelessWidget {
     if (url == null) {
       return _NumberFallback(owned: owned, number: number);
     }
+    AppLogger.log('INFO', 'Carte #$number : $url');
     return CachedNetworkImage(
       imageUrl: url,
       fit: BoxFit.cover,
@@ -131,14 +138,13 @@ class _CardArt extends StatelessWidget {
         ),
       ),
       errorWidget: (context, failedUrl, error) {
-        // Volontairement seulement en debug (voir kDebugMode plus
-        // bas) : print sur des centaines de tuiles en production
-        // n'apporterait rien et coûterait des perfs pour rien.
         // L'URL et l'erreur exacte permettent de tester le lien
-        // directement dans un navigateur.
-        if (kDebugMode) {
-          debugPrint('CardGridItem: image introuvable $failedUrl ($error)');
-        }
+        // directement dans un navigateur (voir AppLogger, qui ne
+        // s'exécute qu'en debug).
+        AppLogger.log(
+          'ERROR',
+          'Carte #$number introuvable : $failedUrl ($error)',
+        );
         return _NumberFallback(owned: owned, number: number);
       },
     );

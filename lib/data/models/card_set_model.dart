@@ -32,14 +32,22 @@ class CardSetModel extends CardSet {
   /// pour certains sets (ex: "Promo B") : `totalCardCount` retombe
   /// alors à 0 ici, corrigé ensuite avec le vrai nombre de cartes
   /// synchronisées (voir `CardRepositoryImpl.syncCardCatalog`).
+  ///
+  /// [logoUrl] reste volontairement `null` : ni
+  /// `pokemon-tcg-pocket-database` (voir README, section Images —
+  /// ne documente que les images de cartes, pas de logo de set) ni
+  /// TCGdex (testée entre-temps, 404 sur tous les sets) n'exposent
+  /// de logo exploitable pour l'instant. `CardSetGridItem` retombe
+  /// sur une icône générique tant que ce point n'est pas résolu.
   factory CardSetModel.fromJson(
     Map<String, dynamic> json, {
     required String seriesId,
   }) {
+    final id = json['code'] as String;
     final names = json['name'] as Map<String, dynamic>?;
     return CardSetModel(
-      id: json['code'] as String,
-      name: (names?['en'] as String?) ?? json['code'] as String,
+      id: id,
+      name: (names?['en'] as String?) ?? id,
       totalCardCount: (json['count'] as num?)?.toInt() ?? 0,
       seriesId: seriesId,
       packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],

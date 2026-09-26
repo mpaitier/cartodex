@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/card_set.dart';
 
 /// Une tuile de la grille de sets : logo, nom et nombre de cartes.
@@ -61,7 +62,10 @@ class CardSetGridItem extends StatelessWidget {
 /// [CardSet.logoUrl] reste donc toujours `null` pour l'instant, et
 /// cette tuile affiche systématiquement l'icône de repli. Le
 /// chemin `CachedNetworkImage` reste en place pour le jour où une
-/// source d'images sera branchée (voir README).
+/// source d'images sera branchée (voir README) — les logs (voir
+/// [AppLogger]) sont déjà en place pour ce moment-là : INFO au
+/// moment de la construction de l'URL, ERROR si le chargement
+/// échoue.
 class _SetLogo extends StatelessWidget {
   const _SetLogo({required this.url});
 
@@ -76,10 +80,12 @@ class _SetLogo extends StatelessWidget {
         child: Icon(Icons.style_outlined),
       );
     }
+    final fullUrl = '$url.webp';
+    AppLogger.log('INFO', 'Logo de set : $fullUrl');
     return ColoredBox(
       color: Colors.black12,
       child: CachedNetworkImage(
-        imageUrl: '$url.webp',
+        imageUrl: fullUrl,
         fit: BoxFit.contain,
         placeholder: (context, _) => const Center(
           child: SizedBox(
@@ -88,8 +94,10 @@ class _SetLogo extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        errorWidget: (context, _, __) =>
-            const Icon(Icons.broken_image_outlined),
+        errorWidget: (context, failedUrl, error) {
+          AppLogger.log('ERROR', 'Logo de set introuvable : $failedUrl ($error)');
+          return const Icon(Icons.broken_image_outlined);
+        },
       ),
     );
   }

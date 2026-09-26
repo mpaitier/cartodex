@@ -1,4 +1,5 @@
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/pocket_cards_image_slug.dart';
 import '../../domain/entities/card_category.dart';
 import '../../domain/entities/pokemon_card.dart';
 
@@ -42,24 +43,27 @@ class CardModel extends PokemonCard {
   factory CardModel.fromJson(Map<String, dynamic> json, {String? category}) {
     final setId = json['set'] as String;
     final number = json['number'].toString();
+    final name = json['name'] as String;
     return CardModel(
       id: '$setId-$number',
       localId: number,
-      name: json['name'] as String,
+      name: name,
       category: _categoryFromApi(category),
       setId: setId,
       // Renseigné par le repository (voir CardRepositoryImpl.syncCardCatalog),
       // qui dispose déjà des noms de sets au moment du groupement par set.
       setName: '',
-      // Le jeu de données ne fournit qu'un nom de fichier, pas une
-      // URL : on reconstruit celle-ci via la convention
-      // "cards-by-set" documentée depuis la v2.1.0 du package
-      // (cards-by-set/{set}/{number}.webp). Non vérifiée avec
-      // certitude côté hébergement (voir README) : si l'image ne
-      // charge pas, CardGridItem retombe sur le numéro affiché en
-      // grand, donc une URL incorrecte ne casse rien.
-      imageUrl:
-          '${AppConstants.pocketDatabaseBaseUrl}/cards-by-set/$setId/$number.webp',
+      // `pokemon-tcg-pocket-database` ne fournit qu'un nom de
+      // fichier, pas une URL exploitable, et TCGdex n'héberge pas
+      // les images TCG Pocket (voir AppConstants.pocketCardsImageBaseUrl
+      // pour l'historique complet). L'URL est reconstruite ici à
+      // partir du nom de la carte (voir [PocketCardsImageSlug]) et
+      // du numéro sur 3 chiffres, seul format observé sur
+      // pocketcards.net.
+      imageUrl: '${AppConstants.pocketCardsImageBaseUrl}/'
+          '${PocketCardsImageSlug.fromCardName(name)}-'
+          '${setId.toLowerCase()}-'
+          '${number.padLeft(3, '0')}.webp',
       rarity: json['rarity'] as String?,
       packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],
     );
