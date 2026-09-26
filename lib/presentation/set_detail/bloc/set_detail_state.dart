@@ -94,12 +94,23 @@ class SetDetailState extends Equatable {
     return result;
   }
 
-  /// Raretés effectivement présentes dans ce set, dans l'ordre
-  /// croissant de rareté, pour peupler le filtre — un sous-ensemble
-  /// des 10 paliers possibles ([CardRarity.allTiers]).
-  List<CardRarity> get availableRarities {
+  /// Raretés effectivement présentes dans ce set pour le volet
+  /// [group] de [CardGridPager][../widgets/card_grid_pager.dart], dans
+  /// l'ordre croissant de rareté, pour peupler `RarityFilterBar` —
+  /// un sous-ensemble des 10 paliers possibles
+  /// ([CardRarity.allTiers]). [CardGroupFilter.all] donne toutes les
+  /// raretés du set, sans restriction ; [CardGroupFilter.diamond] et
+  /// [CardGroupFilter.nonDiamond] restreignent respectivement aux
+  /// cartes de la "collection de base" et aux cartes "alternatives"
+  /// (voir [CardRarity.isBase]) — pour que le filtre affiché ne
+  /// propose jamais une puce sans effet sur le volet actif.
+  List<CardRarity> availableRaritiesForGroup(CardGroupFilter group) {
     final present = <CardRarity>{};
     for (final card in cards) {
+      if (group == CardGroupFilter.diamond && !_isBase(card)) continue;
+      if (group == CardGroupFilter.nonDiamond && !_isAlternative(card)) {
+        continue;
+      }
       final rarity = CardRarity.fromCode(card.rarity);
       if (rarity != null) present.add(rarity);
     }
