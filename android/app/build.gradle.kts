@@ -1,6 +1,11 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    // AGP 9+ fournit Kotlin nativement ("Built-in Kotlin") : le plugin
+    // "kotlin-android" (Kotlin Gradle Plugin classique) n'est plus
+    // appliqué ici, et le bloc `kotlinOptions` qu'il fournissait est
+    // remplacé plus bas par le DSL `compilerOptions` — voir le guide
+    // de migration officiel :
+    // https://docs.flutter.dev/release/breaking-changes/migrate-to-agp-9
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -15,8 +20,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+    kotlin {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        }
     }
 
     defaultConfig {
