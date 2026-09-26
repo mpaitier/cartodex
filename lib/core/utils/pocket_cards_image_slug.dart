@@ -12,18 +12,36 @@
 ///
 /// Elle peut donc échouer sur des noms à ponctuation inhabituelle (ex:
 /// "Mr. Mime", "Nidoran♀"/"Nidoran♂", accents...), ou sur des erreurs de
-/// saisie présentes dans le référentiel distant lui-même. Un cas
-/// récurrent est traité directement dans [_slugify] : deux mots
-/// concaténés sans espace (ex: "Teal MaskOgerpon", "GalarianObstagoon"
-/// — préfixe de forme régionale collé au nom du Pokémon). Pour tout
-/// autre cas non couvert, voir [_cardSlugOverrides] ci-dessous et
-/// [AppLogger][../utils/app_logger.dart] côté widgets, qui signale
-/// chaque échec de chargement pour les repérer au fil de l'utilisation
-/// plutôt que de les découvrir en silence.
+/// saisie présentes dans le référentiel distant lui-même. Deux cas
+/// récurrents sont traités directement dans [_slugify] :
+/// - deux mots concaténés sans espace mais séparés par une majuscule
+///   (ex: "Teal MaskOgerpon") ;
+/// - un préfixe de forme régionale collé au nom du Pokémon, sans
+///   même de majuscule pour le signaler (ex: "Galarianzigzagoon",
+///   tout en minuscules) — voir [_regionalFormPrefixes].
+///
+/// Pour tout autre cas non couvert, voir [_cardSlugOverrides]
+/// ci-dessous et [AppLogger][../utils/app_logger.dart] côté widgets,
+/// qui signale chaque échec de chargement pour les repérer au fil de
+/// l'utilisation plutôt que de les découvrir en silence.
 abstract class PocketCardsImageSlug {
+  /// Préfixes de forme régionale connus, parfois collés directement
+  /// au nom du Pokémon dans le référentiel distant sans espace ni
+  /// majuscule pour marquer la coupure (ex: "Galarianzigzagoon" au
+  /// lieu de "Galarian Zigzagoon") — la casse ne permettant pas de
+  /// détecter ces cas comme le fait le découpage camelCase plus bas,
+  /// ils sont listés explicitement. Comparaison insensible à la
+  /// casse dans [_insertMissingRegionalFormSpace].
+  static const List<String> _regionalFormPrefixes = [
+    'Galarian',
+    'Alolan',
+    'Hisuian',
+    'Paldean',
+  ];
+
   /// Corrections manuelles pour les cartes dont le nom brut du
   /// référentiel distant ne donne toujours pas le bon slug une fois
-  /// passé par [_slugify] (y compris son découpage camelCase) —
+  /// passé par [_slugify] (y compris ses règles de découpage) —
   /// réservé aux erreurs de saisie qu'aucune règle générique ne
   /// couvre. Clé : id de la carte tel que construit par
   /// `CardModel.fromJson` (`<setId>-<numéro>`, ex: "B4-19").
@@ -53,12 +71,13 @@ abstract class PocketCardsImageSlug {
   static String fromPackName(String name) => _slugify(name);
 
   static String _slugify(String raw) {
-    // Le référentiel distant concatène parfois deux mots sans espace
-    // (ex: "Teal MaskOgerpon", "GalarianObstagoon" pour les formes
-    // régionales) : on réinsère un espace avant toute majuscule
+    final withRegionalFormSpace = _insertMissingRegionalFormSpace(raw);
+    // Le référentiel distant concatène aussi parfois deux mots sans
+    // espace tout en gardant une majuscule pour marquer la coupure
+    // (ex: "Teal MaskOgerpon") : on la réinsère avant toute majuscule
     // précédée d'une minuscule ou d'un chiffre, avant la mise en
     // minuscule qui la rendrait indétectable.
-    final spaced = raw.replaceAllMapped(
+    final spaced = withRegionalFormSpace.replaceAllMapped(
       RegExp(r'([a-z0-9])([A-Z])'),
       (match) => '${match[1]} ${match[2]}',
     );
@@ -74,5 +93,26 @@ abstract class PocketCardsImageSlug {
       ' ',
     );
     return normalized.trim().replaceAll(RegExp(r'[\s-]+'), '-');
+  }
+
+  /// Si [raw] commence par l'un de [_regionalFormPrefixes] (insensible
+  /// à la casse) immédiatement suivi d'une lettre — donc sans espace
+  /// ni tiret entre le préfixe et le nom du Pokémon — insère un
+  /// espace à cet endroit. Sans effet si le préfixe est déjà séparé
+  /// (espace, tiret) ou absent.
+  static String _insertMissingRegionalFormSpace(String raw) {
+    for (final prefix in _regionalFormPrefixes) {
+      if (raw.length <= prefix.length) continue;
+      final startsWithPrefix =
+          raw.substring(0, prefix.length).toLowerCase() ==
+              prefix.toLowerCase();
+      if (!startsWithPrefix) continue;
+      final nextChar = raw[prefix.length];
+      if (RegExp(r'[A-Za-z]').hasMatch(nextChar)) {
+        return '${raw.substring(0, prefix.length)} ${raw.substring(prefix.length)}';
+      }
+      return raw;
+    }
+    return raw;
   }
 }
