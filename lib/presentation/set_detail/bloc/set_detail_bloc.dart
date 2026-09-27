@@ -15,7 +15,9 @@ import 'set_detail_state.dart';
 /// dans ce set. Le tap simple bascule toujours la possession pour
 /// le compte principal ; le double-tap ouvre un popup pour choisir
 /// un compte secondaire précis (voir
-/// [SecondaryAccountPickerDialog][../widgets/secondary_account_picker_dialog.dart]).
+/// [SecondaryAccountPickerDialog][../widgets/secondary_account_picker_dialog.dart]) ;
+/// le bouton "+" (après confirmation) en bascule plusieurs à la fois
+/// pour le compte principal (voir [BulkCardsMarkedOwned]).
 ///
 /// La possession se met à jour de façon optimiste, quel que soit
 /// le compte visé : l'UI change immédiatement, avant même la
@@ -37,6 +39,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<SetDetailStarted>(_onStarted);
     on<CardOwnershipToggled>(_onCardOwnershipToggled);
     on<SecondaryOwnershipToggled>(_onSecondaryOwnershipToggled);
+    on<BulkCardsMarkedOwned>(_onBulkCardsMarkedOwned);
     on<PackFilterChanged>(_onPackFilterChanged);
     on<RarityFilterChanged>(_onRarityFilterChanged);
   }
@@ -162,6 +165,54 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
       ),
       (_) {},
     );
+  }
+
+  /// Marque [event.cardIds] comme possédées par le compte principal,
+  /// en une fois. Tout ou rien : au premier échec, l'état entier
+  /// revient à ce qu'il était avant l'appui sur "+" — plus simple à
+  /// comprendre pour l'utilisateur qu'un ajout partiel silencieux.
+  /// Ne touche pas aux identifiants déjà possédés (pas d'écriture
+  /// inutile en base).
+  Future<void> _onBulkCardsMarkedOwned(
+    BulkCardsMarkedOwned event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    final accountId = state.primaryAccountId;
+    if (accountId == null) {
+      emit(
+        state.copyWith(
+          errorMessage:
+              'Crée un compte avant de marquer des cartes comme possédées.',
+        ),
+      );
+      return;
+    }
+
+    final previousMap = state.ownershipByAccountId;
+    final currentIds = previousMap[accountId] ?? const <String>{};
+    final idsToAdd =
+        event.cardIds.where((id) => !currentIds.contains(id)).toList();
+    if (idsToAdd.isEmpty) return;
+
+    final optimisticMap = Map<String, Set<String>>.from(previousMap)
+      ..[accountId] = {...currentIds, ...idsToAdd};
+    emit(state.copyWith(ownershipByAccountId: optimisticMap));
+
+    for (final cardId in idsToAdd) {
+      final result = await _setCardOwned(
+        SetCardOwnedParams(cardId: cardId, accountId: accountId, owned: true),
+      );
+      final failure = result.fold((f) => f, (_) => null);
+      if (failure != null) {
+        emit(
+          state.copyWith(
+            ownershipByAccountId: previousMap,
+            errorMessage: failure.message,
+          ),
+        );
+        return;
+      }
+    }
   }
 
   Future<void> _onPackFilterChanged(

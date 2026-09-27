@@ -48,6 +48,20 @@ class SecondaryOwnershipToggled extends SetDetailEvent {
   List<Object?> get props => [cardId, accountId];
 }
 
+/// Déclenché par le bouton "+" de l'écran (après confirmation) :
+/// marque toutes les cartes de [cardIds] comme possédées par le
+/// compte principal, en une seule fois. [cardIds] dépend du volet
+/// actif de [CardGridPager][../widgets/card_grid_pager.dart] au
+/// moment de l'appui — voir `SetDetailState.visibleCardsForGroup`.
+class BulkCardsMarkedOwned extends SetDetailEvent {
+  const BulkCardsMarkedOwned(this.cardIds);
+
+  final List<String> cardIds;
+
+  @override
+  List<Object?> get props => [cardIds];
+}
+
 /// Déclenché par la sélection d'un booster dans le filtre.
 /// `null` signifie "tous les boosters".
 class PackFilterChanged extends SetDetailEvent {

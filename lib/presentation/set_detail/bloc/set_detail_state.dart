@@ -134,6 +134,23 @@ class SetDetailState extends Equatable {
     return result;
   }
 
+  /// [visibleCards] restreintes au volet [group] de
+  /// [CardGridPager][../widgets/card_grid_pager.dart] — le même
+  /// partage losange / non-losange que [CardGridPager] applique en
+  /// interne pour ses volets ([CardRarity.isBase]), mais exposé ici
+  /// pour que le bouton "+" de [SetDetailPage][../view/set_detail_page.dart]
+  /// sache exactement quelles cartes sont affichées à l'écran au
+  /// moment de l'appui, volet par volet.
+  List<PokemonCard> visibleCardsForGroup(CardGroupFilter group) {
+    if (group == CardGroupFilter.diamond) {
+      return visibleCards.where(_isBase).toList();
+    }
+    if (group == CardGroupFilter.nonDiamond) {
+      return visibleCards.where(_isAlternative).toList();
+    }
+    return visibleCards;
+  }
+
   /// Nombre de cartes de la "collection de base" (rareté losange)
   /// dans ce set, et combien le compte principal en possède — pour
   /// `SetProgressSummary`. Ignore les filtres de booster/rareté :

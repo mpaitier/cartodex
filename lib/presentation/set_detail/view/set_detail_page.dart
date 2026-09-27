@@ -10,6 +10,7 @@ import '../../../domain/entities/card_set.dart';
 import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
+import '../widgets/bulk_add_confirmation_dialog.dart';
 import '../widgets/card_grid_pager.dart';
 import '../widgets/pack_filter_bar.dart';
 import '../widgets/rarity_filter_bar.dart';
@@ -21,7 +22,9 @@ import '../widgets/set_progress_summary.dart';
 /// isoler les cartes losange ou non-losange (voir
 /// [CardGridPager][../widgets/card_grid_pager.dart]). Le tap simple
 /// bascule la possession pour le compte principal ; le double-tap
-/// ouvre un popup pour choisir un compte secondaire.
+/// ouvre un popup pour choisir un compte secondaire ; le bouton "+"
+/// ajoute d'un coup toutes les cartes actuellement affichées au
+/// compte principal.
 class SetDetailPage extends StatelessWidget {
   const SetDetailPage({required this.set, super.key});
 
@@ -52,11 +55,15 @@ class _SetDetailView extends StatefulWidget {
 class _SetDetailViewState extends State<_SetDetailView> {
   /// Volet actif de [CardGridPager], pour restreindre les puces de
   /// `RarityFilterBar` au groupe de rareté pertinent (voir
-  /// `SetDetailState.availableRaritiesForGroup`). État purement
-  /// local à l'affichage, sur le même principe que
-  /// `SetProgressSummary._includeSecondary` : ne vaut pas la peine de
-  /// vivre dans le Bloc. Volet du milieu par défaut, comme
-  /// `CardGridPager` (`PageController(initialPage: 1)`).
+  /// `SetDetailState.availableRaritiesForGroup`) et pour savoir
+  /// quelles cartes le bouton "+" doit ajouter (voir
+  /// `SetDetailState.visibleCardsForGroup`) — sur ce volet losange,
+  /// seules les cartes losange affichées sont concernées ; sur le
+  /// volet étoile, seules les alternatives ; sur le volet du milieu,
+  /// toutes les cartes affichées. État purement local à l'affichage,
+  /// sur le même principe que `SetProgressSummary._includeSecondary` :
+  /// ne vaut pas la peine de vivre dans le Bloc. Volet du milieu par
+  /// défaut, comme `CardGridPager` (`PageController(initialPage: 1)`).
   CardGroupFilter _activeGroup = CardGroupFilter.all;
 
   @override
@@ -77,6 +84,13 @@ class _SetDetailViewState extends State<_SetDetailView> {
         return AppScaffold(
           title: widget.set.name,
           titleWidget: _titleWidget(state),
+          floatingActionButton: state.status == SetDetailStatus.loaded
+              ? FloatingActionButton(
+                  onPressed: () => _onAddAllVisiblePressed(context, state),
+                  tooltip: 'Ajouter les cartes affichées au compte principal',
+                  child: const Icon(Icons.add),
+                )
+              : null,
           body: Column(
             children: [
               PackFilterBar(
@@ -161,6 +175,28 @@ class _SetDetailViewState extends State<_SetDetailView> {
     if (filteredSelection.length != state.selectedRarities.length) {
       context.read<SetDetailBloc>().add(RarityFilterChanged(filteredSelection));
     }
+  }
+
+  /// Bouton "+" : demande confirmation, puis ajoute au compte
+  /// principal toutes les cartes actuellement affichées dans le
+  /// volet actif — pas tout le set, juste ce que l'écran montre en
+  /// ce moment (filtres de booster/rareté inclus).
+  Future<void> _onAddAllVisiblePressed(
+    BuildContext context,
+    SetDetailState state,
+  ) async {
+    final bloc = context.read<SetDetailBloc>();
+    final visibleCards = state.visibleCardsForGroup(_activeGroup);
+    if (visibleCards.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) =>
+          BulkAddConfirmationDialog(cardCount: visibleCards.length),
+    );
+    if (confirmed != true) return;
+
+    bloc.add(BulkCardsMarkedOwned(visibleCards.map((c) => c.id).toList()));
   }
 
   void _onCardDoubleTap(
