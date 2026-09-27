@@ -86,7 +86,7 @@ class _StatsView extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
-        PriorityBoostersList(boosterStats: stats.priorityBoosters),
+        PriorityBoostersList(setProgress: stats.priorityBoosterProgress),
       ],
     );
   }

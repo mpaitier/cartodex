@@ -16,7 +16,8 @@ import '../usecase.dart';
 const _promoSeriesKey = 'PROMO';
 
 /// Calcule les statistiques de complétion d'un compte : taux global,
-/// par série, et par booster (voir [CollectionStats]).
+/// par série, et progression des boosters par set (voir
+/// [CollectionStats]).
 ///
 /// Combine trois appels déjà exposés par [CardRepository]
 /// (`getCardSets`, `getCardsBySet` pour chaque set, `getOwnedCardIds`)
@@ -64,7 +65,7 @@ class GetCollectionStats
     var totalOwned = 0;
     var totalCards = 0;
     final seriesAccumulators = <String, _SeriesAccumulator>{};
-    final boosterStats = <BoosterStats>[];
+    final setBoosterProgress = <SetBoosterProgress>[];
 
     for (final set in sets) {
       final cards = cardsBySetId[set.id] ?? const [];
@@ -80,21 +81,48 @@ class GetCollectionStats
       accumulator.owned += ownedInSet;
       accumulator.total += cards.length;
 
+      // Progression par booster : on ignore les sets promotionnels
+      // (jamais recommandé d'ouvrir un booster promo) et les sets
+      // sans booster connu — rien à recommander dans ce cas.
+      if (set.isPromo || set.packs.isEmpty) continue;
+
+      final cardIdsByPack = <String, Set<String>>{};
       for (final pack in set.packs) {
-        final packCards = cards.where((c) => c.packs.contains(pack)).toList();
-        if (packCards.isEmpty) continue;
-        final packOwned =
-            packCards.where((c) => ownedIds.contains(c.id)).length;
-        boosterStats.add(
-          BoosterStats(
-            setId: set.id,
-            setName: set.name,
-            packName: pack,
-            owned: packOwned,
-            total: packCards.length,
-          ),
-        );
+        final ids =
+            cards.where((c) => c.packs.contains(pack)).map((c) => c.id).toSet();
+        if (ids.isNotEmpty) cardIdsByPack[pack] = ids;
       }
+      if (cardIdsByPack.isEmpty) continue;
+
+      // Union des boosters, pas somme : une carte commune à
+      // plusieurs boosters du même set ne doit compter qu'une fois
+      // dans la progression globale du set.
+      final unionIds = <String>{};
+      for (final ids in cardIdsByPack.values) {
+        unionIds.addAll(ids);
+      }
+
+      final boosters = cardIdsByPack.entries
+          .map(
+            (entry) => BoosterStats(
+              setId: set.id,
+              setName: set.name,
+              packName: entry.key,
+              owned: entry.value.where(ownedIds.contains).length,
+              total: entry.value.length,
+            ),
+          )
+          .toList();
+
+      setBoosterProgress.add(
+        SetBoosterProgress(
+          setId: set.id,
+          setName: set.name,
+          owned: unionIds.where(ownedIds.contains).length,
+          total: unionIds.length,
+          boosters: boosters,
+        ),
+      );
     }
 
     // Séries lettrées dans leur ordre de rencontre (déjà du plus
@@ -120,7 +148,7 @@ class GetCollectionStats
       totalOwned: totalOwned,
       totalCards: totalCards,
       seriesStats: seriesStats,
-      boosterStats: boosterStats,
+      setBoosterProgress: setBoosterProgress,
     );
   }
 }
