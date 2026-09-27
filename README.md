@@ -25,9 +25,9 @@ lib/
 │   ├── theme/
 │   └── widgets/          # Composants UI génériques réutilisables
 ├── domain/                # Règles métier pures, aucune dépendance Flutter
-│   ├── entities/           # CardCategory, CardSet, PokemonCard, Account
+│   ├── entities/           # CardCategory, CardSet, PokemonCard, Account, CollectionStats
 │   ├── repositories/       # Interfaces abstraites (CardRepository, AccountRepository)
-│   └── usecases/           # Un fichier par action (SyncCardCatalog, GetCardSets, GetAccounts...)
+│   └── usecases/           # Un fichier par action (SyncCardCatalog, GetCardSets, GetAccounts, GetCollectionStats...)
 ├── data/                   # Implémentation technique du domaine
 │   ├── datasources/
 │   │   ├── local/          # Base Drift (tables, DAO) : catalogue, possession, comptes
@@ -42,11 +42,15 @@ lib/
     ├── set_detail/             # Feature : détail d'un set (cartes + possession)
     │   ├── bloc/                # SetDetailBloc, événements, état
     │   ├── view/                 # SetDetailPage
-    │   └── widgets/               # CardGrid, CardGridItem, PackFilterBar, PackAvatar
-    └── accounts/               # Feature : gestion des comptes suivis
-        ├── bloc/                 # AccountsBloc, événements, état
-        ├── view/                  # AccountsPage
-        └── widgets/                # AccountListItem, AddAccountDialog
+    │   └── widgets/               # CardGrid, CardGridItem, PackFilterBar, PackAvatar, BulkAddConfirmationDialog
+    ├── accounts/               # Feature : gestion des comptes suivis
+    │   ├── bloc/                 # AccountsBloc, événements, état
+    │   ├── view/                  # AccountsPage
+    │   └── widgets/                # AccountListItem, AddAccountDialog
+    └── stats/                  # Feature : statistiques de complétion
+        ├── bloc/                 # StatsBloc, événements, état
+        ├── view/                  # StatsPage
+        └── widgets/                # OverallProgressCard, SeriesProgressList, PriorityBoostersList
 ```
 
 Règle de dépendance : `presentation` → `domain` ← `data`. Le domaine ne connaît jamais Flutter, Drift ou l'API ; il ne dépend que de ses propres interfaces.
@@ -91,6 +95,14 @@ Les cinq étapes de la feuille de route initiale sont posées, ainsi que le titr
 Passe de finition sur `set_detail` : titre et compteurs de `SetProgressSummary` centrés ; `PageDotsIndicator` déplacé en overlay bas (plutôt qu'au-dessus du filtre de rareté), et simplifié en 3 losanges plutôt que losange/rond/étoile ; puces de `RarityFilterBar` sans coche de sélection ni padding excessif ; `CardGridItem` affiche le numéro de la carte en grand à la place de l'image (sans `#`), l'icône générique n'apportait rien de plus qu'un numéro lisible ; les sets se lisent désormais du plus récent au plus ancien.
 
 **Images (pocketcards.net)** : `pokemon-tcg-pocket-database` ne fournissant aucune URL exploitable (ni logo de set, ni illustration de carte, ni icône de booster), les trois sont désormais reconstruites à partir des noms du référentiel via `PocketCardsImageSlug`, sur le modèle non-officiel de [pocketcards.net](https://pocketcards.net). `CardGridItem` affiche de nouveau l'illustration de la carte (centrée, `BoxFit.contain`, sans recadrage) en plus du numéro en texte (`#XXX`, à côté de la rareté) ; `CardSetGridItem` affiche le logo du set ; `PackFilterBar` affiche l'icône de chaque booster via le nouveau composant `PackAvatar`. La conversion nom → slug reste déduite d'exemples observés, pas d'une spécification garantie : le référentiel distant concatène parfois deux mots sans espace, avec (ex: "Teal MaskOgerpon") ou sans (ex: "Galarianzigzagoon", tout en minuscules) majuscule pour marquer la coupure. `PocketCardsImageSlug._slugify` corrige les deux cas — respectivement par découpage camelCase et par une liste explicite de préfixes de forme régionale (Galarian, Alolan, Hisuian, Paldean) — et une table de correctifs manuels (`_cardSlugOverrides`) reste disponible pour les cas qu'aucune règle générique ne couvrirait, repérés au fil des échecs de chargement loggés par `AppLogger`.
+
+Un bouton "+" a été ajouté à `SetDetailPage` : il marque en une fois, pour le compte principal, toutes les cartes actuellement affichées à l'écran (`SetDetailState.visibleCardsForGroup`), avec confirmation préalable (`BulkAddConfirmationDialog`, qui annonce le nombre de cartes concerné). Le volet actif de `CardGridPager` compte : sur le volet losange, seules les cartes losange affichées sont ajoutées ; sur le volet étoile, seules les alternatives ; sur le volet du milieu, toutes les cartes affichées (filtres de booster/rareté compris). Le Bloc (`BulkCardsMarkedOwned`) applique l'ajout de façon tout-ou-rien : au premier échec de persistance, l'état entier revient à ce qu'il était avant l'appui.
+
+La couche statistiques est posée, sous forme d'une nouvelle feature `stats` (accessible depuis l'AppBar de `CardSetsPage`) :
+- Entité domaine `CollectionStats` (taux global, détail par série `SeriesStats`, détail par booster `BoosterStats`) ; use case `GetCollectionStats`, qui combine `getCardSets`, `getCardsBySet` (par set) et `getOwnedCardIds` déjà exposés par `CardRepository` plutôt que d'ajouter une méthode dédiée au repository — le calcul de complétion est une règle métier, pas un accès aux données.
+- `StatsBloc` cherche d'abord le compte principal (comme `SetDetailBloc`) avant de calculer ses statistiques ; sans compte créé, l'écran invite à en créer un.
+- `StatsPage` affiche la complétion globale (`OverallProgressCard`), le détail par série (`SeriesProgressList`, même regroupement et même ordre que `SeriesFilterBar`), et les boosters à ouvrir en priorité (`PriorityBoostersList`, triés par taux de complétion croissant — `CollectionStats.priorityBoosters` ignore les boosters déjà complets).
+- Calculé pour le compte principal uniquement, pas de bascule "tous comptes" comme sur `SetProgressSummary` pour l'instant.
 
 ## Mise en route
 

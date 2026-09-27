@@ -8,6 +8,7 @@ import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
 import '../../accounts/view/accounts_page.dart';
 import '../../set_detail/view/set_detail_page.dart';
+import '../../stats/view/stats_page.dart';
 import '../bloc/card_sets_bloc.dart';
 import '../bloc/card_sets_event.dart';
 import '../bloc/card_sets_state.dart';
@@ -18,11 +19,11 @@ import '../widgets/sync_catalog_action.dart';
 
 /// Écran d'accueil : liste des sets du référentiel TCG Pocket.
 ///
-/// Point d'entrée de la feature catalogue et de la gestion de
-/// comptes. Un appui sur une tuile ouvre [SetDetailPage] pour ce
-/// set ; l'action dédiée de l'AppBar ouvre [AccountsPage] ; le
-/// menu flottant du bas ([SeriesFilterBar]) filtre la grille par
-/// série.
+/// Point d'entrée de la feature catalogue, de la gestion de comptes
+/// et des statistiques. Un appui sur une tuile ouvre [SetDetailPage]
+/// pour ce set ; l'action dédiée de l'AppBar ouvre [AccountsPage] ou
+/// [StatsPage] ; le menu flottant du bas ([SeriesFilterBar]) filtre
+/// la grille par série.
 class CardSetsPage extends StatelessWidget {
   const CardSetsPage({super.key});
 
@@ -45,6 +46,13 @@ class _CardSetsView extends StatelessWidget {
         return AppScaffold(
           title: 'Cartodex',
           actions: [
+            IconButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const StatsPage()),
+              ),
+              icon: const Icon(Icons.bar_chart),
+              tooltip: 'Statistiques',
+            ),
             IconButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const AccountsPage()),

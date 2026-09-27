@@ -14,6 +14,7 @@ import '../../domain/usecases/add_account.dart';
 import '../../domain/usecases/get_accounts.dart';
 import '../../domain/usecases/get_cards.dart';
 import '../../domain/usecases/get_cards_by_set.dart';
+import '../../domain/usecases/get_collection_stats.dart';
 import '../../domain/usecases/get_owned_cards_id.dart';
 import '../../domain/usecases/set_card_owned.dart';
 import '../../domain/usecases/set_primary_account.dart';
@@ -21,6 +22,7 @@ import '../../domain/usecases/sync_card_catalog.dart';
 import '../../presentation/accounts/bloc/accounts_bloc.dart';
 import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
 import '../../presentation/set_detail/bloc/set_detail_bloc.dart';
+import '../../presentation/stats/bloc/stats_bloc.dart';
 import '../network/network_info.dart';
 
 /// Instance unique du service locator, utilisée dans toute
@@ -74,6 +76,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetAccounts(sl()));
   sl.registerLazySingleton(() => AddAccount(sl()));
   sl.registerLazySingleton(() => SetPrimaryAccount(sl()));
+  sl.registerLazySingleton(() => GetCollectionStats(sl()));
 
   // Blocs / Cubits
   sl.registerFactory(
@@ -95,6 +98,12 @@ Future<void> init() async {
       getAccounts: sl(),
       addAccount: sl(),
       setPrimaryAccount: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => StatsBloc(
+      getAccounts: sl(),
+      getCollectionStats: sl(),
     ),
   );
 }
