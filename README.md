@@ -25,7 +25,7 @@ lib/
 │   ├── theme/
 │   └── widgets/          # Composants UI génériques réutilisables
 ├── domain/                # Règles métier pures, aucune dépendance Flutter
-│   ├── entities/           # CardCategory, CardSet, PokemonCard, Account, CollectionStats
+│   ├── entities/           # CardCategory, CardSet, PokemonCard, Account, CollectionStats, AppUser
 │   ├── repositories/       # Interfaces abstraites (CardRepository, AccountRepository)
 │   └── usecases/           # Un fichier par action (SyncCardCatalog, GetCardSets, GetAccounts, GetCollectionStats...)
 ├── data/                   # Implémentation technique du domaine
@@ -47,10 +47,14 @@ lib/
     │   ├── bloc/                 # AccountsBloc, événements, état
     │   ├── view/                  # AccountsPage
     │   └── widgets/                # AccountListItem, AddAccountDialog
-    └── stats/                  # Feature : statistiques de complétion
-        ├── bloc/                 # StatsBloc, événements, état
-        ├── view/                  # StatsPage
-        └── widgets/                # OverallProgressCard, SeriesProgressList, PriorityBoostersList
+    ├── stats/                  # Feature : statistiques de complétion
+    │   ├── bloc/                 # StatsBloc, événements, état
+    │   ├── view/                  # StatsPage
+    │   └── widgets/                # OverallProgressCard, SeriesProgressList, PriorityBoostersList
+    └── auth/                   # Feature : compte applicatif (Firebase)
+        ├── bloc/                 # AuthBloc (singleton), événements, état
+        ├── view/                  # LoginPage
+        └── widgets/                # GoogleSignInButton
 ```
 
 Règle de dépendance : `presentation` → `domain` ← `data`. Le domaine ne connaît jamais Flutter, Drift ou l'API ; il ne dépend que de ses propres interfaces.
@@ -104,6 +108,25 @@ La couche statistiques est posée, sous forme d'une nouvelle feature `stats` (ac
 - `StatsBloc` cherche d'abord le compte principal (comme `SetDetailBloc`) avant de calculer ses statistiques ; sans compte créé, l'écran invite à en créer un.
 - `StatsPage` affiche la complétion globale (`OverallProgressCard`), le détail par série (`SeriesProgressList`, même regroupement et même ordre que `SeriesFilterBar`), et les boosters à ouvrir en priorité (`PriorityBoostersList`, triés par taux de complétion croissant — `CollectionStats.priorityBoosterProgress` ignore les sets déjà complets côté boosters). Un set à un seul booster s'affiche en une ligne ; un set à plusieurs boosters affiche sa progression globale puis le détail de chaque booster en dessous (triés eux aussi du moins avancé au plus avancé), relié par un trait vertical.
 - Calculé pour le compte principal uniquement, pas de bascule "tous comptes" comme sur `SetProgressSummary` pour l'instant.
+
+**Fondations du compte applicatif (Firebase Auth)** — première étape vers une progression synchronisée entre appareils, avant le moteur de synchronisation lui-même (à venir) :
+- **Migration Drift** : `Accounts.id` et `OwnedCards.accountId` passent d'un entier auto-incrémenté local à un UUID v4 (généré par `AccountLocalDataSourceImpl.addAccount`, package `uuid`) — un entier local collisionnerait entre deux comptes créés hors-ligne sur deux appareils différents avant leur synchronisation. Comme pour les précédents changements de schéma, aucune vraie migration Drift n'est en place : désinstaller l'app (ou vider ses données) avant de relancer après ce changement.
+- **Domaine** : entité `AppUser` (à ne pas confondre avec `Account`, les comptes Pokémon suivis localement) ; interface `AuthRepository` (`authStateChanges`, `signInWithEmail`, `signUpWithEmail`, `signInWithGoogle`, `signOut`) ; use cases `WatchAuthState` (flux, ne suit pas le contrat `UseCase` classique basé sur `Future`), `SignInWithEmail`, `SignUpWithEmail`, `SignInWithGoogle`, `SignOut`.
+- **Data** : `AuthRepositoryImpl`, au-dessus de `firebase_auth` (email/mot de passe) et `google_sign_in` (API v7, Credential Manager côté Android — susceptible d'évoluer, voir la note dans le fichier).
+- **Présentation** : `AuthBloc`, à durée de vie globale (singleton dans le conteneur d'injection, fourni une fois à la racine par `CartodexApp`, contrairement aux autres Blocs recréés par écran) — écoute en continu `authStateChanges` plutôt que de dupliquer la logique connecté/déconnecté dans ses handlers. `LoginPage` (email/mot de passe avec bascule connexion/création, plus `GoogleSignInButton`).
+- **AppBar** de `CardSetsPage` réorganisée : `AppScaffold` gagne un paramètre `leadingActions` (icônes à gauche du titre, à la place du bouton retour automatique — pertinent seulement sur un écran racine sans navigation arrière). À gauche : statistiques, comptes Pokémon. À droite : synchronisation du référentiel de cartes (`SyncCatalogAction`, existant), synchronisation Firebase (`SyncFirebaseAction`, nouveau) — ouvre `LoginPage` tant que déconnecté, propose "Synchroniser maintenant" / "Se déconnecter" une fois connecté.
+- **Connexion optionnelle** : l'app reste pleinement utilisable sans compte applicatif ; se connecter ne sert qu'à activer la synchronisation (étape suivante).
+- **Pas encore fait** : le moteur de synchronisation bidirectionnelle lui-même (comptes Pokémon + possession, règle retenue : "possédée" l'emporte toujours sur "non possédée", jamais de perte de progression). `cloud_firestore` est déjà ajouté aux dépendances en prévision.
+
+### Mise en route — Firebase
+
+En plus des étapes habituelles ci-dessous, avant de lancer l'app :
+
+1. Créer un projet sur [console.firebase.google.com](https://console.firebase.google.com).
+2. Dans *Authentication → Sign-in method*, activer les providers **Email/Password** et **Google**.
+3. Ajouter une app Android au projet Firebase, avec le package `com.example.cartodex`.
+4. Fournir l'empreinte SHA-1 du certificat de debug (nécessaire à Google Sign-In) : `cd android && ./gradlew signingReport`, copier la valeur `SHA1` du variant `debug`, et l'ajouter dans les paramètres de l'app Android sur la console Firebase.
+5. Télécharger le fichier `google-services.json` généré, et le placer dans `android/app/` (à côté de `build.gradle.kts`).
 
 ## Mise en route
 

@@ -97,9 +97,8 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
   @override
   Future<Set<String>> getOwnedCardIds(String accountId) async {
     try {
-      final id = int.parse(accountId);
       final rows = await (_database.select(_database.ownedCards)
-            ..where((t) => t.accountId.equals(id)))
+            ..where((t) => t.accountId.equals(accountId)))
           .get();
       return rows.map((row) => row.cardId).toSet();
     } on Exception catch (e) {
@@ -114,15 +113,15 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
     required bool owned,
   }) async {
     try {
-      final id = int.parse(accountId);
       if (owned) {
         await _database.into(_database.ownedCards).insertOnConflictUpdate(
-              OwnedCardsCompanion.insert(cardId: cardId, accountId: id),
+              OwnedCardsCompanion.insert(cardId: cardId, accountId: accountId),
             );
       } else {
         await (_database.delete(_database.ownedCards)
               ..where(
-                (t) => t.cardId.equals(cardId) & t.accountId.equals(id),
+                (t) =>
+                    t.cardId.equals(cardId) & t.accountId.equals(accountId),
               ))
             .go();
       }

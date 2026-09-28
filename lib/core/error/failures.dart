@@ -30,3 +30,10 @@ class CacheFailure extends Failure {
 class NetworkFailure extends Failure {
   const NetworkFailure(super.message);
 }
+
+/// Échec provenant de l'authentification du compte applicatif
+/// (Firebase Auth, Google Sign-In) : identifiants invalides, email
+/// déjà utilisé, connexion Google annulée, etc.
+class AuthFailure extends Failure {
+  const AuthFailure([super.message = 'Erreur de connexion.']);
+}

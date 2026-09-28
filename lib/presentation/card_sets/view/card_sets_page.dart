@@ -16,14 +16,16 @@ import '../widgets/card_set_grid.dart';
 import '../widgets/card_sets_empty_view.dart';
 import '../widgets/series_filter_bar.dart';
 import '../widgets/sync_catalog_action.dart';
+import '../widgets/sync_firebase_action.dart';
 
 /// Écran d'accueil : liste des sets du référentiel TCG Pocket.
 ///
 /// Point d'entrée de la feature catalogue, de la gestion de comptes
-/// et des statistiques. Un appui sur une tuile ouvre [SetDetailPage]
-/// pour ce set ; l'action dédiée de l'AppBar ouvre [AccountsPage] ou
-/// [StatsPage] ; le menu flottant du bas ([SeriesFilterBar]) filtre
-/// la grille par série.
+/// et des statistiques. AppBar : à gauche, statistiques et comptes
+/// Pokémon ; à droite, synchronisation du référentiel de cartes et
+/// synchronisation avec le compte applicatif (Firebase). Un appui
+/// sur une tuile ouvre [SetDetailPage] pour ce set ; le menu
+/// flottant du bas ([SeriesFilterBar]) filtre la grille par série.
 class CardSetsPage extends StatelessWidget {
   const CardSetsPage({super.key});
 
@@ -45,7 +47,7 @@ class _CardSetsView extends StatelessWidget {
       builder: (context, state) {
         return AppScaffold(
           title: 'Cartodex',
-          actions: [
+          leadingActions: [
             IconButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const StatsPage()),
@@ -60,12 +62,15 @@ class _CardSetsView extends StatelessWidget {
               icon: const Icon(Icons.people_alt_outlined),
               tooltip: 'Comptes',
             ),
+          ],
+          actions: [
             SyncCatalogAction(
               isSyncing: state.status == CardSetsStatus.syncing,
               onPressed: () => context
                   .read<CardSetsBloc>()
                   .add(const CardSetsSyncRequested()),
             ),
+            const SyncFirebaseAction(),
           ],
           body: Stack(
             children: [

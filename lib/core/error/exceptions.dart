@@ -14,3 +14,13 @@ class CacheException implements Exception {
 
   final String message;
 }
+
+/// Exception levée par la couche data lorsqu'une opération
+/// d'authentification (Firebase Auth, Google Sign-In) échoue, pour
+/// un motif propre à l'authentification plutôt qu'au réseau ou au
+/// cache (ex: jeton d'identité manquant après une connexion Google).
+class AuthException implements Exception {
+  const AuthException([this.message = 'Erreur de connexion.']);
+
+  final String message;
+}

@@ -8,6 +8,7 @@ class AppScaffold extends StatelessWidget {
     required this.title,
     required this.body,
     this.titleWidget,
+    this.leadingActions,
     this.actions,
     this.floatingActionButton,
     super.key,
@@ -26,6 +27,13 @@ class AppScaffold extends StatelessWidget {
   /// `SetProgressSummary`).
   final Widget? titleWidget;
 
+  /// Icônes affichées à gauche du titre, à la place du bouton retour
+  /// automatique de `AppBar`. `null` (par défaut) laisse `AppBar`
+  /// gérer son `leading` normalement (bouton retour sur un écran
+  /// empilé par `Navigator`) : à ne fournir que sur un écran racine,
+  /// sans navigation possible en arrière, comme `CardSetsPage`.
+  final List<Widget>? leadingActions;
+
   final List<Widget>? actions;
   final Widget? floatingActionButton;
 
@@ -34,6 +42,11 @@ class AppScaffold extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: titleWidget ?? Text(title),
+        leading: leadingActions == null
+            ? null
+            : Row(mainAxisSize: MainAxisSize.min, children: leadingActions!),
+        leadingWidth:
+            leadingActions == null ? null : 48.0 * leadingActions!.length,
         actions: actions,
       ),
       body: SafeArea(child: body),

@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/error/exceptions.dart';
 import '../../models/account_model.dart';
@@ -50,8 +51,12 @@ class AccountLocalDataSourceImpl implements AccountLocalDataSource {
             ..limit(1))
           .get()
           .then((rows) => rows.isNotEmpty);
+      // Identifiant unique globalement, pas seulement local — voir
+      // la documentation de Accounts.id (tables/accounts_table.dart).
+      final id = const Uuid().v4();
       await _database.into(_database.accounts).insert(
             AccountsCompanion.insert(
+              id: id,
               name: name,
               gameAccountId: gameAccountId,
               isPrimary: Value(!hasAccounts),
@@ -65,7 +70,6 @@ class AccountLocalDataSourceImpl implements AccountLocalDataSource {
   @override
   Future<void> setPrimaryAccount(String accountId) async {
     try {
-      final id = int.parse(accountId);
       // Il n'y a jamais deux comptes principaux à la fois : on
       // retire d'abord le statut à tous, puis on l'accorde au
       // compte choisi, dans une même transaction.
@@ -74,7 +78,7 @@ class AccountLocalDataSourceImpl implements AccountLocalDataSource {
             .update(_database.accounts)
             .write(const AccountsCompanion(isPrimary: Value(false)));
         await (_database.update(_database.accounts)
-              ..where((t) => t.id.equals(id)))
+              ..where((t) => t.id.equals(accountId)))
             .write(const AccountsCompanion(isPrimary: Value(true)));
       });
     } on Exception catch (e) {
@@ -84,7 +88,7 @@ class AccountLocalDataSourceImpl implements AccountLocalDataSource {
 
   AccountModel _fromRow(AccountRow row) {
     return AccountModel(
-      id: row.id.toString(),
+      id: row.id,
       name: row.name,
       gameAccountId: row.gameAccountId,
       isPrimary: row.isPrimary,
