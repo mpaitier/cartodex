@@ -37,7 +37,7 @@ android {
         // Firebase (firebase_auth notamment) exige minSdk 23 — plus
         // élevé que le minimum habituel de Flutter, d'où la valeur
         // fixée en dur ici plutôt que flutter.minSdkVersion.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -1,8 +1,12 @@
-# Fichiers générés par le code generation (Drift, build_runner)
-**/*.g.dart
-**/*.freezed.dart
+# ==========================================
+# 1. Code Generation (Drift, build_runner)
+# ==========================================
+*.g.dart
+*.freezed.dart
 
-# Flutter / Dart
+# ==========================================
+# 2. Flutter / Dart
+# ==========================================
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -10,16 +14,43 @@
 .pub-cache/
 .pub/
 build/
-*.lock
 
-# IDE
+# Ne PAS ignorer pubspec.lock pour une application !
+!pubspec.lock
+
+# ==========================================
+# 3. Android
+# ==========================================
+android/.gradle/
+android/app/build/
+android/local.properties
+*.keystore
+*.jks
+
+# ==========================================
+# 4. iOS / macOS
+# ==========================================
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+*.xcworkspace
+*.xcuserdata
+
+# ==========================================
+# 5. IDE & OS
+# ==========================================
 .idea/
 .vscode/
 *.iml
+.DS_Store
+Thumbs.db
 
-# Base de données locale (dev)
+# ==========================================
+# 6. Données locales & Temp (dev)
+# ==========================================
 *.sqlite
 *.db
-
-# Divers
-.DS_Store
