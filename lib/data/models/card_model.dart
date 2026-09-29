@@ -44,8 +44,9 @@ class CardModel extends PokemonCard {
     final setId = json['set'] as String;
     final number = json['number'].toString();
     final name = json['name'] as String;
+    final id = '$setId-$number';
     return CardModel(
-      id: '$setId-$number',
+      id: id,
       localId: number,
       name: name,
       category: _categoryFromApi(category),
@@ -59,9 +60,13 @@ class CardModel extends PokemonCard {
       // pour l'historique complet). L'URL est reconstruite ici à
       // partir du nom de la carte (voir [PocketCardsImageSlug]) et
       // du numéro sur 3 chiffres, seul format observé sur
-      // pocketcards.net.
+      // pocketcards.net. [PocketCardsImageSlug.fromCardName] vérifie
+      // d'abord une table de correctifs manuels avant la conversion
+      // générique, pour les quelques cartes dont le nom brut du
+      // référentiel distant contient une erreur de saisie (voir sa
+      // documentation).
       imageUrl: '${AppConstants.pocketCardsImageBaseUrl}/'
-          '${PocketCardsImageSlug.fromCardName(name)}-'
+          '${PocketCardsImageSlug.fromCardName(id, name)}-'
           '${setId.toLowerCase()}-'
           '${number.padLeft(3, '0')}.webp',
       rarity: json['rarity'] as String?,

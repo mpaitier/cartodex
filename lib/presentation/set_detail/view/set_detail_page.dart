@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/card_rarities.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
@@ -9,6 +10,7 @@ import '../../../domain/entities/card_set.dart';
 import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
+import '../widgets/bulk_add_confirmation_dialog.dart';
 import '../widgets/card_grid_pager.dart';
 import '../widgets/pack_filter_bar.dart';
 import '../widgets/rarity_filter_bar.dart';
@@ -20,7 +22,9 @@ import '../widgets/set_progress_summary.dart';
 /// isoler les cartes losange ou non-losange (voir
 /// [CardGridPager][../widgets/card_grid_pager.dart]). Le tap simple
 /// bascule la possession pour le compte principal ; le double-tap
-/// ouvre un popup pour choisir un compte secondaire.
+/// ouvre un popup pour choisir un compte secondaire ; le bouton "+"
+/// ajoute d'un coup toutes les cartes actuellement affichées au
+/// compte principal.
 class SetDetailPage extends StatelessWidget {
   const SetDetailPage({required this.set, super.key});
 
@@ -39,10 +43,28 @@ class SetDetailPage extends StatelessWidget {
   }
 }
 
-class _SetDetailView extends StatelessWidget {
+class _SetDetailView extends StatefulWidget {
   const _SetDetailView({required this.set});
 
   final CardSet set;
+
+  @override
+  State<_SetDetailView> createState() => _SetDetailViewState();
+}
+
+class _SetDetailViewState extends State<_SetDetailView> {
+  /// Volet actif de [CardGridPager], pour restreindre les puces de
+  /// `RarityFilterBar` au groupe de rareté pertinent (voir
+  /// `SetDetailState.availableRaritiesForGroup`) et pour savoir
+  /// quelles cartes le bouton "+" doit ajouter (voir
+  /// `SetDetailState.visibleCardsForGroup`) — sur ce volet losange,
+  /// seules les cartes losange affichées sont concernées ; sur le
+  /// volet étoile, seules les alternatives ; sur le volet du milieu,
+  /// toutes les cartes affichées. État purement local à l'affichage,
+  /// sur le même principe que `SetProgressSummary._includeSecondary` :
+  /// ne vaut pas la peine de vivre dans le Bloc. Volet du milieu par
+  /// défaut, comme `CardGridPager` (`PageController(initialPage: 1)`).
+  CardGroupFilter _activeGroup = CardGroupFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -60,19 +82,26 @@ class _SetDetailView extends StatelessWidget {
       },
       builder: (context, state) {
         return AppScaffold(
-          title: set.name,
+          title: widget.set.name,
           titleWidget: _titleWidget(state),
+          floatingActionButton: state.status == SetDetailStatus.loaded
+              ? FloatingActionButton(
+                  onPressed: () => _onAddAllVisiblePressed(context, state),
+                  tooltip: 'Ajouter les cartes affichées au compte principal',
+                  child: const Icon(Icons.add),
+                )
+              : null,
           body: Column(
             children: [
               PackFilterBar(
-                packs: set.packs,
+                packs: widget.set.packs,
                 selectedPack: state.selectedPack,
                 onPackSelected: (pack) => context
                     .read<SetDetailBloc>()
                     .add(PackFilterChanged(pack)),
               ),
               RarityFilterBar(
-                availableRarities: state.availableRarities,
+                availableRarities: state.availableRaritiesForGroup(_activeGroup),
                 selectedRarities: state.selectedRarities,
                 onSelectionChanged: (rarities) => context
                     .read<SetDetailBloc>()
@@ -92,7 +121,7 @@ class _SetDetailView extends StatelessWidget {
   Widget? _titleWidget(SetDetailState state) {
     if (state.cards.isEmpty) return null;
     return SetProgressSummary(
-      setName: set.name,
+      setName: widget.set.name,
       baseOwnedPrimary: state.baseOwned,
       baseOwnedAllAccounts: state.baseOwnedAllAccounts,
       baseTotal: state.baseTotal,
@@ -111,8 +140,9 @@ class _SetDetailView extends StatelessWidget {
     if (state.status == SetDetailStatus.error && state.cards.isEmpty) {
       return AppErrorView(
         message: state.errorMessage ?? 'Une erreur est survenue.',
-        onRetry: () =>
-            context.read<SetDetailBloc>().add(SetDetailStarted(set.id)),
+        onRetry: () => context
+            .read<SetDetailBloc>()
+            .add(SetDetailStarted(widget.set.id)),
       );
     }
 
@@ -123,7 +153,50 @@ class _SetDetailView extends StatelessWidget {
       onTap: (cardId) =>
           context.read<SetDetailBloc>().add(CardOwnershipToggled(cardId)),
       onDoubleTap: (cardId) => _onCardDoubleTap(context, state, cardId),
+      onPageChanged: (group) => _onPagerPageChanged(context, state, group),
     );
+  }
+
+  /// Met à jour le volet actif, et retire de la sélection de rareté
+  /// courante les puces devenues hors-sujet pour ce volet (ex: une
+  /// rareté étoile sélectionnée en arrivant sur le volet losange) —
+  /// sans quoi la grille se viderait silencieusement, sans qu'aucune
+  /// puce cochée ne l'explique. Les puces encore valides pour le
+  /// nouveau volet restent cochées.
+  void _onPagerPageChanged(
+    BuildContext context,
+    SetDetailState state,
+    CardGroupFilter group,
+  ) {
+    setState(() => _activeGroup = group);
+    final stillAvailable = state.availableRaritiesForGroup(group).toSet();
+    final filteredSelection =
+        state.selectedRarities.where(stillAvailable.contains).toSet();
+    if (filteredSelection.length != state.selectedRarities.length) {
+      context.read<SetDetailBloc>().add(RarityFilterChanged(filteredSelection));
+    }
+  }
+
+  /// Bouton "+" : demande confirmation, puis ajoute au compte
+  /// principal toutes les cartes actuellement affichées dans le
+  /// volet actif — pas tout le set, juste ce que l'écran montre en
+  /// ce moment (filtres de booster/rareté inclus).
+  Future<void> _onAddAllVisiblePressed(
+    BuildContext context,
+    SetDetailState state,
+  ) async {
+    final bloc = context.read<SetDetailBloc>();
+    final visibleCards = state.visibleCardsForGroup(_activeGroup);
+    if (visibleCards.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) =>
+          BulkAddConfirmationDialog(cardCount: visibleCards.length),
+    );
+    if (confirmed != true) return;
+
+    bloc.add(BulkCardsMarkedOwned(visibleCards.map((c) => c.id).toList()));
   }
 
   void _onCardDoubleTap(

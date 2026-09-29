@@ -94,12 +94,23 @@ class SetDetailState extends Equatable {
     return result;
   }
 
-  /// Raretés effectivement présentes dans ce set, dans l'ordre
-  /// croissant de rareté, pour peupler le filtre — un sous-ensemble
-  /// des 10 paliers possibles ([CardRarity.allTiers]).
-  List<CardRarity> get availableRarities {
+  /// Raretés effectivement présentes dans ce set pour le volet
+  /// [group] de [CardGridPager][../widgets/card_grid_pager.dart], dans
+  /// l'ordre croissant de rareté, pour peupler `RarityFilterBar` —
+  /// un sous-ensemble des 10 paliers possibles
+  /// ([CardRarity.allTiers]). [CardGroupFilter.all] donne toutes les
+  /// raretés du set, sans restriction ; [CardGroupFilter.diamond] et
+  /// [CardGroupFilter.nonDiamond] restreignent respectivement aux
+  /// cartes de la "collection de base" et aux cartes "alternatives"
+  /// (voir [CardRarity.isBase]) — pour que le filtre affiché ne
+  /// propose jamais une puce sans effet sur le volet actif.
+  List<CardRarity> availableRaritiesForGroup(CardGroupFilter group) {
     final present = <CardRarity>{};
     for (final card in cards) {
+      if (group == CardGroupFilter.diamond && !_isBase(card)) continue;
+      if (group == CardGroupFilter.nonDiamond && !_isAlternative(card)) {
+        continue;
+      }
       final rarity = CardRarity.fromCode(card.rarity);
       if (rarity != null) present.add(rarity);
     }
@@ -121,6 +132,23 @@ class SetDetailState extends Equatable {
       }).toList();
     }
     return result;
+  }
+
+  /// [visibleCards] restreintes au volet [group] de
+  /// [CardGridPager][../widgets/card_grid_pager.dart] — le même
+  /// partage losange / non-losange que [CardGridPager] applique en
+  /// interne pour ses volets ([CardRarity.isBase]), mais exposé ici
+  /// pour que le bouton "+" de [SetDetailPage][../view/set_detail_page.dart]
+  /// sache exactement quelles cartes sont affichées à l'écran au
+  /// moment de l'appui, volet par volet.
+  List<PokemonCard> visibleCardsForGroup(CardGroupFilter group) {
+    if (group == CardGroupFilter.diamond) {
+      return visibleCards.where(_isBase).toList();
+    }
+    if (group == CardGroupFilter.nonDiamond) {
+      return visibleCards.where(_isAlternative).toList();
+    }
+    return visibleCards;
   }
 
   /// Nombre de cartes de la "collection de base" (rareté losange)

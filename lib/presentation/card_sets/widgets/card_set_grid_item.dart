@@ -54,18 +54,17 @@ class CardSetGridItem extends StatelessWidget {
   }
 }
 
-/// Logo du set, avec repli sur une icône générique tant que
-/// [url] est `null`.
+/// Logo du set, avec repli sur une icône générique tant que [url]
+/// est `null` ou que le chargement échoue.
 ///
-/// Le référentiel actuellement utilisé
-/// (`pokemon-tcg-pocket-database`) ne fournit pas d'URL de logo :
-/// [CardSet.logoUrl] reste donc toujours `null` pour l'instant, et
-/// cette tuile affiche systématiquement l'icône de repli. Le
-/// chemin `CachedNetworkImage` reste en place pour le jour où une
-/// source d'images sera branchée (voir README) — les logs (voir
-/// [AppLogger]) sont déjà en place pour ce moment-là : INFO au
+/// [url] est reconstruit depuis pocketcards.net à partir du nom du
+/// set (voir `CardSetModel.fromJson` et `PocketCardsImageSlug`),
+/// sans le suffixe `.webp` — ajouté ici, comme pour les cartes,
+/// pour garder un seul endroit où l'extension de fichier est
+/// décidée. Les logs (voir [AppLogger]) restent en place : INFO au
 /// moment de la construction de l'URL, ERROR si le chargement
-/// échoue.
+/// échoue (utile pour repérer les noms de set à ponctuation
+/// inhabituelle que la conversion générique gère mal).
 class _SetLogo extends StatelessWidget {
   const _SetLogo({required this.url});
 

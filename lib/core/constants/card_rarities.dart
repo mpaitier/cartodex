@@ -3,6 +3,17 @@ import 'package:equatable/equatable.dart';
 /// Groupe visuel d'une rareté TCG Pocket.
 enum RarityGroup { diamond, star, crown, shiny }
 
+/// Volet actif de [CardGridPager][../../presentation/set_detail/widgets/card_grid_pager.dart].
+///
+/// Détermine quel sous-ensemble de cartes (par groupe de rareté) est
+/// affiché — losange uniquement, tout, ou non-losange uniquement — et
+/// donc quelles puces `RarityFilterBar` doit proposer (voir
+/// `SetDetailState.availableRaritiesForGroup`). L'ordre des valeurs
+/// correspond à l'ordre des volets du `PageView` de `CardGridPager` :
+/// `CardGroupFilter.values[pageIndex]` donne directement le volet
+/// actif.
+enum CardGroupFilter { diamond, all, nonDiamond }
+
 /// Représentation visuelle d'une rareté (symbole + palier), déduite
 /// du code brut renvoyé par la source (`C`, `SR`, `UR`...).
 ///
@@ -64,8 +75,9 @@ class CardRarity extends Equatable {
   /// chromatique, ou sans rareté connue (certaines promos) — est
   /// considérée "alternative" : point d'entrée unique pour cette
   /// distinction, utilisée à la fois par `SetDetailState` (les
-  /// compteurs) et `CardGridPager` (les volets swipeables), pour
-  /// qu'ils s'accordent toujours.
+  /// compteurs et les raretés disponibles par volet) et
+  /// `CardGridPager` (les volets swipeables), pour qu'ils s'accordent
+  /// toujours.
   static bool isBase(String? code) => fromCode(code)?.group == RarityGroup.diamond;
 
   /// Les 10 paliers visuels distincts, du plus commun au plus rare,

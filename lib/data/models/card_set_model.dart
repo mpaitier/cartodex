@@ -1,3 +1,5 @@
+import '../../core/constants/app_constants.dart';
+import '../../core/utils/pocket_cards_image_slug.dart';
 import '../../domain/entities/card_set.dart';
 
 /// DTO du set de carte, tel que reçu depuis `sets.json`
@@ -33,23 +35,25 @@ class CardSetModel extends CardSet {
   /// alors à 0 ici, corrigé ensuite avec le vrai nombre de cartes
   /// synchronisées (voir `CardRepositoryImpl.syncCardCatalog`).
   ///
-  /// [logoUrl] reste volontairement `null` : ni
-  /// `pokemon-tcg-pocket-database` (voir README, section Images —
-  /// ne documente que les images de cartes, pas de logo de set) ni
+  /// [logoUrl] est reconstruit à partir du nom anglais du set (voir
+  /// [PocketCardsImageSlug.fromSetName]), sur le même principe que
+  /// les images de carte : ni `pokemon-tcg-pocket-database`, ni
   /// TCGdex (testée entre-temps, 404 sur tous les sets) n'exposent
-  /// de logo exploitable pour l'instant. `CardSetGridItem` retombe
-  /// sur une icône générique tant que ce point n'est pas résolu.
+  /// de logo exploitable directement.
   factory CardSetModel.fromJson(
     Map<String, dynamic> json, {
     required String seriesId,
   }) {
     final id = json['code'] as String;
     final names = json['name'] as Map<String, dynamic>?;
+    final name = (names?['en'] as String?) ?? id;
     return CardSetModel(
       id: id,
-      name: (names?['en'] as String?) ?? id,
+      name: name,
       totalCardCount: (json['count'] as num?)?.toInt() ?? 0,
       seriesId: seriesId,
+      logoUrl: '${AppConstants.pocketCardsSetImageBaseUrl}/'
+          '${PocketCardsImageSlug.fromSetName(name)}',
       packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],
     );
   }

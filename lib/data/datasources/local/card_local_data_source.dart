@@ -32,6 +32,15 @@ abstract class CardLocalDataSource {
     required String accountId,
     required bool owned,
   });
+
+  /// Marque toutes les cartes de [cardIds] comme possédées par
+  /// [accountId], en une seule opération. N'enlève jamais rien —
+  /// utilisé par le bouton "+" du détail d'un set et par la
+  /// synchronisation cloud.
+  Future<void> addOwnedCards({
+    required String accountId,
+    required Set<String> cardIds,
+  });
 }
 
 class CardLocalDataSourceImpl implements CardLocalDataSource {
@@ -97,9 +106,8 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
   @override
   Future<Set<String>> getOwnedCardIds(String accountId) async {
     try {
-      final id = int.parse(accountId);
       final rows = await (_database.select(_database.ownedCards)
-            ..where((t) => t.accountId.equals(id)))
+            ..where((t) => t.accountId.equals(accountId)))
           .get();
       return rows.map((row) => row.cardId).toSet();
     } on Exception catch (e) {
@@ -114,20 +122,43 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
     required bool owned,
   }) async {
     try {
-      final id = int.parse(accountId);
       if (owned) {
         await _database.into(_database.ownedCards).insertOnConflictUpdate(
-              OwnedCardsCompanion.insert(cardId: cardId, accountId: id),
+              OwnedCardsCompanion.insert(cardId: cardId, accountId: accountId),
             );
       } else {
         await (_database.delete(_database.ownedCards)
               ..where(
-                (t) => t.cardId.equals(cardId) & t.accountId.equals(id),
+                (t) =>
+                    t.cardId.equals(cardId) & t.accountId.equals(accountId),
               ))
             .go();
       }
     } on Exception catch (e) {
       throw CacheException('Échec de la mise à jour de la possession : $e');
+    }
+  }
+
+  @override
+  Future<void> addOwnedCards({
+    required String accountId,
+    required Set<String> cardIds,
+  }) async {
+    if (cardIds.isEmpty) return;
+    try {
+      await _database.batch((batch) {
+        batch.insertAllOnConflictUpdate(
+          _database.ownedCards,
+          [
+            for (final cardId in cardIds)
+              OwnedCardsCompanion.insert(cardId: cardId, accountId: accountId),
+          ],
+        );
+      });
+    } on Exception catch (e) {
+      throw CacheException(
+        'Échec de l\'ajout groupé de cartes possédées : $e',
+      );
     }
   }
 

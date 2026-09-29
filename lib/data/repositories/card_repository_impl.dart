@@ -126,4 +126,20 @@ class CardRepositoryImpl implements CardRepository {
       return Left(CacheFailure(e.message));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> addOwnedCards({
+    required String accountId,
+    required Set<String> cardIds,
+  }) async {
+    try {
+      await _localDataSource.addOwnedCards(
+        accountId: accountId,
+        cardIds: cardIds,
+      );
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    }
+  }
 }

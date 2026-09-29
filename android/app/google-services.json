@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "739770944620",
+    "project_id": "cartodex-f5a25",
+    "storage_bucket": "cartodex-f5a25.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739770944620:android:4972b731d9d7d0fa7b5c49",
+        "android_client_info": {
+          "package_name": "com.example.cartodex"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "739770944620-a9rl8qdmk8muahi4n4t4c8idack3uefh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.cartodex",
+            "certificate_hash": "66b9f53a0f6bcea1a21dceb294a31d73ec5147c8"
+          }
+        },
+        {
+          "client_id": "739770944620-46tgrhnalpg7mrdesv446p4cf36jjf18.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhzYtOHCMqYNrfgh0vG2PDdsrGimKyuao"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "739770944620-46tgrhnalpg7mrdesv446p4cf36jjf18.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "739770944620-ug1pafjj92kcqb8mbstctmb28liv2ge5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.cartodex"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

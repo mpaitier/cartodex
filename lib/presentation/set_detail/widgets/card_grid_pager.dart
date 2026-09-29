@@ -31,6 +31,7 @@ class CardGridPager extends StatefulWidget {
     required this.secondaryOwnedCardIds,
     required this.onTap,
     required this.onDoubleTap,
+    this.onPageChanged,
     super.key,
   });
 
@@ -39,6 +40,12 @@ class CardGridPager extends StatefulWidget {
   final Set<String> secondaryOwnedCardIds;
   final ValueChanged<String> onTap;
   final ValueChanged<String> onDoubleTap;
+
+  /// Notifié à chaque changement de volet — voir [CardGroupFilter].
+  /// Permet au parent d'adapter d'autres éléments d'UI (ex: les
+  /// puces proposées par `RarityFilterBar`) au volet actif, sans que
+  /// ce widget n'ait à connaître `RarityFilterBar` lui-même.
+  final ValueChanged<CardGroupFilter>? onPageChanged;
 
   @override
   State<CardGridPager> createState() => _CardGridPagerState();
@@ -66,7 +73,10 @@ class _CardGridPagerState extends State<CardGridPager> {
       children: [
         PageView(
           controller: _controller,
-          onPageChanged: (page) => setState(() => _currentPage = page),
+          onPageChanged: (page) {
+            setState(() => _currentPage = page);
+            widget.onPageChanged?.call(CardGroupFilter.values[page]);
+          },
           children: [
             _grid('diamond', _diamondCards),
             _grid('all', widget.cards),

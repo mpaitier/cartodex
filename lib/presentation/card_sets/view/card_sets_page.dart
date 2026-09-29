@@ -8,6 +8,8 @@ import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
 import '../../accounts/view/accounts_page.dart';
 import '../../set_detail/view/set_detail_page.dart';
+import '../../stats/view/stats_page.dart';
+import '../../sync/bloc/sync_bloc.dart';
 import '../bloc/card_sets_bloc.dart';
 import '../bloc/card_sets_event.dart';
 import '../bloc/card_sets_state.dart';
@@ -15,21 +17,30 @@ import '../widgets/card_set_grid.dart';
 import '../widgets/card_sets_empty_view.dart';
 import '../widgets/series_filter_bar.dart';
 import '../widgets/sync_catalog_action.dart';
+import '../widgets/sync_firebase_action.dart';
 
 /// Écran d'accueil : liste des sets du référentiel TCG Pocket.
 ///
-/// Point d'entrée de la feature catalogue et de la gestion de
-/// comptes. Un appui sur une tuile ouvre [SetDetailPage] pour ce
-/// set ; l'action dédiée de l'AppBar ouvre [AccountsPage] ; le
-/// menu flottant du bas ([SeriesFilterBar]) filtre la grille par
-/// série.
+/// Point d'entrée de la feature catalogue, de la gestion de comptes
+/// et des statistiques. AppBar : à gauche, statistiques et comptes
+/// Pokémon ; à droite, synchronisation du référentiel de cartes et
+/// synchronisation avec le compte applicatif (Firebase — voir
+/// `SyncFirebaseAction`, `SyncBloc`, fourni ici avec le même cycle
+/// de vie que l'écran). Un appui sur une tuile ouvre [SetDetailPage]
+/// pour ce set ; le menu flottant du bas ([SeriesFilterBar]) filtre
+/// la grille par série.
 class CardSetsPage extends StatelessWidget {
   const CardSetsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<CardSetsBloc>()..add(const CardSetsStarted()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => sl<CardSetsBloc>()..add(const CardSetsStarted()),
+        ),
+        BlocProvider(create: (_) => sl<SyncBloc>()),
+      ],
       child: const _CardSetsView(),
     );
   }
@@ -44,7 +55,14 @@ class _CardSetsView extends StatelessWidget {
       builder: (context, state) {
         return AppScaffold(
           title: 'Cartodex',
-          actions: [
+          leadingActions: [
+            IconButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const StatsPage()),
+              ),
+              icon: const Icon(Icons.bar_chart),
+              tooltip: 'Statistiques',
+            ),
             IconButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const AccountsPage()),
@@ -52,12 +70,15 @@ class _CardSetsView extends StatelessWidget {
               icon: const Icon(Icons.people_alt_outlined),
               tooltip: 'Comptes',
             ),
+          ],
+          actions: [
             SyncCatalogAction(
               isSyncing: state.status == CardSetsStatus.syncing,
               onPressed: () => context
                   .read<CardSetsBloc>()
                   .add(const CardSetsSyncRequested()),
             ),
+            const SyncFirebaseAction(),
           ],
           body: Stack(
             children: [

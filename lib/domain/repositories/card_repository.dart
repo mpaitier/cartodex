@@ -43,4 +43,13 @@ abstract class CardRepository {
     required String accountId,
     required bool owned,
   });
+
+  /// Marque toutes les cartes de [cardIds] comme possédées par
+  /// [accountId], en une seule opération. N'enlève jamais rien :
+  /// utilisé par la synchronisation cloud, dont la règle est que
+  /// "possédée" l'emporte toujours.
+  Future<Either<Failure, void>> addOwnedCards({
+    required String accountId,
+    required Set<String> cardIds,
+  });
 }

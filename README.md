@@ -25,9 +25,9 @@ lib/
 │   ├── theme/
 │   └── widgets/          # Composants UI génériques réutilisables
 ├── domain/                # Règles métier pures, aucune dépendance Flutter
-│   ├── entities/           # CardCategory, CardSet, PokemonCard, Account
+│   ├── entities/           # CardCategory, CardSet, PokemonCard, Account, CollectionStats, AppUser, CloudAccount, SyncResult
 │   ├── repositories/       # Interfaces abstraites (CardRepository, AccountRepository)
-│   └── usecases/           # Un fichier par action (SyncCardCatalog, GetCardSets, GetAccounts...)
+│   └── usecases/           # Un fichier par action (SyncCardCatalog, GetCardSets, GetAccounts, GetCollectionStats...)
 ├── data/                   # Implémentation technique du domaine
 │   ├── datasources/
 │   │   ├── local/          # Base Drift (tables, DAO) : catalogue, possession, comptes
@@ -42,11 +42,21 @@ lib/
     ├── set_detail/             # Feature : détail d'un set (cartes + possession)
     │   ├── bloc/                # SetDetailBloc, événements, état
     │   ├── view/                 # SetDetailPage
-    │   └── widgets/               # CardGrid, CardGridItem, PackFilterBar
-    └── accounts/               # Feature : gestion des comptes suivis
-        ├── bloc/                 # AccountsBloc, événements, état
-        ├── view/                  # AccountsPage
-        └── widgets/                # AccountListItem, AddAccountDialog
+    │   └── widgets/               # CardGrid, CardGridItem, PackFilterBar, PackAvatar, BulkAddConfirmationDialog
+    ├── accounts/               # Feature : gestion des comptes suivis
+    │   ├── bloc/                 # AccountsBloc, événements, état
+    │   ├── view/                  # AccountsPage
+    │   └── widgets/                # AccountListItem, AddAccountDialog
+    ├── stats/                  # Feature : statistiques de complétion
+    │   ├── bloc/                 # StatsBloc, événements, état
+    │   ├── view/                  # StatsPage
+    │   └── widgets/                # OverallProgressCard, SeriesProgressList, PriorityBoostersList
+    ├── auth/                   # Feature : compte applicatif (Firebase)
+    │   ├── bloc/                 # AuthBloc (singleton), événements, état
+    │   ├── view/                  # LoginPage
+    │   └── widgets/                # GoogleSignInButton
+    └── sync/                   # Feature : synchronisation cloud
+        └── bloc/                 # SyncBloc, événements, état
 ```
 
 Règle de dépendance : `presentation` → `domain` ← `data`. Le domaine ne connaît jamais Flutter, Drift ou l'API ; il ne dépend que de ses propres interfaces.
@@ -71,12 +81,12 @@ La couche présentation de l'écran d'accueil est posée :
 - `injection_container.dart` enregistre les cinq use cases et `CardSetsBloc` (en factory, une instance par écran).
 - `CardSetsPage` remplace `HomePage` comme écran d'accueil de `CartodexApp`.
 
-**Changement de schéma local** : `Cards` et `CardSets` ont chacune une nouvelle colonne `packs`, `Accounts` est une nouvelle table, et `OwnedCards` passe d'une clé simple (`cardId`) à une clé composite (`cardId`, `accountId`) — la possession est désormais par compte. Aucune migration Drift n'est en place à ce stade du projet (`schemaVersion` reste à 1) : après avoir appliqué ces changements, désinstaller l'app du téléphone/émulateur (ou vider ses données) avant de relancer `flutter run`, pour repartir d'une base vierge.
+**Changement de schéma local** : `Cards` et `CardSets` ont chacune une nouvelle colonne `packs`, `Accounts` est une nouvelle table, et `OwnedCards` passe d'une clé simple (`cardId`) à une clé composite (`cardId`, `accountId`) — la possession est désormais par compte. Ces changements-là (antérieurs à la v2) n'ont pas de migration : ils supposent une base créée après eux, d'où la consigne de l'époque de désinstaller l'app une fois. Les changements suivants passent par une vraie migration (voir plus bas, v1 → v2).
 
 La couche présentation de l'écran de détail d'un set est posée :
 - `SetDetailBloc` charge les cartes du set (`GetCardsBySet`), tous les comptes (`GetAccounts`) et, pour chacun, les cartes qu'il possède (`GetOwnedCardIds`). Le tap simple bascule toujours la possession pour le compte principal (violet profond) ; le double-tap ouvre `SecondaryAccountPickerDialog` pour choisir un compte secondaire précis (bleu, icône flèche vers le haut). Les deux passent par le même use case (`SetCardOwned`) et la même mise à jour optimiste factorisée dans le Bloc : l'état local change immédiatement, un échec revient en arrière sans vider toute la grille. Sans compte encore créé, le tap simple affiche un message invitant à en créer un ; sans compte secondaire, le popup de double-tap fait de même.
 - Le filtre par booster (`PackFilterChanged`) s'appuie directement sur `CardSet.packs`, connu dès l'ouverture de l'écran (passé depuis `CardSetsPage`, pas besoin d'attendre le chargement des cartes) ; il se masque de lui-même quand un set n'a qu'un seul booster.
-- Composants dédiés : `CardGrid`, `CardGridPager` (3 volets swipeables — losange à gauche, tout au milieu, non-losange à droite — filtrage purement local, sans passer par le Bloc ; `PageDotsIndicator` — losange/rond/étoile plutôt que des points génériques — au-dessus, et une `PageStorageKey` par volet pour que chacun garde son propre défilement d'un swipe à l'autre), `CardGridItem` (nom, numéro au format `#XXX`, rareté affichée avec les symboles du jeu, badge de possession à deux états), `PackFilterBar`, `RarityFilterBar` (multi-sélection, "Tout"), `SecondaryAccountPickerDialog`, `SetProgressSummary` (titre de l'AppBar : ◆/★/Σ possédé-sur-total, en vert quand complet — inspiré de l'écran de progression de l'app officielle TCG Pocket, condensé pour une AppBar ; un tap bascule le contour des boîtes entre violet — compte principal seul — et bleu — principal + cartes possédées par au moins un secondaire, en évitant tout double-comptage). `AppScaffold` accepte désormais un `titleWidget` optionnel pour ce genre de titre enrichi.
+- Composants dédiés : `CardGrid`, `CardGridPager` (3 volets swipeables — losange à gauche, tout au milieu, non-losange à droite — filtrage purement local, sans passer par le Bloc ; `PageDotsIndicator` — losange/rond/étoile plutôt que des points génériques — au-dessus, et une `PageStorageKey` par volet pour que chacun garde son propre défilement d'un swipe à l'autre), `CardGridItem` (nom, numéro au format `#XXX`, rareté affichée avec les symboles du jeu, badge de possession à deux états), `PackFilterBar` (avec icône de booster via `PackAvatar`), `RarityFilterBar` (multi-sélection, "Tout"), `SecondaryAccountPickerDialog`, `SetProgressSummary` (titre de l'AppBar : ◆/★/Σ possédé-sur-total, en vert quand complet — inspiré de l'écran de progression de l'app officielle TCG Pocket, condensé pour une AppBar ; un tap bascule le contour des boîtes entre violet — compte principal seul — et bleu — principal + cartes possédées par au moins un secondaire, en évitant tout double-comptage). `AppScaffold` accepte désormais un `titleWidget` optionnel pour ce genre de titre enrichi.
 - `CardRarity` (`core/constants/card_rarities.dart`) convertit les codes bruts de la source (`C`, `SR`, `UR`...) vers la représentation du jeu : 1 à 4 losanges, 1 à 3 étoiles, 1 couronne, 1 à 2 étoiles chromatiques (table tirée de `rarities.json` de la source). `SR` et `SAR` partagent le même rendu (★★) — indissociables visuellement dans le jeu, seule la bordure (non reproduite ici) les distingue.
 - Un appui sur une tuile de `CardSetsPage` ouvre désormais `SetDetailPage` pour ce set, dont le titre affiche "`<nom> - X acquis / total`" une fois les cartes chargées (compte principal).
 
@@ -86,11 +96,54 @@ La gestion de comptes est posée — première brique d'une future collection mu
 - `AccountsBloc`, `AccountsPage` (liste + FAB d'ajout), `AccountListItem` (étoile pleine jaune pour le principal, en contour gris et cliquable pour les autres), `AddAccountDialog` (formulaire nom + identifiant).
 - Accessible depuis une action dédiée dans l'AppBar de `CardSetsPage`.
 
-**Limitation connue** : `pokemon-tcg-pocket-database` ne fournit aucune URL d'image (ni logo de set, ni illustration de carte — seulement un nom de fichier). `CardSet.logoUrl` reste donc toujours `null` pour l'instant, et la grille affiche une icône générique à la place du logo. Trouver/brancher une source d'images est un point ouvert, pas encore résolu.
-
-Les cinq étapes de la feuille de route initiale sont posées, ainsi que le titre enrichi de l'AppBar (`SetProgressSummary`, avec bascule principal/tous-comptes au tap). Reste explicitement en attente : une adaptation dynamique des puces de `RarityFilterBar` selon le volet actif de `CardGridPager`.
+Les cinq étapes de la feuille de route initiale sont posées, ainsi que le titre enrichi de l'AppBar (`SetProgressSummary`, avec bascule principal/tous-comptes au tap). `RarityFilterBar` adapte désormais ses puces au volet actif de `CardGridPager` (`SetDetailState.availableRaritiesForGroup`, restreint via le nouvel enum `CardGroupFilter`) : seules les raretés losange sont proposées sur le volet losange, seules les raretés alternatives sur le volet étoile. Un changement de volet retire de la sélection courante les puces devenues hors-sujet, sans effacer celles qui restent valides — sinon la grille se viderait silencieusement.
 
 Passe de finition sur `set_detail` : titre et compteurs de `SetProgressSummary` centrés ; `PageDotsIndicator` déplacé en overlay bas (plutôt qu'au-dessus du filtre de rareté), et simplifié en 3 losanges plutôt que losange/rond/étoile ; puces de `RarityFilterBar` sans coche de sélection ni padding excessif ; `CardGridItem` affiche le numéro de la carte en grand à la place de l'image (sans `#`), l'icône générique n'apportait rien de plus qu'un numéro lisible ; les sets se lisent désormais du plus récent au plus ancien.
+
+**Images (pocketcards.net)** : `pokemon-tcg-pocket-database` ne fournissant aucune URL exploitable (ni logo de set, ni illustration de carte, ni icône de booster), les trois sont désormais reconstruites à partir des noms du référentiel via `PocketCardsImageSlug`, sur le modèle non-officiel de [pocketcards.net](https://pocketcards.net). `CardGridItem` affiche de nouveau l'illustration de la carte (centrée, `BoxFit.contain`, sans recadrage) en plus du numéro en texte (`#XXX`, à côté de la rareté) ; `CardSetGridItem` affiche le logo du set ; `PackFilterBar` affiche l'icône de chaque booster via le nouveau composant `PackAvatar`. La conversion nom → slug reste déduite d'exemples observés, pas d'une spécification garantie : le référentiel distant concatène parfois deux mots sans espace, avec (ex: "Teal MaskOgerpon") ou sans (ex: "Galarianzigzagoon", tout en minuscules) majuscule pour marquer la coupure. `PocketCardsImageSlug._slugify` corrige les deux cas — respectivement par découpage camelCase et par une liste explicite de préfixes de forme régionale (Galarian, Alolan, Hisuian, Paldean) — et une table de correctifs manuels (`_cardSlugOverrides`) reste disponible pour les cas qu'aucune règle générique ne couvrirait, repérés au fil des échecs de chargement loggés par `AppLogger`.
+
+Un bouton "+" a été ajouté à `SetDetailPage` : il marque en une fois, pour le compte principal, toutes les cartes actuellement affichées à l'écran (`SetDetailState.visibleCardsForGroup`), avec confirmation préalable (`BulkAddConfirmationDialog`, qui annonce le nombre de cartes concerné). Le volet actif de `CardGridPager` compte : sur le volet losange, seules les cartes losange affichées sont ajoutées ; sur le volet étoile, seules les alternatives ; sur le volet du milieu, toutes les cartes affichées (filtres de booster/rareté compris). Le Bloc (`BulkCardsMarkedOwned`) applique l'ajout de façon tout-ou-rien : au premier échec de persistance, l'état entier revient à ce qu'il était avant l'appui.
+
+La couche statistiques est posée, sous forme d'une nouvelle feature `stats` (accessible depuis l'AppBar de `CardSetsPage`) :
+- Entité domaine `CollectionStats` (taux global, détail par série `SeriesStats`, progression des boosters par set `SetBoosterProgress` — chacun avec le détail par booster `BoosterStats`) ; use case `GetCollectionStats`, qui combine `getCardSets`, `getCardsBySet` (par set) et `getOwnedCardIds` déjà exposés par `CardRepository` plutôt que d'ajouter une méthode dédiée au repository — le calcul de complétion est une règle métier, pas un accès aux données.
+- `SetBoosterProgress` calcule la progression globale d'un set côté boosters par **union** de ses boosters (pas somme) : une carte partagée par plusieurs boosters ne compte qu'une fois. Les sets promotionnels et les sets sans booster connu sont exclus de cette vue (`GetCollectionStats`).
+- `StatsBloc` cherche d'abord le compte principal (comme `SetDetailBloc`) avant de calculer ses statistiques ; sans compte créé, l'écran invite à en créer un.
+- `StatsPage` affiche la complétion globale (`OverallProgressCard`), le détail par série (`SeriesProgressList`, même regroupement et même ordre que `SeriesFilterBar`), et les boosters à ouvrir en priorité (`PriorityBoostersList`, triés par taux de complétion croissant — `CollectionStats.priorityBoosterProgress` ignore les sets déjà complets côté boosters). Un set à un seul booster s'affiche en une ligne ; un set à plusieurs boosters affiche sa progression globale puis le détail de chaque booster en dessous (triés eux aussi du moins avancé au plus avancé), relié par un trait vertical.
+- Calculé pour le compte principal uniquement, pas de bascule "tous comptes" comme sur `SetProgressSummary` pour l'instant.
+
+**Fondations du compte applicatif (Firebase Auth)** — première étape vers une progression synchronisée entre appareils, avant le moteur de synchronisation lui-même (à venir) :
+- **Migration Drift (v1 → v2)** : `Accounts.id` et `OwnedCards.accountId` passent d'un entier auto-incrémenté local à du texte (UUID v4 pour les nouveaux comptes, généré par `AccountLocalDataSourceImpl.addAccount`, package `uuid`) — un entier local collisionnerait entre deux comptes créés hors-ligne sur deux appareils avant leur synchronisation. `schemaVersion` passe à 2 et `AppDatabase._migrateAccountIdsToText` reconstruit les deux tables en recopiant les lignes existantes (l'id `1` devient `"1"`) : aucune donnée locale n'est perdue, pas besoin de désinstaller. Les comptes déjà existants gardent ces identifiants du type `"1"` ; la future synchronisation devra les remplacer par de vrais UUID au premier envoi. La migration suppose une base v1 dont le reste du schéma est à jour.
+- **Domaine** : entité `AppUser` (à ne pas confondre avec `Account`, les comptes Pokémon suivis localement) ; interface `AuthRepository` (`authStateChanges`, `signInWithEmail`, `signUpWithEmail`, `signInWithGoogle`, `signOut`) ; use cases `WatchAuthState` (flux, ne suit pas le contrat `UseCase` classique basé sur `Future`), `SignInWithEmail`, `SignUpWithEmail`, `SignInWithGoogle`, `SignOut`.
+- **Data** : `AuthRepositoryImpl`, au-dessus de `firebase_auth` (email/mot de passe) et `google_sign_in` (API v7, Credential Manager côté Android — susceptible d'évoluer, voir la note dans le fichier).
+- **Présentation** : `AuthBloc`, à durée de vie globale (singleton dans le conteneur d'injection, fourni une fois à la racine par `CartodexApp`, contrairement aux autres Blocs recréés par écran) — écoute en continu `authStateChanges` plutôt que de dupliquer la logique connecté/déconnecté dans ses handlers. `LoginPage` (email/mot de passe avec bascule connexion/création, plus `GoogleSignInButton`).
+- **AppBar** de `CardSetsPage` réorganisée : `AppScaffold` gagne un paramètre `leadingActions` (icônes à gauche du titre, à la place du bouton retour automatique — pertinent seulement sur un écran racine sans navigation arrière). À gauche : statistiques, comptes Pokémon. À droite : synchronisation du référentiel de cartes (`SyncCatalogAction`, existant), synchronisation Firebase (`SyncFirebaseAction`, nouveau) — ouvre `LoginPage` tant que déconnecté, propose "Synchroniser maintenant" / "Se déconnecter" une fois connecté.
+- **Connexion optionnelle** : l'app reste pleinement utilisable sans compte applicatif ; se connecter ne sert qu'à activer la synchronisation (étape suivante).
+- **Pas encore fait** : rafraîchissement automatique des écrans déjà ouverts après une synchronisation (il faut quitter/rouvrir l'écran concerné pour voir les données à jour) ; réconciliation du champ `isPrimary` en cas de divergence entre appareils (la synchro se concentre sur la possession des cartes, pas sur qui est "principal").
+
+**Moteur de synchronisation (Firestore)** — la synchronisation elle-même, annoncée comme prochaine étape à la fin de la fondation auth :
+- **Stockage** : un document par compte Pokémon (`users/{uid}/accounts/{accountId}`), avec les cartes possédées dans un champ tableau `ownedCardIds` — une synchronisation coûte une lecture par compte, pas une par carte. Voir `CloudSyncRepositoryImpl` pour la forme exacte du document et les règles de sécurité Firestore attendues (à déployer côté console, non fournies en code) :
+  ```
+  match /users/{userId}/accounts/{accountId} {
+    allow read, write: if request.auth != null && request.auth.uid == userId;
+  }
+  ```
+- **Domaine** : entités `CloudAccount` (un compte cloud, avec sa possession) et `SyncResult` (bilan : comptes/cartes récupérés ou envoyés) ; interface `CloudSyncRepository` (`fetchAccounts`, `pushAccount` — ce dernier utilise `arrayUnion` côté Firestore, jamais un remplacement, pour garantir la règle de fusion même côté serveur) ; use case `SyncWithCloud`, qui orchestre : migration des identifiants hérités (voir plus bas), comparaison compte par compte (union des cartes possédées, jamais de perte), puis import des comptes qui n'existent que dans le cloud.
+- **Règle de fusion** : "possédée" l'emporte toujours sur "non possédée" — une carte marquée possédée d'un côté (local ou cloud) l'est aussi de l'autre après synchronisation, jamais l'inverse.
+- **Identifiants hérités** : les comptes créés avant la migration UUID (v2, voir plus haut) portent encore un simple nombre en texte (ex: `"1"`) ; `AccountRepository.migrateLegacyAccountIds` les remplace par de vrais UUID juste avant le premier envoi vers le cloud (deux appareils pourraient sinon avoir chacun un compte `"1"`), en réattachant la possession correspondante.
+- **`Account`** gagne un champ `createdAt`, qui suit le compte lors de la synchronisation (`AccountModel`, `AccountRow` — la colonne existait déjà côté Drift, seulement pas exposée au domaine jusqu'ici).
+- `AccountRepository` gagne `importAccount` (ajoute en local un compte venu du cloud) ; `CardRepository` gagne `addOwnedCards` (marque plusieurs cartes possédées en une fois, sans jamais rien retirer — réutilisable ailleurs, ex: un futur bouton d'import).
+- **Présentation** : `SyncBloc` (créé avec `CardSetsBloc` à l'ouverture de l'écran d'accueil, même cycle de vie) déclenché par `SyncFirebaseAction`, qui affiche le bilan de la synchronisation dans un SnackBar (ou "Déjà à jour." si rien n'a changé).
+- Tout ou rien à la première erreur rencontrée pendant `SyncWithCloud` : la synchronisation s'arrête et remonte l'échec sans revenir en arrière sur ce qui a déjà été appliqué — la fusion étant idempotente, une resynchronisation ultérieure rattrape ce qui manque encore.
+
+### Mise en route — Firebase
+
+En plus des étapes habituelles ci-dessous, avant de lancer l'app :
+
+1. Créer un projet sur [console.firebase.google.com](https://console.firebase.google.com).
+2. Dans *Authentication → Sign-in method*, activer les providers **Email/Password** et **Google**.
+3. Ajouter une app Android au projet Firebase, avec le package `com.example.cartodex`.
+4. Fournir l'empreinte SHA-1 du certificat de debug (nécessaire à Google Sign-In) : `cd android && ./gradlew signingReport`, copier la valeur `SHA1` du variant `debug`, et l'ajouter dans les paramètres de l'app Android sur la console Firebase.
+5. Télécharger le fichier `google-services.json` généré, et le placer dans `android/app/` (à côté de `build.gradle.kts`).
 
 ## Mise en route
 

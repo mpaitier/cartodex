@@ -6,8 +6,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
-/// Une tuile de la grille de cartes : nom, numéro, rareté, et un
-/// badge de possession.
+/// Une tuile de la grille de cartes : illustration centrée, nom,
+/// numéro et rareté, et un badge de possession.
 ///
 /// Composant purement visuel, sans connaissance du Bloc parent :
 /// le tap simple (compte principal) remonte via [onTap], le
@@ -29,9 +29,9 @@ class CardGridItem extends StatelessWidget {
   final VoidCallback onDoubleTap;
 
   /// Numéro sur 3 chiffres (ex: "007"), quelle que soit la largeur
-  /// du numéro brut renvoyé par la source. Sans `#` : c'est le
-  /// repli affiché à la place de l'image quand celle-ci ne charge
-  /// pas (voir [_CardArt]), le `#` n'y apporterait rien.
+  /// du numéro brut renvoyé par la source. Affiché à la fois dans
+  /// le texte sous l'illustration, et en grand à la place de
+  /// celle-ci quand elle ne charge pas (voir [_NumberFallback]).
   String get _paddedNumber => card.localId.padLeft(3, '0');
 
   @override
@@ -66,11 +66,20 @@ class CardGridItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.labelMedium,
                       ),
-                      if (rarity != null)
-                        Text(
-                          rarity.symbol,
-                          style: theme.textTheme.labelSmall,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '#$_paddedNumber',
+                            style: theme.textTheme.labelSmall,
+                          ),
+                          if (rarity != null)
+                            Text(
+                              rarity.symbol,
+                              style: theme.textTheme.labelSmall,
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -91,15 +100,17 @@ class CardGridItem extends StatelessWidget {
   }
 }
 
-/// Illustration de la carte. [imageUrl] est reconstruit à partir de
-/// la convention "cards-by-set" du référentiel (voir
-/// `CardModel.fromJson`), sans certitude absolue sur l'hébergement
-/// exact (voir README) : si le chargement échoue, ou tant qu'aucune
-/// URL n'est disponible, retombe sur le numéro de la carte affiché
-/// en grand plutôt qu'une icône générique identique pour toutes les
-/// cartes. Grisée quand la carte n'est pas possédée, pour
-/// distinguer les deux états au premier coup d'œil même sans
-/// visuel.
+/// Illustration de la carte, centrée sans être recadrée
+/// (`BoxFit.contain`, quelle que soit la proportion de l'image
+/// renvoyée par pocketcards.net). [imageUrl] est reconstruit à
+/// partir de la convention de nommage du site (voir
+/// `CardModel.fromJson` et `PocketCardsImageSlug`), sans certitude
+/// absolue sur son exactitude pour chaque carte : si le chargement
+/// échoue, ou tant qu'aucune URL n'est disponible, retombe sur le
+/// numéro de la carte affiché en grand plutôt qu'une icône
+/// générique identique pour toutes les cartes. Grisée quand la
+/// carte n'est pas possédée, pour distinguer les deux états au
+/// premier coup d'œil même sans visuel.
 ///
 /// Chaque URL tentée est loguée (voir [AppLogger]) : en INFO au
 /// moment de la construction, en ERROR si `CachedNetworkImage`
@@ -124,29 +135,33 @@ class _CardArt extends StatelessWidget {
       return _NumberFallback(owned: owned, number: number);
     }
     AppLogger.log('INFO', 'Carte #$number : $url');
-    return CachedNetworkImage(
-      imageUrl: url,
-      fit: BoxFit.cover,
-      placeholder: (context, _) => ColoredBox(
-        color: owned ? Colors.black12 : Colors.black.withValues(alpha: 0.04),
-        child: const Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
+    return ColoredBox(
+      color: owned ? Colors.black12 : Colors.black.withValues(alpha: 0.04),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: CachedNetworkImage(
+          imageUrl: url,
+          fit: BoxFit.contain,
+          alignment: Alignment.center,
+          placeholder: (context, _) => const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
+          errorWidget: (context, failedUrl, error) {
+            // L'URL et l'erreur exacte permettent de tester le lien
+            // directement dans un navigateur (voir AppLogger, qui ne
+            // s'exécute qu'en debug).
+            AppLogger.log(
+              'ERROR',
+              'Carte #$number introuvable : $failedUrl ($error)',
+            );
+            return _NumberFallback(owned: owned, number: number);
+          },
         ),
       ),
-      errorWidget: (context, failedUrl, error) {
-        // L'URL et l'erreur exacte permettent de tester le lien
-        // directement dans un navigateur (voir AppLogger, qui ne
-        // s'exécute qu'en debug).
-        AppLogger.log(
-          'ERROR',
-          'Carte #$number introuvable : $failedUrl ($error)',
-        );
-        return _NumberFallback(owned: owned, number: number);
-      },
     );
   }
 }
