@@ -52,4 +52,34 @@ class AccountRepositoryImpl implements AccountRepository {
       return Left(CacheFailure(e.message));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> migrateLegacyAccountIds() async {
+    try {
+      await _localDataSource.migrateLegacyAccountIds();
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> importAccount({
+    required String id,
+    required String name,
+    required String gameAccountId,
+    required DateTime createdAt,
+  }) async {
+    try {
+      await _localDataSource.importAccount(
+        id: id,
+        name: name,
+        gameAccountId: gameAccountId,
+        createdAt: createdAt,
+      );
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    }
+  }
 }

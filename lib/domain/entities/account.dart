@@ -13,10 +13,13 @@ class Account extends Equatable {
     required this.name,
     required this.gameAccountId,
     required this.isPrimary,
+    required this.createdAt,
   });
 
-  /// Identifiant local (généré par l'app), utilisé pour toute
-  /// référence interne (ex: possession d'une carte par ce compte).
+  /// Identifiant unique globalement (UUID pour les comptes récents,
+  /// simple nombre en texte pour les plus anciens tant qu'ils n'ont
+  /// pas été synchronisés), utilisé pour toute référence interne
+  /// (ex: possession d'une carte par ce compte).
   final String id;
 
   final String name;
@@ -31,6 +34,10 @@ class Account extends Equatable {
   /// compte à l'autre (jamais dupliqué ni retiré sans remplaçant).
   final bool isPrimary;
 
+  /// Date de création, qui fixe l'ordre d'affichage et suit le
+  /// compte lors de la synchronisation avec le cloud.
+  final DateTime createdAt;
+
   @override
-  List<Object?> get props => [id, name, gameAccountId, isPrimary];
+  List<Object?> get props => [id, name, gameAccountId, isPrimary, createdAt];
 }

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:get_it/get_it.dart';
@@ -11,9 +12,11 @@ import '../../data/datasources/remote/card_remote_data_source.dart';
 import '../../data/repositories/account_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/card_repository_impl.dart';
+import '../../data/repositories/cloud_sync_repository_impl.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/card_repository.dart';
+import '../../domain/repositories/cloud_sync_repository.dart';
 import '../../domain/usecases/add_account.dart';
 import '../../domain/usecases/get_accounts.dart';
 import '../../domain/usecases/get_cards.dart';
@@ -27,12 +30,14 @@ import '../../domain/usecases/sign_in_with_google.dart';
 import '../../domain/usecases/sign_out.dart';
 import '../../domain/usecases/sign_up_with_email.dart';
 import '../../domain/usecases/sync_card_catalog.dart';
+import '../../domain/usecases/sync_with_cloud.dart';
 import '../../domain/usecases/watch_auth_state.dart';
 import '../../presentation/accounts/bloc/accounts_bloc.dart';
 import '../../presentation/auth/bloc/auth_bloc.dart';
 import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
 import '../../presentation/set_detail/bloc/set_detail_bloc.dart';
 import '../../presentation/stats/bloc/stats_bloc.dart';
+import '../../presentation/sync/bloc/sync_bloc.dart';
 import '../network/network_info.dart';
 
 /// Instance unique du service locator, utilisée dans toute
@@ -49,8 +54,8 @@ final GetIt sl = GetIt.instance;
 /// dessous d'elle.
 ///
 /// Suppose `Firebase.initializeApp()` déjà terminé (voir
-/// `main.dart`) : `FirebaseAuth.instance` et `GoogleSignIn.instance`
-/// en dépendent.
+/// `main.dart`) : `FirebaseAuth.instance`, `GoogleSignIn.instance`
+/// et `FirebaseFirestore.instance` en dépendent.
 Future<void> init() async {
   // Core
   sl.registerLazySingleton<Connectivity>(Connectivity.new);
@@ -62,6 +67,9 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<google_sign_in.GoogleSignIn>(
     () => google_sign_in.GoogleSignIn.instance,
+  );
+  sl.registerLazySingleton<FirebaseFirestore>(
+    () => FirebaseFirestore.instance,
   );
 
   // Data sources
@@ -89,6 +97,9 @@ Future<void> init() async {
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(firebaseAuth: sl(), googleSignIn: sl()),
   );
+  sl.registerLazySingleton<CloudSyncRepository>(
+    () => CloudSyncRepositoryImpl(sl()),
+  );
 
   // Use cases
   sl.registerLazySingleton(() => SyncCardCatalog(sl()));
@@ -105,6 +116,13 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SignUpWithEmail(sl()));
   sl.registerLazySingleton(() => SignInWithGoogle(sl()));
   sl.registerLazySingleton(() => SignOut(sl()));
+  sl.registerLazySingleton(
+    () => SyncWithCloud(
+      accountRepository: sl(),
+      cardRepository: sl(),
+      cloudSyncRepository: sl(),
+    ),
+  );
 
   // Blocs / Cubits
   sl.registerFactory(
@@ -134,6 +152,7 @@ Future<void> init() async {
       getCollectionStats: sl(),
     ),
   );
+  sl.registerFactory(() => SyncBloc(syncWithCloud: sl()));
   // Singleton, pas factory : un seul état de connexion pour toute
   // l'app, fourni une fois à la racine (voir CartodexApp) plutôt que
   // recréé à chaque écran.

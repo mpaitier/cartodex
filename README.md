@@ -25,7 +25,7 @@ lib/
 │   ├── theme/
 │   └── widgets/          # Composants UI génériques réutilisables
 ├── domain/                # Règles métier pures, aucune dépendance Flutter
-│   ├── entities/           # CardCategory, CardSet, PokemonCard, Account, CollectionStats, AppUser
+│   ├── entities/           # CardCategory, CardSet, PokemonCard, Account, CollectionStats, AppUser, CloudAccount, SyncResult
 │   ├── repositories/       # Interfaces abstraites (CardRepository, AccountRepository)
 │   └── usecases/           # Un fichier par action (SyncCardCatalog, GetCardSets, GetAccounts, GetCollectionStats...)
 ├── data/                   # Implémentation technique du domaine
@@ -51,10 +51,12 @@ lib/
     │   ├── bloc/                 # StatsBloc, événements, état
     │   ├── view/                  # StatsPage
     │   └── widgets/                # OverallProgressCard, SeriesProgressList, PriorityBoostersList
-    └── auth/                   # Feature : compte applicatif (Firebase)
-        ├── bloc/                 # AuthBloc (singleton), événements, état
-        ├── view/                  # LoginPage
-        └── widgets/                # GoogleSignInButton
+    ├── auth/                   # Feature : compte applicatif (Firebase)
+    │   ├── bloc/                 # AuthBloc (singleton), événements, état
+    │   ├── view/                  # LoginPage
+    │   └── widgets/                # GoogleSignInButton
+    └── sync/                   # Feature : synchronisation cloud
+        └── bloc/                 # SyncBloc, événements, état
 ```
 
 Règle de dépendance : `presentation` → `domain` ← `data`. Le domaine ne connaît jamais Flutter, Drift ou l'API ; il ne dépend que de ses propres interfaces.
@@ -116,7 +118,22 @@ La couche statistiques est posée, sous forme d'une nouvelle feature `stats` (ac
 - **Présentation** : `AuthBloc`, à durée de vie globale (singleton dans le conteneur d'injection, fourni une fois à la racine par `CartodexApp`, contrairement aux autres Blocs recréés par écran) — écoute en continu `authStateChanges` plutôt que de dupliquer la logique connecté/déconnecté dans ses handlers. `LoginPage` (email/mot de passe avec bascule connexion/création, plus `GoogleSignInButton`).
 - **AppBar** de `CardSetsPage` réorganisée : `AppScaffold` gagne un paramètre `leadingActions` (icônes à gauche du titre, à la place du bouton retour automatique — pertinent seulement sur un écran racine sans navigation arrière). À gauche : statistiques, comptes Pokémon. À droite : synchronisation du référentiel de cartes (`SyncCatalogAction`, existant), synchronisation Firebase (`SyncFirebaseAction`, nouveau) — ouvre `LoginPage` tant que déconnecté, propose "Synchroniser maintenant" / "Se déconnecter" une fois connecté.
 - **Connexion optionnelle** : l'app reste pleinement utilisable sans compte applicatif ; se connecter ne sert qu'à activer la synchronisation (étape suivante).
-- **Pas encore fait** : le moteur de synchronisation bidirectionnelle lui-même (comptes Pokémon + possession, règle retenue : "possédée" l'emporte toujours sur "non possédée", jamais de perte de progression). `cloud_firestore` est déjà ajouté aux dépendances en prévision.
+- **Pas encore fait** : rafraîchissement automatique des écrans déjà ouverts après une synchronisation (il faut quitter/rouvrir l'écran concerné pour voir les données à jour) ; réconciliation du champ `isPrimary` en cas de divergence entre appareils (la synchro se concentre sur la possession des cartes, pas sur qui est "principal").
+
+**Moteur de synchronisation (Firestore)** — la synchronisation elle-même, annoncée comme prochaine étape à la fin de la fondation auth :
+- **Stockage** : un document par compte Pokémon (`users/{uid}/accounts/{accountId}`), avec les cartes possédées dans un champ tableau `ownedCardIds` — une synchronisation coûte une lecture par compte, pas une par carte. Voir `CloudSyncRepositoryImpl` pour la forme exacte du document et les règles de sécurité Firestore attendues (à déployer côté console, non fournies en code) :
+  ```
+  match /users/{userId}/accounts/{accountId} {
+    allow read, write: if request.auth != null && request.auth.uid == userId;
+  }
+  ```
+- **Domaine** : entités `CloudAccount` (un compte cloud, avec sa possession) et `SyncResult` (bilan : comptes/cartes récupérés ou envoyés) ; interface `CloudSyncRepository` (`fetchAccounts`, `pushAccount` — ce dernier utilise `arrayUnion` côté Firestore, jamais un remplacement, pour garantir la règle de fusion même côté serveur) ; use case `SyncWithCloud`, qui orchestre : migration des identifiants hérités (voir plus bas), comparaison compte par compte (union des cartes possédées, jamais de perte), puis import des comptes qui n'existent que dans le cloud.
+- **Règle de fusion** : "possédée" l'emporte toujours sur "non possédée" — une carte marquée possédée d'un côté (local ou cloud) l'est aussi de l'autre après synchronisation, jamais l'inverse.
+- **Identifiants hérités** : les comptes créés avant la migration UUID (v2, voir plus haut) portent encore un simple nombre en texte (ex: `"1"`) ; `AccountRepository.migrateLegacyAccountIds` les remplace par de vrais UUID juste avant le premier envoi vers le cloud (deux appareils pourraient sinon avoir chacun un compte `"1"`), en réattachant la possession correspondante.
+- **`Account`** gagne un champ `createdAt`, qui suit le compte lors de la synchronisation (`AccountModel`, `AccountRow` — la colonne existait déjà côté Drift, seulement pas exposée au domaine jusqu'ici).
+- `AccountRepository` gagne `importAccount` (ajoute en local un compte venu du cloud) ; `CardRepository` gagne `addOwnedCards` (marque plusieurs cartes possédées en une fois, sans jamais rien retirer — réutilisable ailleurs, ex: un futur bouton d'import).
+- **Présentation** : `SyncBloc` (créé avec `CardSetsBloc` à l'ouverture de l'écran d'accueil, même cycle de vie) déclenché par `SyncFirebaseAction`, qui affiche le bilan de la synchronisation dans un SnackBar (ou "Déjà à jour." si rien n'a changé).
+- Tout ou rien à la première erreur rencontrée pendant `SyncWithCloud` : la synchronisation s'arrête et remonte l'échec sans revenir en arrière sur ce qui a déjà été appliqué — la fusion étant idempotente, une resynchronisation ultérieure rattrape ce qui manque encore.
 
 ### Mise en route — Firebase
 

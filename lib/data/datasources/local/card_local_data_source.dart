@@ -32,6 +32,15 @@ abstract class CardLocalDataSource {
     required String accountId,
     required bool owned,
   });
+
+  /// Marque toutes les cartes de [cardIds] comme possédées par
+  /// [accountId], en une seule opération. N'enlève jamais rien —
+  /// utilisé par le bouton "+" du détail d'un set et par la
+  /// synchronisation cloud.
+  Future<void> addOwnedCards({
+    required String accountId,
+    required Set<String> cardIds,
+  });
 }
 
 class CardLocalDataSourceImpl implements CardLocalDataSource {
@@ -127,6 +136,29 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
       }
     } on Exception catch (e) {
       throw CacheException('Échec de la mise à jour de la possession : $e');
+    }
+  }
+
+  @override
+  Future<void> addOwnedCards({
+    required String accountId,
+    required Set<String> cardIds,
+  }) async {
+    if (cardIds.isEmpty) return;
+    try {
+      await _database.batch((batch) {
+        batch.insertAllOnConflictUpdate(
+          _database.ownedCards,
+          [
+            for (final cardId in cardIds)
+              OwnedCardsCompanion.insert(cardId: cardId, accountId: accountId),
+          ],
+        );
+      });
+    } on Exception catch (e) {
+      throw CacheException(
+        'Échec de l\'ajout groupé de cartes possédées : $e',
+      );
     }
   }
 

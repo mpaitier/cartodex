@@ -9,6 +9,7 @@ import '../../../domain/entities/card_set.dart';
 import '../../accounts/view/accounts_page.dart';
 import '../../set_detail/view/set_detail_page.dart';
 import '../../stats/view/stats_page.dart';
+import '../../sync/bloc/sync_bloc.dart';
 import '../bloc/card_sets_bloc.dart';
 import '../bloc/card_sets_event.dart';
 import '../bloc/card_sets_state.dart';
@@ -23,16 +24,23 @@ import '../widgets/sync_firebase_action.dart';
 /// Point d'entrée de la feature catalogue, de la gestion de comptes
 /// et des statistiques. AppBar : à gauche, statistiques et comptes
 /// Pokémon ; à droite, synchronisation du référentiel de cartes et
-/// synchronisation avec le compte applicatif (Firebase). Un appui
-/// sur une tuile ouvre [SetDetailPage] pour ce set ; le menu
-/// flottant du bas ([SeriesFilterBar]) filtre la grille par série.
+/// synchronisation avec le compte applicatif (Firebase — voir
+/// `SyncFirebaseAction`, `SyncBloc`, fourni ici avec le même cycle
+/// de vie que l'écran). Un appui sur une tuile ouvre [SetDetailPage]
+/// pour ce set ; le menu flottant du bas ([SeriesFilterBar]) filtre
+/// la grille par série.
 class CardSetsPage extends StatelessWidget {
   const CardSetsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<CardSetsBloc>()..add(const CardSetsStarted()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => sl<CardSetsBloc>()..add(const CardSetsStarted()),
+        ),
+        BlocProvider(create: (_) => sl<SyncBloc>()),
+      ],
       child: const _CardSetsView(),
     );
   }
