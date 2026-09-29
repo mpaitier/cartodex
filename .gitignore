@@ -54,3 +54,6 @@ Thumbs.db
 # ==========================================
 *.sqlite
 *.db
+
+# Firebase configuration
+lib/firebase_options.dart
