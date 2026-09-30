@@ -9,6 +9,7 @@
 /// - "Team Rocket's Moltres ex" (carte) → "team-rockets-moltres-ex"
 /// - "Ruler of the Skies" (set) → "ruler-of-the-skies"
 /// - "Genetic Apex" + "Mewtwo" (booster) → "genetic-apex-mewtwo"
+/// - "Mega Rising" + "Mega Blaziken" (booster) → "mega-rising-blaziken"
 ///
 /// Elle peut donc échouer sur des noms à ponctuation inhabituelle (ex:
 /// "Mr. Mime", "Nidoran♀"/"Nidoran♂", accents...), ou sur des erreurs de
@@ -39,6 +40,11 @@ abstract class PocketCardsImageSlug {
     'Paldean',
   ];
 
+  /// Préfixe des noms de booster du set "Mega Rising" (ex: "Mega
+  /// Blaziken"), absent du nom de fichier correspondant sur
+  /// pocketcards.net — voir [fromBoosterName].
+  static const String _boosterMegaPrefix = 'Mega ';
+
   /// Corrections manuelles pour les cartes dont le nom brut du
   /// référentiel distant ne donne toujours pas le bon slug une fois
   /// passé par [_slugify] (y compris ses règles de découpage) —
@@ -66,8 +72,17 @@ abstract class PocketCardsImageSlug {
   /// du booster par celui de son set (ex: set "Genetic Apex", booster
   /// "Mewtwo" → "genetic-apex-mewtwo"), le nom du booster seul
   /// ("mewtwo") ne correspondant à aucun fichier.
+  ///
+  /// Les boosters de "Mega Rising" s'appellent "Mega Blaziken",
+  /// "Mega Altaria"... dans le référentiel distant, mais le fichier
+  /// est "mega-rising-blaziken" : le "Mega " de tête du nom de
+  /// booster est retiré avant l'assemblage, sans quoi le slug
+  /// contiendrait "mega" deux fois ("mega-rising-mega-blaziken", 404).
   static String fromBoosterName(String setName, String packName) {
-    return _slugify('$setName $packName');
+    final cleanedPackName = packName.startsWith(_boosterMegaPrefix)
+        ? packName.substring(_boosterMegaPrefix.length)
+        : packName;
+    return _slugify('$setName $cleanedPackName');
   }
 
   static String _slugify(String raw) {
