@@ -7,8 +7,8 @@
 /// garantie. Exemples ayant servi de base :
 /// - "Volbeat" (carte) → "volbeat"
 /// - "Team Rocket's Moltres ex" (carte) → "team-rockets-moltres-ex"
-/// - "Ruler of the Skies" (set / booster) → "ruler-of-the-skies"
-/// - "Mega Rising Blaziken" (booster) → "mega-rising-blaziken"
+/// - "Ruler of the Skies" (set) → "ruler-of-the-skies"
+/// - "Genetic Apex" + "Mewtwo" (booster) → "genetic-apex-mewtwo"
 ///
 /// Elle peut donc échouer sur des noms à ponctuation inhabituelle (ex:
 /// "Mr. Mime", "Nidoran♀"/"Nidoran♂", accents...), ou sur des erreurs de
@@ -62,13 +62,13 @@ abstract class PocketCardsImageSlug {
   /// "ruler-of-the-skies").
   static String fromSetName(String name) => _slugify(name);
 
-  /// Le slug d'icône pour un nom de booster (ex: "Mega Rising
-  /// Blaziken" → "mega-rising-blaziken"). Le nom brut du booster, tel
-  /// que fourni par le référentiel distant (`CardSet.packs`), semble
-  /// déjà correspondre exactement au nom attendu par pocketcards.net
-  /// (aucune combinaison avec le nom du set ne s'est révélée
-  /// nécessaire sur les exemples observés à ce jour).
-  static String fromPackName(String name) => _slugify(name);
+  /// Le slug d'icône pour un booster : pocketcards.net préfixe le nom
+  /// du booster par celui de son set (ex: set "Genetic Apex", booster
+  /// "Mewtwo" → "genetic-apex-mewtwo"), le nom du booster seul
+  /// ("mewtwo") ne correspondant à aucun fichier.
+  static String fromBoosterName(String setName, String packName) {
+    return _slugify('$setName $packName');
+  }
 
   static String _slugify(String raw) {
     final withRegionalFormSpace = _insertMissingRegionalFormSpace(raw);

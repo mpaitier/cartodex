@@ -106,7 +106,11 @@ class _BoosterRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          PackAvatar(packName: booster.packName, radius: 10),
+          PackAvatar(
+            setName: booster.setName,
+            packName: booster.packName,
+            radius: 10,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: _ProgressRow(

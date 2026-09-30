@@ -5,16 +5,21 @@ import 'pack_avatar.dart';
 /// Barre horizontale de filtre par booster, avec un choix "Tous"
 /// systématique en tête.
 ///
+/// [setName] est nécessaire pour retrouver l'icône de chaque booster
+/// (voir [PackAvatar]).
+///
 /// Se rend invisible quand le set n'a qu'un seul booster (ou
 /// aucun) : le filtre n'apporterait rien dans ce cas.
 class PackFilterBar extends StatelessWidget {
   const PackFilterBar({
+    required this.setName,
     required this.packs,
     required this.selectedPack,
     required this.onPackSelected,
     super.key,
   });
 
+  final String setName;
   final List<String> packs;
   final String? selectedPack;
   final ValueChanged<String?> onPackSelected;
@@ -41,7 +46,7 @@ class PackFilterBar extends StatelessWidget {
           }
           final pack = packs[index - 1];
           return ChoiceChip(
-            avatar: PackAvatar(packName: pack),
+            avatar: PackAvatar(setName: setName, packName: pack),
             label: Text(pack),
             selected: selectedPack == pack,
             onSelected: (_) => onPackSelected(pack),
