@@ -6,24 +6,44 @@ import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/pocket_cards_image_slug.dart';
 
 /// Icône ronde d'un booster (utilisée par
-/// [PackFilterBar][pack_filter_bar.dart]).
+/// [PackFilterBar][pack_filter_bar.dart] et par la liste des
+/// boosters prioritaires des statistiques).
 ///
-/// Chaque nom de booster est converti en URL d'image via
-/// [PocketCardsImageSlug.fromPackName] (ex: "Mega Rising Blaziken" →
-/// `.../boosters/mega-rising-blaziken.webp`). Retombe sur une icône
-/// générique tant que le chargement échoue — voir [AppLogger], qui
-/// signale chaque échec pour repérer les noms de booster mal gérés
-/// par la conversion générique.
+/// Deux formes d'URL sur pocketcards.net, selon le set :
+/// - set à plusieurs boosters : nom du set suivi de celui du booster
+///   (ex: "Genetic Apex" + "Mewtwo" →
+///   `.../boosters/genetic-apex-mewtwo.webp`, voir
+///   [PocketCardsImageSlug.fromBoosterName]) ;
+/// - set à un seul booster : le nom du set seul (ex: "Ruler of the
+///   Skies" → `.../boosters/ruler-of-the-skies.webp`). Dans ce cas
+///   [packName] reste `null`.
+///
+/// Retombe sur une icône générique tant que le chargement échoue —
+/// voir [AppLogger], qui signale chaque échec pour repérer les noms
+/// mal gérés par la conversion générique.
 class PackAvatar extends StatelessWidget {
-  const PackAvatar({required this.packName, this.radius = 12, super.key});
+  const PackAvatar({
+    required this.setName,
+    this.packName,
+    this.radius = 12,
+    super.key,
+  });
 
-  final String packName;
+  final String setName;
+
+  /// `null` pour l'icône du booster unique d'un set à un seul
+  /// booster (le nom du set suffit alors à former l'URL).
+  final String? packName;
+
   final double radius;
 
   @override
   Widget build(BuildContext context) {
-    final url = '${AppConstants.pocketCardsBoosterImageBaseUrl}/'
-        '${PocketCardsImageSlug.fromPackName(packName)}.webp';
+    final pack = packName;
+    final slug = pack == null
+        ? PocketCardsImageSlug.fromSetName(setName)
+        : PocketCardsImageSlug.fromBoosterName(setName, pack);
+    final url = '${AppConstants.pocketCardsBoosterImageBaseUrl}/$slug.webp';
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.black12,

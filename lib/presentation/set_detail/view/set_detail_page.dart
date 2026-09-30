@@ -94,6 +94,7 @@ class _SetDetailViewState extends State<_SetDetailView> {
           body: Column(
             children: [
               PackFilterBar(
+                setName: widget.set.name,
                 packs: widget.set.packs,
                 selectedPack: state.selectedPack,
                 onPackSelected: (pack) => context
