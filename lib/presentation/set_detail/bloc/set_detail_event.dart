@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/constants/card_rarities.dart';
+import 'ownership_filter.dart';
 
 /// Événements gérés par [SetDetailBloc][set_detail_bloc.dart].
 abstract class SetDetailEvent extends Equatable {
@@ -82,4 +83,16 @@ class RarityFilterChanged extends SetDetailEvent {
 
   @override
   List<Object?> get props => [rarities];
+}
+
+/// Déclenché par la sélection d'une puce dans
+/// [OwnershipFilterBar][../widgets/ownership_filter_bar.dart].
+/// [OwnershipFilter.all] signifie "aucun filtre de possession".
+class OwnershipFilterChanged extends SetDetailEvent {
+  const OwnershipFilterChanged(this.filter);
+
+  final OwnershipFilter filter;
+
+  @override
+  List<Object?> get props => [filter];
 }

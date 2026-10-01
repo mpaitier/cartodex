@@ -12,19 +12,22 @@ import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
 import '../widgets/bulk_add_confirmation_dialog.dart';
 import '../widgets/card_grid_pager.dart';
+import '../widgets/ownership_filter_bar.dart';
 import '../widgets/pack_filter_bar.dart';
 import '../widgets/rarity_filter_bar.dart';
 import '../widgets/secondary_account_picker_dialog.dart';
 import '../widgets/set_progress_summary.dart';
 
-/// Écran de détail d'un set : ses cartes, filtrables par booster et
-/// par rareté (multi-sélection), avec un swipe gauche/droite pour
-/// isoler les cartes losange ou non-losange (voir
-/// [CardGridPager][../widgets/card_grid_pager.dart]). Le tap simple
-/// bascule la possession pour le compte principal ; le double-tap
-/// ouvre un popup pour choisir un compte secondaire ; le bouton "+"
-/// ajoute d'un coup toutes les cartes actuellement affichées au
-/// compte principal.
+/// Écran de détail d'un set : ses cartes, filtrables par booster, par
+/// rareté (multi-sélection) et par possession (principal, secondaires
+/// ou non possédées — voir
+/// [OwnershipFilterBar][../widgets/ownership_filter_bar.dart]), avec
+/// un swipe gauche/droite pour isoler les cartes losange ou
+/// non-losange (voir [CardGridPager][../widgets/card_grid_pager.dart]).
+/// Le tap simple bascule la possession pour le compte principal ; le
+/// double-tap ouvre un popup pour choisir un compte secondaire ; le
+/// bouton "+" ajoute d'un coup toutes les cartes actuellement
+/// affichées au compte principal.
 class SetDetailPage extends StatelessWidget {
   const SetDetailPage({required this.set, super.key});
 
@@ -108,6 +111,13 @@ class _SetDetailViewState extends State<_SetDetailView> {
                     .read<SetDetailBloc>()
                     .add(RarityFilterChanged(rarities)),
               ),
+              OwnershipFilterBar(
+                availableFilters: state.availableOwnershipFilters,
+                selectedFilter: state.selectedOwnership,
+                onFilterSelected: (filter) => context
+                    .read<SetDetailBloc>()
+                    .add(OwnershipFilterChanged(filter)),
+              ),
               Expanded(child: _buildBody(context, state)),
             ],
           ),
@@ -181,7 +191,7 @@ class _SetDetailViewState extends State<_SetDetailView> {
   /// Bouton "+" : demande confirmation, puis ajoute au compte
   /// principal toutes les cartes actuellement affichées dans le
   /// volet actif — pas tout le set, juste ce que l'écran montre en
-  /// ce moment (filtres de booster/rareté inclus).
+  /// ce moment (filtres de booster, rareté et possession inclus).
   Future<void> _onAddAllVisiblePressed(
     BuildContext context,
     SetDetailState state,

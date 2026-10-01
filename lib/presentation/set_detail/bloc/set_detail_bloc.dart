@@ -25,6 +25,9 @@ import 'set_detail_state.dart';
 /// l'état revient en arrière et un message d'erreur est exposé — la
 /// vue l'affiche en SnackBar plutôt que de remplacer toute la
 /// grille.
+///
+/// Trois filtres cumulatifs agissent sur la grille (booster, rareté,
+/// possession) : ils ne vivent que dans l'état, jamais en base.
 class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
   SetDetailBloc({
     required GetCardsBySet getCardsBySet,
@@ -42,6 +45,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<BulkCardsMarkedOwned>(_onBulkCardsMarkedOwned);
     on<PackFilterChanged>(_onPackFilterChanged);
     on<RarityFilterChanged>(_onRarityFilterChanged);
+    on<OwnershipFilterChanged>(_onOwnershipFilterChanged);
   }
 
   final GetCardsBySet _getCardsBySet;
@@ -227,5 +231,12 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     Emitter<SetDetailState> emit,
   ) async {
     emit(state.copyWith(selectedRarities: event.rarities));
+  }
+
+  Future<void> _onOwnershipFilterChanged(
+    OwnershipFilterChanged event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    emit(state.copyWith(selectedOwnership: event.filter));
   }
 }
