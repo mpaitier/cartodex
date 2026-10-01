@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/card_rarities.dart';
 import '../../../domain/entities/pokemon_card.dart';
 import 'card_grid.dart';
+import 'card_grid_density.dart';
 import 'page_dots_indicator.dart';
 
 /// Grille de cartes à 3 volets, navigables au swipe :
@@ -21,6 +22,9 @@ import 'page_dots_indicator.dart';
 /// sans rareté connue (certaines promos) est donc "non-losange" ici
 /// aussi, pas exclue des deux volets à la fois.
 ///
+/// [density] est transmise telle quelle aux trois grilles : les
+/// volets partagent toujours le même nombre de colonnes.
+///
 /// `StatefulWidget` uniquement pour garder le [PageController] en
 /// vie d'un build à l'autre : recréé à chaque frame, il ramènerait
 /// l'utilisateur au volet du milieu à chaque bascule de possession.
@@ -31,6 +35,7 @@ class CardGridPager extends StatefulWidget {
     required this.secondaryOwnedCardIds,
     required this.onTap,
     required this.onDoubleTap,
+    this.density = CardGridDensity.comfortable,
     this.onPageChanged,
     super.key,
   });
@@ -40,6 +45,7 @@ class CardGridPager extends StatefulWidget {
   final Set<String> secondaryOwnedCardIds;
   final ValueChanged<String> onTap;
   final ValueChanged<String> onDoubleTap;
+  final CardGridDensity density;
 
   /// Notifié à chaque changement de volet — voir [CardGroupFilter].
   /// Permet au parent d'adapter d'autres éléments d'UI (ex: les
@@ -104,6 +110,7 @@ class _CardGridPagerState extends State<CardGridPager> {
       cards: cards,
       primaryOwnedCardIds: widget.primaryOwnedCardIds,
       secondaryOwnedCardIds: widget.secondaryOwnedCardIds,
+      density: widget.density,
       onTap: widget.onTap,
       onDoubleTap: widget.onDoubleTap,
     );

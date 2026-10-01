@@ -12,9 +12,11 @@ import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
 import '../widgets/bulk_add_confirmation_dialog.dart';
+import '../widgets/card_grid_density.dart';
 import '../widgets/card_grid_pager.dart';
 import '../widgets/ownership_filter_bar.dart';
 import '../widgets/pack_filter_bar.dart';
+import '../widgets/pinch_gesture_detector.dart';
 import '../widgets/rarity_filter_bar.dart';
 import '../widgets/secondary_account_filter_bar.dart';
 import '../widgets/secondary_account_picker_dialog.dart';
@@ -31,7 +33,9 @@ import '../widgets/set_progress_summary.dart';
 /// Le tap simple bascule la possession pour le compte principal ; le
 /// double-tap ouvre un popup pour choisir un compte secondaire ; le
 /// bouton "+" ajoute d'un coup toutes les cartes actuellement
-/// affichées au compte principal.
+/// affichées au compte principal. La grille passe de 3 à 5 colonnes
+/// (comme dans le jeu) par le bouton de l'AppBar ou par un pincement
+/// à deux doigts (voir [PinchGestureDetector][../widgets/pinch_gesture_detector.dart]).
 class SetDetailPage extends StatelessWidget {
   const SetDetailPage({required this.set, super.key});
 
@@ -73,6 +77,12 @@ class _SetDetailViewState extends State<_SetDetailView> {
   /// défaut, comme `CardGridPager` (`PageController(initialPage: 1)`).
   CardGroupFilter _activeGroup = CardGroupFilter.all;
 
+  /// Densité de la grille (3 ou 5 colonnes, voir [CardGridDensity]),
+  /// changée par le bouton de l'AppBar ou par un pincement à deux
+  /// doigts. État purement local à l'affichage, comme [_activeGroup] :
+  /// pas persisté, retombe sur 3 colonnes à chaque ouverture.
+  CardGridDensity _density = CardGridDensity.comfortable;
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SetDetailBloc, SetDetailState>(
@@ -91,6 +101,16 @@ class _SetDetailViewState extends State<_SetDetailView> {
         return AppScaffold(
           title: widget.set.name,
           titleWidget: _titleWidget(state),
+          actions: [
+            IconButton(
+              onPressed: () =>
+                  setState(() => _density = _density.toggled),
+              icon: Icon(_density.isCompact ? Icons.grid_view : Icons.apps),
+              tooltip: _density.isCompact
+                  ? 'Afficher 3 colonnes'
+                  : 'Afficher 5 colonnes',
+            ),
+          ],
           floatingActionButton: state.status == SetDetailStatus.loaded
               ? FloatingActionButton(
                   onPressed: () => _onAddAllVisiblePressed(context, state),
@@ -169,14 +189,22 @@ class _SetDetailViewState extends State<_SetDetailView> {
       );
     }
 
-    return CardGridPager(
-      cards: state.visibleCards,
-      primaryOwnedCardIds: state.primaryOwnedCardIds,
-      secondaryOwnedCardIds: state.secondaryOwnedCardIds,
-      onTap: (cardId) =>
-          context.read<SetDetailBloc>().add(CardOwnershipToggled(cardId)),
-      onDoubleTap: (cardId) => _onCardDoubleTap(context, state, cardId),
-      onPageChanged: (group) => _onPagerPageChanged(context, state, group),
+    // Rapprocher les doigts affiche plus de colonnes (vue d'ensemble),
+    // les écarter en affiche moins (cartes plus grandes) — comme dans
+    // une galerie photo.
+    return PinchGestureDetector(
+      onPinchIn: () => setState(() => _density = CardGridDensity.compact),
+      onPinchOut: () => setState(() => _density = CardGridDensity.comfortable),
+      child: CardGridPager(
+        cards: state.visibleCards,
+        primaryOwnedCardIds: state.primaryOwnedCardIds,
+        secondaryOwnedCardIds: state.secondaryOwnedCardIds,
+        density: _density,
+        onTap: (cardId) =>
+            context.read<SetDetailBloc>().add(CardOwnershipToggled(cardId)),
+        onDoubleTap: (cardId) => _onCardDoubleTap(context, state, cardId),
+        onPageChanged: (group) => _onPagerPageChanged(context, state, group),
+      ),
     );
   }
 
