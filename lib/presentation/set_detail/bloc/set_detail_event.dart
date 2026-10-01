@@ -88,6 +88,9 @@ class RarityFilterChanged extends SetDetailEvent {
 /// Déclenché par la sélection d'une puce dans
 /// [OwnershipFilterBar][../widgets/ownership_filter_bar.dart].
 /// [OwnershipFilter.all] signifie "aucun filtre de possession".
+///
+/// Réinitialise aussi le compte secondaire précis éventuellement
+/// choisi (voir [SecondaryAccountFilterChanged]).
 class OwnershipFilterChanged extends SetDetailEvent {
   const OwnershipFilterChanged(this.filter);
 
@@ -95,4 +98,18 @@ class OwnershipFilterChanged extends SetDetailEvent {
 
   @override
   List<Object?> get props => [filter];
+}
+
+/// Déclenché par la sélection d'une puce dans
+/// [SecondaryAccountFilterBar][../widgets/secondary_account_filter_bar.dart],
+/// visible seulement quand le filtre de possession est
+/// [OwnershipFilter.secondary]. `null` signifie "tous les comptes
+/// secondaires".
+class SecondaryAccountFilterChanged extends SetDetailEvent {
+  const SecondaryAccountFilterChanged(this.accountId);
+
+  final String? accountId;
+
+  @override
+  List<Object?> get props => [accountId];
 }

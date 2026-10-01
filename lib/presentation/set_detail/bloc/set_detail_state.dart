@@ -21,10 +21,11 @@ enum SetDetailStatus {
 }
 
 /// Sentinelle utilisée par [SetDetailState.copyWith] pour
-/// distinguer "ne pas toucher à [SetDetailState.selectedPack]" de
-/// "le remettre à `null`" (qui est une valeur valide : "tous les
-/// boosters"). Un paramètre nommé nullable ne peut pas porter cette
-/// distinction à lui seul.
+/// distinguer "ne pas toucher à [SetDetailState.selectedPack]" (ou à
+/// [SetDetailState.selectedSecondaryAccountId]) de "le remettre à
+/// `null`" (qui est une valeur valide : "tous les boosters", "tous
+/// les secondaires"). Un paramètre nommé nullable ne peut pas porter
+/// cette distinction à lui seul.
 const _unset = Object();
 
 /// État affiché par l'écran de détail d'un set.
@@ -37,6 +38,7 @@ class SetDetailState extends Equatable {
     this.selectedPack,
     this.selectedRarities = const {},
     this.selectedOwnership = OwnershipFilter.all,
+    this.selectedSecondaryAccountId,
     this.errorMessage,
   });
 
@@ -47,8 +49,8 @@ class SetDetailState extends Equatable {
   final List<Account> accounts;
 
   /// Cartes possédées, par compte : `ownershipByAccountId[accountId]`
-  /// donne les identifiants de cartes de ce set que ce compte
-  /// possède.
+  /// donne les identifiants de cartes que ce compte possède (tous
+  /// sets confondus — voir `GetOwnedCardIds`).
   final Map<String, Set<String>> ownershipByAccountId;
 
   /// Booster actuellement sélectionné dans le filtre. `null`
@@ -66,6 +68,12 @@ class SetDetailState extends Equatable {
   /// "aucun filtre" est non nulle, pas besoin de sentinelle.
   final OwnershipFilter selectedOwnership;
 
+  /// Compte secondaire précis choisi quand [selectedOwnership] vaut
+  /// [OwnershipFilter.secondary]. `null` signifie "tous les comptes
+  /// secondaires". Valeur brute : voir [activeSecondaryAccountId]
+  /// pour celle réellement appliquée.
+  final String? selectedSecondaryAccountId;
+
   final String? errorMessage;
 
   /// Le compte principal, s'il en existe un. `null` tant qu'aucun
@@ -81,6 +89,32 @@ class SetDetailState extends Equatable {
 
   List<Account> get secondaryAccounts =>
       accounts.where((account) => !account.isPrimary).toList();
+
+  /// Les comptes secondaires qui possèdent au moins une carte de CE
+  /// set — ceux qu'il a un sens de proposer dans
+  /// `SecondaryAccountFilterBar`. [ownershipByAccountId] couvrant
+  /// tous les sets, on recoupe avec [cards].
+  List<Account> get secondaryAccountsWithCards {
+    return secondaryAccounts.where((account) {
+      final owned = ownershipByAccountId[account.id] ?? const <String>{};
+      return cards.any((card) => owned.contains(card.id));
+    }).toList();
+  }
+
+  /// Le compte secondaire réellement appliqué par le filtre : `null`
+  /// (tous les secondaires) si le filtre de possession n'est pas
+  /// [OwnershipFilter.secondary], ou si le compte choisi n'a plus de
+  /// carte dans ce set (ex: il vient d'en perdre la dernière) —
+  /// sinon la grille se viderait sans qu'aucune puce proposée ne
+  /// l'explique.
+  String? get activeSecondaryAccountId {
+    final id = selectedSecondaryAccountId;
+    if (id == null || selectedOwnership != OwnershipFilter.secondary) {
+      return null;
+    }
+    final stillValid = secondaryAccountsWithCards.any((a) => a.id == id);
+    return stillValid ? id : null;
+  }
 
   /// Cartes possédées par le compte principal — ce que le tap
   /// simple bascule.
@@ -157,12 +191,24 @@ class SetDetailState extends Equatable {
       // Calculés une seule fois : les getters reconstruisent leur
       // ensemble à chaque appel, trop coûteux dans une boucle.
       final primaryIds = primaryOwnedCardIds;
-      final secondaryIds = secondaryOwnedCardIds;
+      final secondaryIds = _secondaryIdsForFilter;
       result = result
           .where((card) => _matchesOwnership(card, primaryIds, secondaryIds))
           .toList();
     }
     return result;
+  }
+
+  /// Les cartes secondaires que le filtre de possession doit
+  /// considérer : celles du compte précis choisi
+  /// ([activeSecondaryAccountId]), ou à défaut l'union de tous les
+  /// secondaires. [activeSecondaryAccountId] n'est non nul que sur
+  /// le filtre [OwnershipFilter.secondary] : "non possédées" reste
+  /// donc toujours calculé sur l'union.
+  Set<String> get _secondaryIdsForFilter {
+    final accountId = activeSecondaryAccountId;
+    if (accountId == null) return secondaryOwnedCardIds;
+    return ownershipByAccountId[accountId] ?? const <String>{};
   }
 
   /// [visibleCards] restreintes au volet [group] de
@@ -263,6 +309,7 @@ class SetDetailState extends Equatable {
     Object? selectedPack = _unset,
     Set<CardRarity>? selectedRarities,
     OwnershipFilter? selectedOwnership,
+    Object? selectedSecondaryAccountId = _unset,
     String? errorMessage,
   }) {
     return SetDetailState(
@@ -275,6 +322,9 @@ class SetDetailState extends Equatable {
           : selectedPack as String?,
       selectedRarities: selectedRarities ?? this.selectedRarities,
       selectedOwnership: selectedOwnership ?? this.selectedOwnership,
+      selectedSecondaryAccountId: identical(selectedSecondaryAccountId, _unset)
+          ? this.selectedSecondaryAccountId
+          : selectedSecondaryAccountId as String?,
       errorMessage: errorMessage,
     );
   }
@@ -288,6 +338,7 @@ class SetDetailState extends Equatable {
         selectedPack,
         selectedRarities,
         selectedOwnership,
+        selectedSecondaryAccountId,
         errorMessage,
       ];
 }

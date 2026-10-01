@@ -7,6 +7,7 @@ import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
+import '../bloc/ownership_filter.dart';
 import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
@@ -15,13 +16,16 @@ import '../widgets/card_grid_pager.dart';
 import '../widgets/ownership_filter_bar.dart';
 import '../widgets/pack_filter_bar.dart';
 import '../widgets/rarity_filter_bar.dart';
+import '../widgets/secondary_account_filter_bar.dart';
 import '../widgets/secondary_account_picker_dialog.dart';
 import '../widgets/set_progress_summary.dart';
 
 /// Écran de détail d'un set : ses cartes, filtrables par booster, par
 /// rareté (multi-sélection) et par possession (principal, secondaires
 /// ou non possédées — voir
-/// [OwnershipFilterBar][../widgets/ownership_filter_bar.dart]), avec
+/// [OwnershipFilterBar][../widgets/ownership_filter_bar.dart] ; sur
+/// "secondaires", un second filtre choisit un compte précis — voir
+/// [SecondaryAccountFilterBar][../widgets/secondary_account_filter_bar.dart]), avec
 /// un swipe gauche/droite pour isoler les cartes losange ou
 /// non-losange (voir [CardGridPager][../widgets/card_grid_pager.dart]).
 /// Le tap simple bascule la possession pour le compte principal ; le
@@ -118,6 +122,14 @@ class _SetDetailViewState extends State<_SetDetailView> {
                     .read<SetDetailBloc>()
                     .add(OwnershipFilterChanged(filter)),
               ),
+              if (state.selectedOwnership == OwnershipFilter.secondary)
+                SecondaryAccountFilterBar(
+                  accounts: state.secondaryAccountsWithCards,
+                  selectedAccountId: state.activeSecondaryAccountId,
+                  onAccountSelected: (accountId) => context
+                      .read<SetDetailBloc>()
+                      .add(SecondaryAccountFilterChanged(accountId)),
+                ),
               Expanded(child: _buildBody(context, state)),
             ],
           ),
