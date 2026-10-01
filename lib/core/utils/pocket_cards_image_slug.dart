@@ -7,19 +7,22 @@
 /// garantie. Exemples ayant servi de base :
 /// - "Volbeat" (carte) → "volbeat"
 /// - "Team Rocket's Moltres ex" (carte) → "team-rockets-moltres-ex"
+/// - "Porygon2" (carte) → "porygon-2"
 /// - "Ruler of the Skies" (set) → "ruler-of-the-skies"
 /// - "Genetic Apex" + "Mewtwo" (booster) → "genetic-apex-mewtwo"
 /// - "Mega Rising" + "Mega Blaziken" (booster) → "mega-rising-blaziken"
 ///
 /// Elle peut donc échouer sur des noms à ponctuation inhabituelle (ex:
 /// "Mr. Mime", "Nidoran♀"/"Nidoran♂", accents...), ou sur des erreurs de
-/// saisie présentes dans le référentiel distant lui-même. Deux cas
+/// saisie présentes dans le référentiel distant lui-même. Trois cas
 /// récurrents sont traités directement dans [_slugify] :
 /// - deux mots concaténés sans espace mais séparés par une majuscule
 ///   (ex: "Teal MaskOgerpon") ;
 /// - un préfixe de forme régionale collé au nom du Pokémon, sans
 ///   même de majuscule pour le signaler (ex: "Galarianzigzagoon",
-///   tout en minuscules) — voir [_regionalFormPrefixes].
+///   tout en minuscules) — voir [_regionalFormPrefixes] ;
+/// - un chiffre collé à la fin d'un nom, que le site sépare par un
+///   tiret (ex: "Porygon2" → "porygon-2").
 ///
 /// Pour tout autre cas non couvert, voir [_cardSlugOverrides]
 /// ci-dessous et [AppLogger][../utils/app_logger.dart] côté widgets,
@@ -92,8 +95,16 @@ abstract class PocketCardsImageSlug {
     // (ex: "Teal MaskOgerpon") : on la réinsère avant toute majuscule
     // précédée d'une minuscule ou d'un chiffre, avant la mise en
     // minuscule qui la rendrait indétectable.
-    final spaced = withRegionalFormSpace.replaceAllMapped(
+    final camelSpaced = withRegionalFormSpace.replaceAllMapped(
       RegExp(r'([a-z0-9])([A-Z])'),
+      (match) => '${match[1]} ${match[2]}',
+    );
+    // pocketcards.net sépare par un tiret un chiffre collé à la fin
+    // d'un nom (ex: "Porygon2" → "porygon-2", et non "porygon2" qui
+    // renvoie un 404) : on insère un espace entre une minuscule et un
+    // chiffre, normalisé en tiret plus bas comme les autres espaces.
+    final spaced = camelSpaced.replaceAllMapped(
+      RegExp(r'([a-z])(\d)'),
       (match) => '${match[1]} ${match[2]}',
     );
     final lowerCased = spaced.toLowerCase();
