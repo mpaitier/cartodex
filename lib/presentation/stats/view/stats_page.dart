@@ -10,11 +10,16 @@ import '../bloc/stats_event.dart';
 import '../bloc/stats_state.dart';
 import '../widgets/overall_progress_card.dart';
 import '../widgets/priority_boosters_list.dart';
+import '../widgets/rarity_scope_action.dart';
 import '../widgets/series_progress_list.dart';
 
 /// Écran de statistiques : taux de complétion global, détail par
-/// série, et boosters à ouvrir en priorité — tout calculé pour le
-/// compte principal (voir [StatsBloc]).
+/// série, et boosters à ouvrir en priorité.
+///
+/// Les chiffres sont ceux du compte principal (violet), prolongés en
+/// jaune par ce que les comptes secondaires possèdent en plus — voir
+/// [StatsBloc]. Le bouton de la top bar ([RarityScopeAction]) restreint
+/// le tout à une famille de raretés : rond (toutes), losange, étoile.
 class StatsPage extends StatelessWidget {
   const StatsPage({super.key});
 
@@ -36,6 +41,14 @@ class _StatsView extends StatelessWidget {
       builder: (context, state) {
         return AppScaffold(
           title: 'Statistiques',
+          actions: [
+            RarityScopeAction(
+              scope: state.rarityScope,
+              onPressed: () => context
+                  .read<StatsBloc>()
+                  .add(StatsRarityScopeChanged(state.rarityScope.next)),
+            ),
+          ],
           body: _buildBody(context, state),
         );
       },
@@ -75,7 +88,7 @@ class _StatsView extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        OverallProgressCard(owned: stats.totalOwned, total: stats.totalCards),
+        OverallProgressCard(progress: stats.overall),
         const SizedBox(height: 24),
         Text('Par série', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),

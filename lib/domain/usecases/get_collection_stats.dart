@@ -5,6 +5,8 @@ import '../../core/error/failures.dart';
 import '../entities/card_set.dart';
 import '../entities/collection_stats.dart';
 import '../entities/pokemon_card.dart';
+import '../entities/progress_count.dart';
+import '../entities/rarity_scope.dart';
 import '../repositories/card_repository.dart';
 import '../usecase.dart';
 
@@ -15,9 +17,16 @@ import '../usecase.dart';
 /// de la couche présentation.
 const _promoSeriesKey = 'PROMO';
 
-/// Calcule les statistiques de complétion d'un compte : taux global,
-/// par série, et progression des boosters par set (voir
-/// [CollectionStats]).
+/// Calcule les statistiques de complétion : taux global, par série,
+/// et progression des boosters par set (voir [CollectionStats]).
+///
+/// Chaque progression est un [ProgressCount] "X (+Y) / Z" :
+/// - X : cartes possédées par le compte principal ;
+/// - Y : cartes possédées par au moins un compte secondaire mais pas
+///   par le principal (union des secondaires, sans doublon, privée
+///   des cartes du principal) ;
+/// - Z : cartes existantes dans le périmètre de raretés demandé
+///   ([GetCollectionStatsParams.rarityScope]).
 ///
 /// Combine trois appels déjà exposés par [CardRepository]
 /// (`getCardSets`, `getCardsBySet` pour chaque set, `getOwnedCardIds`)
@@ -35,51 +44,99 @@ class GetCollectionStats
     GetCollectionStatsParams params,
   ) async {
     final setsResult = await _repository.getCardSets();
-    final ownedResult = await _repository.getOwnedCardIds(params.accountId);
+    final primaryResult =
+        await _repository.getOwnedCardIds(params.primaryAccountId);
 
     final failure = setsResult.fold((f) => f, (_) => null) ??
-        ownedResult.fold((f) => f, (_) => null);
+        primaryResult.fold((f) => f, (_) => null);
     if (failure != null) return Left(failure);
 
     final sets = setsResult.getOrElse(() => const []);
-    final ownedIds = ownedResult.getOrElse(() => const <String>{});
+    final primaryIds = primaryResult.getOrElse(() => const <String>{});
+
+    // Union des cartes de tous les secondaires.
+    final secondaryIds = <String>{};
+    for (final accountId in params.secondaryAccountIds) {
+      final ownedResult = await _repository.getOwnedCardIds(accountId);
+      final ownedFailure = ownedResult.fold((f) => f, (_) => null);
+      if (ownedFailure != null) return Left(ownedFailure);
+      secondaryIds.addAll(ownedResult.getOrElse(() => const <String>{}));
+    }
+    // Ne garde que ce que le principal n'a pas déjà : pas de
+    // double-comptage entre X et Y.
+    final secondaryOnlyIds = secondaryIds.difference(primaryIds);
 
     final cardsBySetId = <String, List<PokemonCard>>{};
     for (final set in sets) {
       final cardsResult = await _repository.getCardsBySet(set.id);
       final cardsFailure = cardsResult.fold((f) => f, (_) => null);
       if (cardsFailure != null) return Left(cardsFailure);
-      cardsBySetId[set.id] = cardsResult.getOrElse(() => const []);
+      cardsBySetId[set.id] = cardsResult
+          .getOrElse(() => const <PokemonCard>[])
+          .where((card) => params.rarityScope.includes(card.rarity))
+          .toList();
     }
 
     return Right(
-      _buildStats(sets: sets, cardsBySetId: cardsBySetId, ownedIds: ownedIds),
+      _buildStats(
+        sets: sets,
+        cardsBySetId: cardsBySetId,
+        primaryIds: primaryIds,
+        secondaryOnlyIds: secondaryOnlyIds,
+      ),
+    );
+  }
+
+  /// Compte, parmi [cardIds], ce que possède le principal (X), ce
+  /// que les secondaires ajoutent (Y), et le total (Z).
+  ProgressCount _countFor(
+    Iterable<String> cardIds, {
+    required Set<String> primaryIds,
+    required Set<String> secondaryOnlyIds,
+  }) {
+    var owned = 0;
+    var secondaryExtra = 0;
+    var total = 0;
+    for (final id in cardIds) {
+      total++;
+      if (primaryIds.contains(id)) {
+        owned++;
+      } else if (secondaryOnlyIds.contains(id)) {
+        secondaryExtra++;
+      }
+    }
+    return ProgressCount(
+      owned: owned,
+      secondaryExtra: secondaryExtra,
+      total: total,
     );
   }
 
   CollectionStats _buildStats({
     required List<CardSet> sets,
     required Map<String, List<PokemonCard>> cardsBySetId,
-    required Set<String> ownedIds,
+    required Set<String> primaryIds,
+    required Set<String> secondaryOnlyIds,
   }) {
-    var totalOwned = 0;
-    var totalCards = 0;
+    var overall = ProgressCount.zero;
     final seriesAccumulators = <String, _SeriesAccumulator>{};
     final setBoosterProgress = <SetBoosterProgress>[];
 
     for (final set in sets) {
-      final cards = cardsBySetId[set.id] ?? const [];
-      final ownedInSet = cards.where((c) => ownedIds.contains(c.id)).length;
-      totalOwned += ownedInSet;
-      totalCards += cards.length;
+      final cards = cardsBySetId[set.id] ?? const <PokemonCard>[];
+      final setCount = _countFor(
+        cards.map((c) => c.id),
+        primaryIds: primaryIds,
+        secondaryOnlyIds: secondaryOnlyIds,
+      );
+      overall += setCount;
 
       final seriesKey = set.isPromo ? _promoSeriesKey : set.seriesId;
       final accumulator = seriesAccumulators.putIfAbsent(
         seriesKey,
         () => _SeriesAccumulator(label: set.isPromo ? 'Promo' : set.seriesId),
       );
-      accumulator.owned += ownedInSet;
-      accumulator.total += cards.length;
+      accumulator.progress += setCount;
 
       // Progression par booster : on ignore les sets promotionnels
       // (jamais recommandé d'ouvrir un booster promo) et les sets
@@ -108,8 +165,11 @@ class GetCollectionStats
               setId: set.id,
               setName: set.name,
               packName: entry.key,
-              owned: entry.value.where(ownedIds.contains).length,
-              total: entry.value.length,
+              progress: _countFor(
+                entry.value,
+                primaryIds: primaryIds,
+                secondaryOnlyIds: secondaryOnlyIds,
+              ),
             ),
           )
           .toList();
@@ -118,8 +178,11 @@ class GetCollectionStats
         SetBoosterProgress(
           setId: set.id,
           setName: set.name,
-          owned: unionIds.where(ownedIds.contains).length,
-          total: unionIds.length,
+          progress: _countFor(
+            unionIds,
+            primaryIds: primaryIds,
+            secondaryOnlyIds: secondaryOnlyIds,
+          ),
           boosters: boosters,
         ),
       );
@@ -139,14 +202,12 @@ class GetCollectionStats
       return SeriesStats(
         seriesKey: key,
         label: accumulator.label,
-        owned: accumulator.owned,
-        total: accumulator.total,
+        progress: accumulator.progress,
       );
     }).toList();
 
     return CollectionStats(
-      totalOwned: totalOwned,
-      totalCards: totalCards,
+      overall: overall,
       seriesStats: seriesStats,
       setBoosterProgress: setBoosterProgress,
     );
@@ -159,16 +220,27 @@ class _SeriesAccumulator {
   _SeriesAccumulator({required this.label});
 
   final String label;
-  int owned = 0;
-  int total = 0;
+  ProgressCount progress = ProgressCount.zero;
 }
 
-/// Paramètre attendu par [GetCollectionStats].
+/// Paramètres attendus par [GetCollectionStats].
 class GetCollectionStatsParams extends Equatable {
-  const GetCollectionStatsParams({required this.accountId});
+  const GetCollectionStatsParams({
+    required this.primaryAccountId,
+    this.secondaryAccountIds = const [],
+    this.rarityScope = RarityScope.all,
+  });
 
-  final String accountId;
+  /// Compte principal : sa possession donne X.
+  final String primaryAccountId;
+
+  /// Comptes secondaires : leur union (privée du principal) donne Y.
+  final List<String> secondaryAccountIds;
+
+  /// Périmètre de raretés pris en compte (rond / losange / étoile).
+  final RarityScope rarityScope;
 
   @override
-  List<Object?> get props => [accountId];
+  List<Object?> get props =>
+      [primaryAccountId, secondaryAccountIds, rarityScope];
 }

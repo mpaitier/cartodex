@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 
-/// Carte de progression globale de la collection : cartes possédées
-/// sur le total, tous sets confondus, avec une barre de progression
-/// et le pourcentage.
+import '../../../domain/entities/progress_count.dart';
+import 'progress_count_label.dart';
+import 'stacked_progress_bar.dart';
+
+/// Carte de progression globale de la collection, tous sets
+/// confondus : barre violette du compte principal prolongée en jaune
+/// par ce que les secondaires ajoutent, le détail "X (+Y) / Z", et le
+/// pourcentage du compte principal.
 class OverallProgressCard extends StatelessWidget {
-  const OverallProgressCard({required this.owned, required this.total, super.key});
+  const OverallProgressCard({required this.progress, super.key});
 
-  final int owned;
-  final int total;
-
-  double get _ratio => total == 0 ? 0 : owned / total;
+  final ProgressCount progress;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final percent = (_ratio * 100).toStringAsFixed(1);
+    final percent = (progress.primaryRatio * 100).toStringAsFixed(1);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -23,12 +25,18 @@ class OverallProgressCard extends StatelessWidget {
           children: [
             Text('Collection complète', style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(value: _ratio, minHeight: 10),
-            ),
+            StackedProgressBar(progress: progress, height: 10),
             const SizedBox(height: 8),
-            Text('$owned / $total cartes ($percent %)'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ProgressCountLabel(
+                  progress: progress,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                Text('$percent %', style: theme.textTheme.bodyMedium),
+              ],
+            ),
           ],
         ),
       ),
