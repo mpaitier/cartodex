@@ -23,6 +23,7 @@ import '../../domain/usecases/get_cards.dart';
 import '../../domain/usecases/get_cards_by_set.dart';
 import '../../domain/usecases/get_collection_stats.dart';
 import '../../domain/usecases/get_owned_cards_id.dart';
+import '../../domain/usecases/get_sets_progress.dart';
 import '../../domain/usecases/set_card_owned.dart';
 import '../../domain/usecases/set_primary_account.dart';
 import '../../domain/usecases/sign_in_with_email.dart';
@@ -111,6 +112,12 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddAccount(sl()));
   sl.registerLazySingleton(() => SetPrimaryAccount(sl()));
   sl.registerLazySingleton(() => GetCollectionStats(sl()));
+  sl.registerLazySingleton(
+    () => GetSetsProgress(
+      cardRepository: sl(),
+      accountRepository: sl(),
+    ),
+  );
   sl.registerLazySingleton(() => WatchAuthState(sl()));
   sl.registerLazySingleton(() => SignInWithEmail(sl()));
   sl.registerLazySingleton(() => SignUpWithEmail(sl()));
@@ -129,6 +136,7 @@ Future<void> init() async {
     () => CardSetsBloc(
       getCardSets: sl(),
       syncCardCatalog: sl(),
+      getSetsProgress: sl(),
     ),
   );
   sl.registerFactory(

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../domain/entities/card_set.dart';
+import '../../../domain/entities/set_progress.dart';
 
 /// Étape du cycle de vie de [CardSetsState].
 enum CardSetsStatus {
@@ -52,6 +53,7 @@ class CardSetsState extends Equatable {
     this.status = CardSetsStatus.initial,
     this.sets = const [],
     this.selectedSeriesKey,
+    this.progressBySetId = const {},
     this.errorMessage,
   });
 
@@ -64,6 +66,12 @@ class CardSetsState extends Equatable {
   /// fois (voir [CardSetsBloc._reload][../bloc/card_sets_bloc.dart],
   /// qui choisit la série la plus récente par défaut).
   final String? selectedSeriesKey;
+
+  /// Progression du compte principal (et des secondaires en plus)
+  /// pour chaque set, indexée par identifiant de set. Vide tant
+  /// qu'aucun compte principal n'existe : les tuiles n'affichent
+  /// alors aucune progression.
+  final Map<String, SetProgress> progressBySetId;
 
   final String? errorMessage;
 
@@ -109,16 +117,19 @@ class CardSetsState extends Equatable {
     CardSetsStatus? status,
     List<CardSet>? sets,
     String? selectedSeriesKey,
+    Map<String, SetProgress>? progressBySetId,
     String? errorMessage,
   }) {
     return CardSetsState(
       status: status ?? this.status,
       sets: sets ?? this.sets,
       selectedSeriesKey: selectedSeriesKey ?? this.selectedSeriesKey,
+      progressBySetId: progressBySetId ?? this.progressBySetId,
       errorMessage: errorMessage,
     );
   }
 
   @override
-  List<Object?> get props => [status, sets, selectedSeriesKey, errorMessage];
+  List<Object?> get props =>
+      [status, sets, selectedSeriesKey, progressBySetId, errorMessage];
 }
