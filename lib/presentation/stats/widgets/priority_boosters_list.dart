@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/collection_stats.dart';
+import '../../../domain/entities/progress_count.dart';
 import '../../set_detail/widgets/pack_avatar.dart';
+import 'progress_count_label.dart';
 
 /// Boosters à ouvrir en priorité, groupés par set — voir
 /// `CollectionStats.priorityBoosterProgress` (sets pas encore
@@ -15,6 +17,9 @@ import '../../set_detail/widgets/pack_avatar.dart';
 /// boosters, sans double-comptage d'une carte partagée) puis le
 /// détail de chacun en dessous, avec son icône, relié par un trait
 /// vertical.
+///
+/// Chaque progression se lit "X (+Y) / Z" : X pour le compte
+/// principal, Y ce que les secondaires ont en plus, Z le total.
 class PriorityBoostersList extends StatelessWidget {
   const PriorityBoostersList({required this.setProgress, super.key});
 
@@ -61,8 +66,7 @@ class _SetBoosterBlock extends StatelessWidget {
             label: set.setName,
             labelStyle: theme.textTheme.bodyMedium
                 ?.copyWith(fontWeight: FontWeight.bold),
-            owned: set.owned,
-            total: set.total,
+            progress: set.progress,
           ),
           if (set.hasMultipleBoosters) _BoosterBracket(boosters: set.boosters),
         ],
@@ -123,36 +127,31 @@ class _BoosterRow extends StatelessWidget {
           radius: 10,
         ),
         label: booster.packName,
-        owned: booster.owned,
-        total: booster.total,
+        progress: booster.progress,
       ),
     );
   }
 }
 
-/// Une ligne "[icône] nom — X/Y (Z %)", réutilisée pour la ligne d'un
-/// set et pour celle de chacun de ses boosters. [leading] est
+/// Une ligne "[icône] nom — X (+Y) / Z", réutilisée pour la ligne
+/// d'un set et pour celle de chacun de ses boosters. [leading] est
 /// facultatif : sans lui, la ligne commence directement par le nom.
 class _ProgressRow extends StatelessWidget {
   const _ProgressRow({
     required this.label,
-    required this.owned,
-    required this.total,
+    required this.progress,
     this.leading,
     this.labelStyle,
   });
 
   final String label;
-  final int owned;
-  final int total;
+  final ProgressCount progress;
   final Widget? leading;
   final TextStyle? labelStyle;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ratio = total == 0 ? 0.0 : owned / total;
-    final percent = (ratio * 100).toStringAsFixed(0);
     return Row(
       children: [
         if (leading != null) ...[
@@ -162,7 +161,7 @@ class _ProgressRow extends StatelessWidget {
         Expanded(
           child: Text(label, style: labelStyle ?? theme.textTheme.bodySmall),
         ),
-        Text('$owned/$total ($percent %)', style: theme.textTheme.bodySmall),
+        ProgressCountLabel(progress: progress),
       ],
     );
   }

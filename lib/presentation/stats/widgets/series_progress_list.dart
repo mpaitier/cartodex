@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/collection_stats.dart';
+import 'progress_count_label.dart';
+import 'stacked_progress_bar.dart';
 
 /// Une ligne de progression par série ([CollectionStats.seriesStats]),
 /// dans le même ordre que `SeriesFilterBar` de `CardSetsPage`
@@ -40,20 +42,9 @@ class _SeriesRow extends StatelessWidget {
             width: 56,
             child: Text(series.label, style: theme.textTheme.bodyMedium),
           ),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: series.completionRatio,
-                minHeight: 8,
-              ),
-            ),
-          ),
+          Expanded(child: StackedProgressBar(progress: series.progress)),
           const SizedBox(width: 8),
-          Text(
-            '${series.owned}/${series.total}',
-            style: theme.textTheme.bodySmall,
-          ),
+          ProgressCountLabel(progress: series.progress),
         ],
       ),
     );
