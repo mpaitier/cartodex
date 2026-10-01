@@ -25,6 +25,11 @@ import 'set_detail_state.dart';
 /// l'état revient en arrière et un message d'erreur est exposé — la
 /// vue l'affiche en SnackBar plutôt que de remplacer toute la
 /// grille.
+///
+/// Trois filtres cumulatifs agissent sur la grille (booster, rareté,
+/// possession — ce dernier pouvant se restreindre à un compte
+/// secondaire précis) : ils ne vivent que dans l'état, jamais en
+/// base.
 class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
   SetDetailBloc({
     required GetCardsBySet getCardsBySet,
@@ -42,6 +47,8 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<BulkCardsMarkedOwned>(_onBulkCardsMarkedOwned);
     on<PackFilterChanged>(_onPackFilterChanged);
     on<RarityFilterChanged>(_onRarityFilterChanged);
+    on<OwnershipFilterChanged>(_onOwnershipFilterChanged);
+    on<SecondaryAccountFilterChanged>(_onSecondaryAccountFilterChanged);
   }
 
   final GetCardsBySet _getCardsBySet;
@@ -227,5 +234,26 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     Emitter<SetDetailState> emit,
   ) async {
     emit(state.copyWith(selectedRarities: event.rarities));
+  }
+
+  Future<void> _onOwnershipFilterChanged(
+    OwnershipFilterChanged event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    // Changer de filtre de possession oublie le compte secondaire
+    // précis : en revenant sur "secondaires", on repart de "tous".
+    emit(
+      state.copyWith(
+        selectedOwnership: event.filter,
+        selectedSecondaryAccountId: null,
+      ),
+    );
+  }
+
+  Future<void> _onSecondaryAccountFilterChanged(
+    SecondaryAccountFilterChanged event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    emit(state.copyWith(selectedSecondaryAccountId: event.accountId));
   }
 }

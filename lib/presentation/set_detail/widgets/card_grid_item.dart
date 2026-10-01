@@ -9,6 +9,10 @@ import '../../../domain/entities/pokemon_card.dart';
 /// Une tuile de la grille de cartes : illustration centrée, nom,
 /// numéro et rareté, et un badge de possession.
 ///
+/// En mode [compact] (grille à 5 colonnes, voir `CardGridDensity`),
+/// seuls l'illustration et le badge (réduit) restent : le texte ne
+/// tiendrait pas dans une tuile aussi étroite.
+///
 /// Composant purement visuel, sans connaissance du Bloc parent :
 /// le tap simple (compte principal) remonte via [onTap], le
 /// double-tap (choix d'un compte secondaire) via [onDoubleTap].
@@ -19,6 +23,7 @@ class CardGridItem extends StatelessWidget {
     required this.ownedBySecondary,
     required this.onTap,
     required this.onDoubleTap,
+    this.compact = false,
     super.key,
   });
 
@@ -27,6 +32,9 @@ class CardGridItem extends StatelessWidget {
   final bool ownedBySecondary;
   final VoidCallback onTap;
   final VoidCallback onDoubleTap;
+
+  /// Vrai pour la grille dense : texte masqué, badge réduit.
+  final bool compact;
 
   /// Numéro sur 3 chiffres (ex: "007"), quelle que soit la largeur
   /// du numéro brut renvoyé par la source. Affiché à la fois dans
@@ -53,44 +61,47 @@ class CardGridItem extends StatelessWidget {
                     imageUrl: card.imageUrl,
                     owned: owned,
                     number: _paddedNumber,
+                    compact: compact,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        card.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelMedium,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '#$_paddedNumber',
-                            style: theme.textTheme.labelSmall,
-                          ),
-                          if (rarity != null)
+                if (!compact)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          card.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelMedium,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Text(
-                              rarity.symbol,
+                              '#$_paddedNumber',
                               style: theme.textTheme.labelSmall,
                             ),
-                        ],
-                      ),
-                    ],
+                            if (rarity != null)
+                              Text(
+                                rarity.symbol,
+                                style: theme.textTheme.labelSmall,
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
             Positioned(
-              top: 4,
-              right: 4,
+              top: compact ? 2 : 4,
+              right: compact ? 2 : 4,
               child: _OwnershipBadge(
                 ownedByPrimary: ownedByPrimary,
                 ownedBySecondary: ownedBySecondary,
+                compact: compact,
               ),
             ),
           ],
@@ -122,11 +133,13 @@ class _CardArt extends StatelessWidget {
     required this.imageUrl,
     required this.owned,
     required this.number,
+    required this.compact,
   });
 
   final String? imageUrl;
   final bool owned;
   final String number;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +151,7 @@ class _CardArt extends StatelessWidget {
     return ColoredBox(
       color: owned ? Colors.black12 : Colors.black.withValues(alpha: 0.04),
       child: Padding(
-        padding: const EdgeInsets.all(4),
+        padding: EdgeInsets.all(compact ? 2 : 4),
         child: CachedNetworkImage(
           imageUrl: url,
           fit: BoxFit.contain,
@@ -195,40 +208,45 @@ class _NumberFallback extends StatelessWidget {
 /// violet profond (tap simple) prioritaire sur jaune (double-tap,
 /// compte secondaire), lui-même prioritaire sur l'état neutre.
 /// L'icône du badge secondaire est foncée : le blanc ne se lit pas
-/// sur du jaune.
+/// sur du jaune. En mode [compact], le badge est réduit pour ne pas
+/// masquer l'illustration.
 class _OwnershipBadge extends StatelessWidget {
   const _OwnershipBadge({
     required this.ownedByPrimary,
     required this.ownedBySecondary,
+    required this.compact,
   });
 
   final bool ownedByPrimary;
   final bool ownedBySecondary;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final radius = compact ? 9.0 : 12.0;
+    final iconSize = compact ? 11.0 : 14.0;
     if (ownedByPrimary) {
-      return const CircleAvatar(
-        radius: 12,
+      return CircleAvatar(
+        radius: radius,
         backgroundColor: AppColors.ownedByPrimaryAccount,
-        child: Icon(Icons.check, size: 14, color: Colors.white),
+        child: Icon(Icons.check, size: iconSize, color: Colors.white),
       );
     }
     if (ownedBySecondary) {
-      return const CircleAvatar(
-        radius: 12,
+      return CircleAvatar(
+        radius: radius,
         backgroundColor: AppColors.ownedBySecondaryAccount,
         child: Icon(
           Icons.arrow_upward,
-          size: 14,
+          size: iconSize,
           color: AppColors.onOwnedBySecondaryAccount,
         ),
       );
     }
-    return const CircleAvatar(
-      radius: 12,
+    return CircleAvatar(
+      radius: radius,
       backgroundColor: Colors.black45,
-      child: Icon(Icons.add, size: 14, color: Colors.white),
+      child: Icon(Icons.add, size: iconSize, color: Colors.white),
     );
   }
 }

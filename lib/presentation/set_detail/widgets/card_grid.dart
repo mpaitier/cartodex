@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/pokemon_card.dart';
+import 'card_grid_density.dart';
 import 'card_grid_item.dart';
 
 /// Grille des cartes d'un set (déjà filtrées par booster si besoin).
 ///
 /// Extraite dans son propre composant pour garder l'écran centré
 /// sur l'orchestration des états du Bloc plutôt que sur la mise en
-/// page.
+/// page. [density] fixe le nombre de colonnes et le niveau de détail
+/// des tuiles (voir [CardGridDensity]).
 class CardGrid extends StatelessWidget {
   const CardGrid({
     required this.cards,
@@ -15,6 +17,7 @@ class CardGrid extends StatelessWidget {
     required this.secondaryOwnedCardIds,
     required this.onTap,
     required this.onDoubleTap,
+    this.density = CardGridDensity.comfortable,
     super.key,
   });
 
@@ -30,16 +33,17 @@ class CardGrid extends StatelessWidget {
 
   final ValueChanged<String> onTap;
   final ValueChanged<String> onDoubleTap;
+  final CardGridDensity density;
 
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
       padding: const EdgeInsets.all(12),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 0.68,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: density.columns,
+        mainAxisSpacing: density.spacing,
+        crossAxisSpacing: density.spacing,
+        childAspectRatio: density.childAspectRatio,
       ),
       itemCount: cards.length,
       itemBuilder: (context, index) {
@@ -48,6 +52,7 @@ class CardGrid extends StatelessWidget {
           card: card,
           ownedByPrimary: primaryOwnedCardIds.contains(card.id),
           ownedBySecondary: secondaryOwnedCardIds.contains(card.id),
+          compact: density.isCompact,
           onTap: () => onTap(card.id),
           onDoubleTap: () => onDoubleTap(card.id),
         );
