@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/account.dart';
 
 /// Popup ouvert au double-tap sur une carte : choisit le compte
@@ -7,7 +8,7 @@ import '../../../domain/entities/account.dart';
 ///
 /// N'affiche que les comptes secondaires ([Account.isPrimary] à
 /// `false`) — le tap simple couvre déjà le principal. Une flèche
-/// bleue indique les comptes qui possèdent déjà la carte.
+/// jaune indique les comptes qui possèdent déjà la carte.
 class SecondaryAccountPickerDialog extends StatelessWidget {
   const SecondaryAccountPickerDialog({
     required this.accounts,
@@ -56,7 +57,7 @@ class SecondaryAccountPickerDialog extends StatelessWidget {
                 Icon(
                   Icons.arrow_upward,
                   color: ownedByAccountId.contains(account.id)
-                      ? Colors.blue
+                      ? AppColors.ownedBySecondaryAccount
                       : Colors.grey,
                 ),
                 const SizedBox(width: 12),

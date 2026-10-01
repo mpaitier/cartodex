@@ -31,3 +31,12 @@ class SeriesFilterChanged extends CardSetsEvent {
   @override
   List<Object?> get props => [seriesKey];
 }
+
+/// Déclenché quand la possession a pu changer sans que cet écran le
+/// sache (retour du détail d'un set ou de la gestion des comptes,
+/// synchronisation cloud terminée) : recalcule uniquement la
+/// progression affichée sur les tuiles, sans repasser par un état de
+/// chargement.
+class CardSetsProgressRefreshRequested extends CardSetsEvent {
+  const CardSetsProgressRefreshRequested();
+}

@@ -192,8 +192,10 @@ class _NumberFallback extends StatelessWidget {
 ///
 /// Le principal l'emporte visuellement si la carte est possédée à
 /// la fois par le compte principal et par un compte secondaire :
-/// violet profond (tap simple) prioritaire sur bleu (double-tap,
+/// violet profond (tap simple) prioritaire sur jaune (double-tap,
 /// compte secondaire), lui-même prioritaire sur l'état neutre.
+/// L'icône du badge secondaire est foncée : le blanc ne se lit pas
+/// sur du jaune.
 class _OwnershipBadge extends StatelessWidget {
   const _OwnershipBadge({
     required this.ownedByPrimary,
@@ -216,7 +218,11 @@ class _OwnershipBadge extends StatelessWidget {
       return const CircleAvatar(
         radius: 12,
         backgroundColor: AppColors.ownedBySecondaryAccount,
-        child: Icon(Icons.arrow_upward, size: 14, color: Colors.white),
+        child: Icon(
+          Icons.arrow_upward,
+          size: 14,
+          color: AppColors.onOwnedBySecondaryAccount,
+        ),
       );
     }
     return const CircleAvatar(

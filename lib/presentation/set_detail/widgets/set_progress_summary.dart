@@ -11,7 +11,7 @@ import '../../../core/theme/app_colors.dart';
 /// une carte dépliable.
 ///
 /// Un tap bascule entre compte principal uniquement (contour
-/// violet) et principal + secondaires (contour bleu) — mêmes
+/// violet) et principal + secondaires (contour jaune) — mêmes
 /// couleurs que le badge de possession des cartes, pour rester
 /// cohérent avec ce que chacune signifie déjà ailleurs dans l'app.
 class SetProgressSummary extends StatefulWidget {
@@ -115,7 +115,7 @@ class _SetProgressSummaryState extends State<SetProgressSummary> {
 }
 
 /// Une petite boîte "symbole owned/total", au contour coloré selon
-/// le mode courant (violet/bleu) et au texte en vert quand complet
+/// le mode courant (violet/jaune) et au texte en vert quand complet
 /// — comme le "72/72" bleu de l'app officielle.
 class _RarityGroupCount extends StatelessWidget {
   const _RarityGroupCount({
