@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 import '../../../core/constants/card_rarities.dart';
 import '../../../domain/entities/account.dart';
 import '../../../domain/entities/pokemon_card.dart';
-import 'ownership_filter.dart';
 
 /// Étape du cycle de vie de [SetDetailState].
 enum SetDetailStatus {
@@ -22,10 +21,10 @@ enum SetDetailStatus {
 
 /// Sentinelle utilisée par [SetDetailState.copyWith] pour
 /// distinguer "ne pas toucher à [SetDetailState.selectedPack]" (ou à
-/// [SetDetailState.selectedSecondaryAccountId]) de "le remettre à
-/// `null`" (qui est une valeur valide : "tous les boosters", "tous
-/// les secondaires"). Un paramètre nommé nullable ne peut pas porter
-/// cette distinction à lui seul.
+/// [SetDetailState.ownerFilterAccountId]) de "le remettre à `null`"
+/// (qui est une valeur valide : "tous les boosters", "aucune
+/// restriction"). Un paramètre nommé nullable ne peut pas porter cette
+/// distinction à lui seul.
 const _unset = Object();
 
 /// État affiché par l'écran de détail d'un set.
@@ -37,8 +36,7 @@ class SetDetailState extends Equatable {
     this.ownershipByAccountId = const {},
     this.selectedPack,
     this.selectedRarities = const {},
-    this.selectedOwnership = OwnershipFilter.all,
-    this.selectedSecondaryAccountId,
+    this.ownerFilterAccountId,
     this.errorMessage,
   });
 
@@ -49,8 +47,8 @@ class SetDetailState extends Equatable {
   final List<Account> accounts;
 
   /// Cartes possédées, par compte : `ownershipByAccountId[accountId]`
-  /// donne les identifiants de cartes que ce compte possède (tous
-  /// sets confondus — voir `GetOwnedCardIds`).
+  /// donne les identifiants de cartes de ce set que ce compte
+  /// possède.
   final Map<String, Set<String>> ownershipByAccountId;
 
   /// Booster actuellement sélectionné dans le filtre. `null`
@@ -63,16 +61,10 @@ class SetDetailState extends Equatable {
   /// filtre", jamais une valeur "ne pas toucher".
   final Set<CardRarity> selectedRarities;
 
-  /// Filtre de possession courant. [OwnershipFilter.all] signifie
-  /// "aucun filtre" : comme pour [selectedRarities], la valeur
-  /// "aucun filtre" est non nulle, pas besoin de sentinelle.
-  final OwnershipFilter selectedOwnership;
-
-  /// Compte secondaire précis choisi quand [selectedOwnership] vaut
-  /// [OwnershipFilter.secondary]. `null` signifie "tous les comptes
-  /// secondaires". Valeur brute : voir [activeSecondaryAccountId]
-  /// pour celle réellement appliquée.
-  final String? selectedSecondaryAccountId;
+  /// Compte dont on n'affiche que les cartes possédées. `null`
+  /// signifie "aucune restriction" (cas normal). Fixé à l'ouverture
+  /// de l'écran (voir `SetDetailStarted`), jamais modifié ensuite.
+  final String? ownerFilterAccountId;
 
   final String? errorMessage;
 
@@ -89,32 +81,6 @@ class SetDetailState extends Equatable {
 
   List<Account> get secondaryAccounts =>
       accounts.where((account) => !account.isPrimary).toList();
-
-  /// Les comptes secondaires qui possèdent au moins une carte de CE
-  /// set — ceux qu'il a un sens de proposer dans
-  /// `SecondaryAccountFilterBar`. [ownershipByAccountId] couvrant
-  /// tous les sets, on recoupe avec [cards].
-  List<Account> get secondaryAccountsWithCards {
-    return secondaryAccounts.where((account) {
-      final owned = ownershipByAccountId[account.id] ?? const <String>{};
-      return cards.any((card) => owned.contains(card.id));
-    }).toList();
-  }
-
-  /// Le compte secondaire réellement appliqué par le filtre : `null`
-  /// (tous les secondaires) si le filtre de possession n'est pas
-  /// [OwnershipFilter.secondary], ou si le compte choisi n'a plus de
-  /// carte dans ce set (ex: il vient d'en perdre la dernière) —
-  /// sinon la grille se viderait sans qu'aucune puce proposée ne
-  /// l'explique.
-  String? get activeSecondaryAccountId {
-    final id = selectedSecondaryAccountId;
-    if (id == null || selectedOwnership != OwnershipFilter.secondary) {
-      return null;
-    }
-    final stillValid = secondaryAccountsWithCards.any((a) => a.id == id);
-    return stillValid ? id : null;
-  }
 
   /// Cartes possédées par le compte principal — ce que le tap
   /// simple bascule.
@@ -135,19 +101,17 @@ class SetDetailState extends Equatable {
     return result;
   }
 
-  /// Les choix à proposer dans `OwnershipFilterBar`. Vide tant
-  /// qu'aucun compte principal n'existe (aucune possession à
-  /// filtrer) ; sans compte secondaire, le choix "secondaires" est
-  /// omis plutôt que de proposer une puce qui ne montrerait jamais
-  /// rien.
-  List<OwnershipFilter> get availableOwnershipFilters {
-    if (primaryAccount == null) return const [];
-    return [
-      OwnershipFilter.all,
-      OwnershipFilter.primary,
-      if (secondaryAccounts.isNotEmpty) OwnershipFilter.secondary,
-      OwnershipFilter.notOwned,
-    ];
+  /// Cartes du set une fois appliquée la restriction à un compte
+  /// ([ownerFilterAccountId]), avant tout filtre de booster ou de
+  /// rareté. Sans restriction, ce sont simplement toutes les cartes.
+  /// Ne concerne que ce qui est affiché dans la grille : les
+  /// compteurs de progression ([baseTotal], [baseOwned]...) restent
+  /// calculés sur tout le set.
+  List<PokemonCard> get _scopedCards {
+    final id = ownerFilterAccountId;
+    if (id == null) return cards;
+    final owned = ownershipByAccountId[id] ?? const <String>{};
+    return cards.where((card) => owned.contains(card.id)).toList();
   }
 
   /// Raretés effectivement présentes dans ce set pour le volet
@@ -159,10 +123,12 @@ class SetDetailState extends Equatable {
   /// [CardGroupFilter.nonDiamond] restreignent respectivement aux
   /// cartes de la "collection de base" et aux cartes "alternatives"
   /// (voir [CardRarity.isBase]) — pour que le filtre affiché ne
-  /// propose jamais une puce sans effet sur le volet actif.
+  /// propose jamais une puce sans effet sur le volet actif. Quand
+  /// l'écran est restreint à un compte, seules les raretés de ses
+  /// cartes sont proposées.
   List<CardRarity> availableRaritiesForGroup(CardGroupFilter group) {
     final present = <CardRarity>{};
-    for (final card in cards) {
+    for (final card in _scopedCards) {
       if (group == CardGroupFilter.diamond && !_isBase(card)) continue;
       if (group == CardGroupFilter.nonDiamond && !_isAlternative(card)) {
         continue;
@@ -173,10 +139,10 @@ class SetDetailState extends Equatable {
     return CardRarity.allTiers.where(present.contains).toList();
   }
 
-  /// Cartes à afficher compte tenu des filtres courants (booster,
-  /// rareté et possession, cumulatifs).
+  /// Cartes à afficher compte tenu des filtres courants (restriction
+  /// à un compte, booster et rareté, cumulatifs).
   List<PokemonCard> get visibleCards {
-    var result = cards;
+    var result = _scopedCards;
     final pack = selectedPack;
     if (pack != null) {
       result = result.where((card) => card.packs.contains(pack)).toList();
@@ -187,28 +153,7 @@ class SetDetailState extends Equatable {
         return rarity != null && selectedRarities.contains(rarity);
       }).toList();
     }
-    if (selectedOwnership != OwnershipFilter.all) {
-      // Calculés une seule fois : les getters reconstruisent leur
-      // ensemble à chaque appel, trop coûteux dans une boucle.
-      final primaryIds = primaryOwnedCardIds;
-      final secondaryIds = _secondaryIdsForFilter;
-      result = result
-          .where((card) => _matchesOwnership(card, primaryIds, secondaryIds))
-          .toList();
-    }
     return result;
-  }
-
-  /// Les cartes secondaires que le filtre de possession doit
-  /// considérer : celles du compte précis choisi
-  /// ([activeSecondaryAccountId]), ou à défaut l'union de tous les
-  /// secondaires. [activeSecondaryAccountId] n'est non nul que sur
-  /// le filtre [OwnershipFilter.secondary] : "non possédées" reste
-  /// donc toujours calculé sur l'union.
-  Set<String> get _secondaryIdsForFilter {
-    final accountId = activeSecondaryAccountId;
-    if (accountId == null) return secondaryOwnedCardIds;
-    return ownershipByAccountId[accountId] ?? const <String>{};
   }
 
   /// [visibleCards] restreintes au volet [group] de
@@ -276,28 +221,6 @@ class SetDetailState extends Equatable {
   /// des totaux à 0 sur "Promo B").
   static bool _isAlternative(PokemonCard card) => !_isBase(card);
 
-  /// Applique [selectedOwnership] à [card]. Le principal l'emporte
-  /// sur les secondaires, comme pour le badge de `CardGridItem` : une
-  /// carte possédée par les deux n'est que "principal".
-  bool _matchesOwnership(
-    PokemonCard card,
-    Set<String> primaryIds,
-    Set<String> secondaryIds,
-  ) {
-    final byPrimary = primaryIds.contains(card.id);
-    final bySecondary = secondaryIds.contains(card.id);
-    switch (selectedOwnership) {
-      case OwnershipFilter.all:
-        return true;
-      case OwnershipFilter.primary:
-        return byPrimary;
-      case OwnershipFilter.secondary:
-        return bySecondary && !byPrimary;
-      case OwnershipFilter.notOwned:
-        return !byPrimary && !bySecondary;
-    }
-  }
-
   /// Ne préserve jamais l'ancien message d'erreur : toute
   /// transition qui ne le fournit pas explicitement le réinitialise,
   /// pour ne pas réafficher une erreur déjà résolue.
@@ -308,8 +231,7 @@ class SetDetailState extends Equatable {
     Map<String, Set<String>>? ownershipByAccountId,
     Object? selectedPack = _unset,
     Set<CardRarity>? selectedRarities,
-    OwnershipFilter? selectedOwnership,
-    Object? selectedSecondaryAccountId = _unset,
+    Object? ownerFilterAccountId = _unset,
     String? errorMessage,
   }) {
     return SetDetailState(
@@ -321,10 +243,9 @@ class SetDetailState extends Equatable {
           ? this.selectedPack
           : selectedPack as String?,
       selectedRarities: selectedRarities ?? this.selectedRarities,
-      selectedOwnership: selectedOwnership ?? this.selectedOwnership,
-      selectedSecondaryAccountId: identical(selectedSecondaryAccountId, _unset)
-          ? this.selectedSecondaryAccountId
-          : selectedSecondaryAccountId as String?,
+      ownerFilterAccountId: identical(ownerFilterAccountId, _unset)
+          ? this.ownerFilterAccountId
+          : ownerFilterAccountId as String?,
       errorMessage: errorMessage,
     );
   }
@@ -337,8 +258,7 @@ class SetDetailState extends Equatable {
         ownershipByAccountId,
         selectedPack,
         selectedRarities,
-        selectedOwnership,
-        selectedSecondaryAccountId,
+        ownerFilterAccountId,
         errorMessage,
       ];
 }

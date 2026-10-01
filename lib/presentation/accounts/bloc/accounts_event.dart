@@ -13,6 +13,14 @@ class AccountsStarted extends AccountsEvent {
   const AccountsStarted();
 }
 
+/// Déclenché au retour d'un écran où la possession a pu changer
+/// (détail d'un compte secondaire, puis d'un set) : recalcule la
+/// liste et les cartes en plus de chaque secondaire, sans repasser
+/// par un état de chargement.
+class AccountsRefreshRequested extends AccountsEvent {
+  const AccountsRefreshRequested();
+}
+
 /// Déclenché par la validation du formulaire d'ajout de compte.
 class AccountAdded extends AccountsEvent {
   const AccountAdded({required this.name, required this.gameAccountId});

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../domain/entities/account.dart';
+import '../../../domain/entities/account_extras.dart';
 
 /// Étape du cycle de vie de [AccountsState].
 enum AccountsStatus {
@@ -22,11 +23,19 @@ class AccountsState extends Equatable {
   const AccountsState({
     this.status = AccountsStatus.initial,
     this.accounts = const [],
+    this.extrasByAccountId = const {},
     this.errorMessage,
   });
 
   final AccountsStatus status;
   final List<Account> accounts;
+
+  /// Cartes en plus du compte principal, par compte secondaire
+  /// (indexé par identifiant de compte). Vide tant qu'il n'y a pas de
+  /// secondaire, ou si le calcul a échoué : la liste s'affiche alors
+  /// sans compteurs plutôt que de tomber en erreur.
+  final Map<String, AccountExtras> extrasByAccountId;
+
   final String? errorMessage;
 
   /// Ne préserve jamais l'ancien message d'erreur : toute
@@ -35,15 +44,18 @@ class AccountsState extends Equatable {
   AccountsState copyWith({
     AccountsStatus? status,
     List<Account>? accounts,
+    Map<String, AccountExtras>? extrasByAccountId,
     String? errorMessage,
   }) {
     return AccountsState(
       status: status ?? this.status,
       accounts: accounts ?? this.accounts,
+      extrasByAccountId: extrasByAccountId ?? this.extrasByAccountId,
       errorMessage: errorMessage,
     );
   }
 
   @override
-  List<Object?> get props => [status, accounts, errorMessage];
+  List<Object?> get props =>
+      [status, accounts, extrasByAccountId, errorMessage];
 }

@@ -19,17 +19,17 @@ import 'set_detail_state.dart';
 /// le bouton "+" (après confirmation) en bascule plusieurs à la fois
 /// pour le compte principal (voir [BulkCardsMarkedOwned]).
 ///
+/// L'écran peut être ouvert restreint aux cartes d'un compte (voir
+/// `SetDetailStarted.ownerFilterAccountId`) : la restriction est
+/// mémorisée dans l'état à l'ouverture, et appliquée par
+/// `SetDetailState.visibleCards`.
+///
 /// La possession se met à jour de façon optimiste, quel que soit
 /// le compte visé : l'UI change immédiatement, avant même la
 /// réponse du use case. En cas d'échec de la persistance locale,
 /// l'état revient en arrière et un message d'erreur est exposé — la
 /// vue l'affiche en SnackBar plutôt que de remplacer toute la
 /// grille.
-///
-/// Trois filtres cumulatifs agissent sur la grille (booster, rareté,
-/// possession — ce dernier pouvant se restreindre à un compte
-/// secondaire précis) : ils ne vivent que dans l'état, jamais en
-/// base.
 class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
   SetDetailBloc({
     required GetCardsBySet getCardsBySet,
@@ -47,8 +47,6 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<BulkCardsMarkedOwned>(_onBulkCardsMarkedOwned);
     on<PackFilterChanged>(_onPackFilterChanged);
     on<RarityFilterChanged>(_onRarityFilterChanged);
-    on<OwnershipFilterChanged>(_onOwnershipFilterChanged);
-    on<SecondaryAccountFilterChanged>(_onSecondaryAccountFilterChanged);
   }
 
   final GetCardsBySet _getCardsBySet;
@@ -60,7 +58,12 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     SetDetailStarted event,
     Emitter<SetDetailState> emit,
   ) async {
-    emit(state.copyWith(status: SetDetailStatus.loading));
+    emit(
+      state.copyWith(
+        status: SetDetailStatus.loading,
+        ownerFilterAccountId: event.ownerFilterAccountId,
+      ),
+    );
 
     final cardsResult =
         await _getCardsBySet(GetCardsBySetParams(setId: event.setId));
@@ -234,26 +237,5 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     Emitter<SetDetailState> emit,
   ) async {
     emit(state.copyWith(selectedRarities: event.rarities));
-  }
-
-  Future<void> _onOwnershipFilterChanged(
-    OwnershipFilterChanged event,
-    Emitter<SetDetailState> emit,
-  ) async {
-    // Changer de filtre de possession oublie le compte secondaire
-    // précis : en revenant sur "secondaires", on repart de "tous".
-    emit(
-      state.copyWith(
-        selectedOwnership: event.filter,
-        selectedSecondaryAccountId: null,
-      ),
-    );
-  }
-
-  Future<void> _onSecondaryAccountFilterChanged(
-    SecondaryAccountFilterChanged event,
-    Emitter<SetDetailState> emit,
-  ) async {
-    emit(state.copyWith(selectedSecondaryAccountId: event.accountId));
   }
 }

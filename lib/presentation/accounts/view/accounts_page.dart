@@ -5,6 +5,9 @@ import '../../../core/di/injection_container.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
+import '../../../domain/entities/account.dart';
+import '../../../domain/entities/account_extras.dart';
+import '../../account_extras/view/account_extras_page.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
@@ -12,6 +15,9 @@ import '../widgets/account_list_item.dart';
 import '../widgets/add_account_dialog.dart';
 
 /// Écran de gestion des comptes suivis par l'application.
+///
+/// Un compte secondaire affiche ses cartes en plus du principal ; un
+/// appui dessus ouvre [AccountExtrasPage], le détail par set.
 class AccountsPage extends StatelessWidget {
   const AccountsPage({super.key});
 
@@ -79,12 +85,36 @@ class _AccountsView extends StatelessWidget {
         final account = state.accounts[index];
         return AccountListItem(
           account: account,
+          extras: account.isPrimary
+              ? null
+              : state.extrasByAccountId[account.id] ??
+                  AccountExtras(accountId: account.id),
+          onTap: account.isPrimary
+              ? null
+              : () => _openExtras(context, account),
           onCrownTap: () => context
               .read<AccountsBloc>()
               .add(PrimaryAccountChanged(account.id)),
         );
       },
     );
+  }
+
+  /// Ouvre le détail des cartes en plus de [account], puis demande au
+  /// Bloc de recalculer les compteurs une fois revenu sur la liste :
+  /// la possession a pu changer entre-temps (tap sur une carte dans
+  /// le détail d'un set). Le Bloc est lu avant l'attente, pour ne pas
+  /// toucher au `context` après la navigation.
+  Future<void> _openExtras(BuildContext context, Account account) async {
+    final bloc = context.read<AccountsBloc>();
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AccountExtrasPage(account: account),
+      ),
+    );
+    if (!bloc.isClosed) {
+      bloc.add(const AccountsRefreshRequested());
+    }
   }
 
   void _openAddDialog(BuildContext context) {
