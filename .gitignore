@@ -57,5 +57,3 @@ Thumbs.db
 
 # Firebase configuration
 lib/firebase_options.dart
-
-node_modules/
