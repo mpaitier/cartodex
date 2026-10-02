@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/constants/card_rarities.dart';
-import 'ownership_filter.dart';
 
 /// Événements gérés par [SetDetailBloc][set_detail_bloc.dart].
 abstract class SetDetailEvent extends Equatable {
@@ -13,13 +12,19 @@ abstract class SetDetailEvent extends Equatable {
 
 /// Déclenché à l'ouverture de l'écran : charge les cartes du set
 /// [setId] et l'ensemble des identifiants de cartes possédées.
+///
+/// [ownerFilterAccountId], quand fourni, restreint l'affichage aux
+/// seules cartes possédées par ce compte (utilisé depuis le détail
+/// des cartes en plus d'un compte secondaire). `null` = aucune
+/// restriction.
 class SetDetailStarted extends SetDetailEvent {
-  const SetDetailStarted(this.setId);
+  const SetDetailStarted(this.setId, {this.ownerFilterAccountId});
 
   final String setId;
+  final String? ownerFilterAccountId;
 
   @override
-  List<Object?> get props => [setId];
+  List<Object?> get props => [setId, ownerFilterAccountId];
 }
 
 /// Déclenché par un appui simple sur une carte : bascule sa
@@ -83,33 +88,4 @@ class RarityFilterChanged extends SetDetailEvent {
 
   @override
   List<Object?> get props => [rarities];
-}
-
-/// Déclenché par la sélection d'une puce dans
-/// [OwnershipFilterBar][../widgets/ownership_filter_bar.dart].
-/// [OwnershipFilter.all] signifie "aucun filtre de possession".
-///
-/// Réinitialise aussi le compte secondaire précis éventuellement
-/// choisi (voir [SecondaryAccountFilterChanged]).
-class OwnershipFilterChanged extends SetDetailEvent {
-  const OwnershipFilterChanged(this.filter);
-
-  final OwnershipFilter filter;
-
-  @override
-  List<Object?> get props => [filter];
-}
-
-/// Déclenché par la sélection d'une puce dans
-/// [SecondaryAccountFilterBar][../widgets/secondary_account_filter_bar.dart],
-/// visible seulement quand le filtre de possession est
-/// [OwnershipFilter.secondary]. `null` signifie "tous les comptes
-/// secondaires".
-class SecondaryAccountFilterChanged extends SetDetailEvent {
-  const SecondaryAccountFilterChanged(this.accountId);
-
-  final String? accountId;
-
-  @override
-  List<Object?> get props => [accountId];
 }

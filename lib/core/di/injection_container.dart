@@ -23,6 +23,7 @@ import '../../domain/usecases/get_cards.dart';
 import '../../domain/usecases/get_cards_by_set.dart';
 import '../../domain/usecases/get_collection_stats.dart';
 import '../../domain/usecases/get_owned_cards_id.dart';
+import '../../domain/usecases/get_secondary_accounts_extras.dart';
 import '../../domain/usecases/get_sets_progress.dart';
 import '../../domain/usecases/set_card_owned.dart';
 import '../../domain/usecases/set_primary_account.dart';
@@ -33,6 +34,7 @@ import '../../domain/usecases/sign_up_with_email.dart';
 import '../../domain/usecases/sync_card_catalog.dart';
 import '../../domain/usecases/sync_with_cloud.dart';
 import '../../domain/usecases/watch_auth_state.dart';
+import '../../presentation/account_extras/bloc/account_extras_bloc.dart';
 import '../../presentation/accounts/bloc/accounts_bloc.dart';
 import '../../presentation/auth/bloc/auth_bloc.dart';
 import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
@@ -118,6 +120,12 @@ Future<void> init() async {
       accountRepository: sl(),
     ),
   );
+  sl.registerLazySingleton(
+    () => GetSecondaryAccountsExtras(
+      cardRepository: sl(),
+      accountRepository: sl(),
+    ),
+  );
   sl.registerLazySingleton(() => WatchAuthState(sl()));
   sl.registerLazySingleton(() => SignInWithEmail(sl()));
   sl.registerLazySingleton(() => SignUpWithEmail(sl()));
@@ -152,7 +160,11 @@ Future<void> init() async {
       getAccounts: sl(),
       addAccount: sl(),
       setPrimaryAccount: sl(),
+      getSecondaryAccountsExtras: sl(),
     ),
+  );
+  sl.registerFactory(
+    () => AccountExtrasBloc(getSecondaryAccountsExtras: sl()),
   );
   sl.registerFactory(
     () => StatsBloc(
