@@ -12,12 +12,15 @@ import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import '../widgets/account_list_item.dart';
+import '../widgets/accounts_sort_action.dart';
 import '../widgets/add_account_dialog.dart';
 
 /// Écran de gestion des comptes suivis par l'application.
 ///
 /// Un compte secondaire affiche ses cartes en plus du principal ; un
-/// appui dessus ouvre [AccountExtrasPage], le détail par set.
+/// appui dessus ouvre [AccountExtrasPage], le détail par set. Un menu
+/// de tri dans l'AppBar réordonne les secondaires (le principal reste
+/// toujours en tête).
 class AccountsPage extends StatelessWidget {
   const AccountsPage({super.key});
 
@@ -50,6 +53,16 @@ class _AccountsView extends StatelessWidget {
       builder: (context, state) {
         return AppScaffold(
           title: 'Comptes',
+          actions: [
+            if (state.status == AccountsStatus.loaded &&
+                state.accounts.isNotEmpty)
+              AccountsSortAction(
+                selected: state.sortOption,
+                onSelected: (option) => context
+                    .read<AccountsBloc>()
+                    .add(AccountsSortChanged(option)),
+              ),
+          ],
           floatingActionButton: FloatingActionButton(
             onPressed: () => _openAddDialog(context),
             tooltip: 'Ajouter un compte',
@@ -79,10 +92,12 @@ class _AccountsView extends StatelessWidget {
       return const Center(child: Text('Aucun compte pour l’instant.'));
     }
 
+    // Principal en tête, secondaires triés selon le critère choisi.
+    final accounts = state.sortedAccounts;
     return ListView.builder(
-      itemCount: state.accounts.length,
+      itemCount: accounts.length,
       itemBuilder: (context, index) {
-        final account = state.accounts[index];
+        final account = accounts[index];
         return AccountListItem(
           account: account,
           extras: account.isPrimary

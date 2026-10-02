@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'accounts_sort_option.dart';
+
 /// Événements gérés par [AccountsBloc][accounts_bloc.dart].
 abstract class AccountsEvent extends Equatable {
   const AccountsEvent();
@@ -19,6 +21,17 @@ class AccountsStarted extends AccountsEvent {
 /// par un état de chargement.
 class AccountsRefreshRequested extends AccountsEvent {
   const AccountsRefreshRequested();
+}
+
+/// Déclenché par le choix d'un critère dans le menu de tri de la
+/// liste des comptes.
+class AccountsSortChanged extends AccountsEvent {
+  const AccountsSortChanged(this.option);
+
+  final AccountsSortOption option;
+
+  @override
+  List<Object?> get props => [option];
 }
 
 /// Déclenché par la validation du formulaire d'ajout de compte.

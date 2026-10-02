@@ -20,6 +20,9 @@ import 'accounts_state.dart';
 /// plus du principal (voir [GetSecondaryAccountsExtras]). Un échec de
 /// ce calcul ne fait jamais tomber l'écran : les comptes s'affichent,
 /// simplement sans compteurs.
+///
+/// Le critère de tri ([AccountsSortChanged]) est stocké dans l'état ;
+/// l'ordre effectif est calculé par `AccountsState.sortedAccounts`.
 class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   AccountsBloc({
     required GetAccounts getAccounts,
@@ -33,6 +36,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         super(const AccountsState()) {
     on<AccountsStarted>(_onStarted);
     on<AccountsRefreshRequested>(_onRefreshRequested);
+    on<AccountsSortChanged>(_onSortChanged);
     on<AccountAdded>(_onAccountAdded);
     on<PrimaryAccountChanged>(_onPrimaryAccountChanged);
   }
@@ -58,6 +62,13 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     // chargement initial calcule déjà tout.
     if (state.status != AccountsStatus.loaded) return;
     await _reload(emit);
+  }
+
+  void _onSortChanged(
+    AccountsSortChanged event,
+    Emitter<AccountsState> emit,
+  ) {
+    emit(state.copyWith(sortOption: event.option));
   }
 
   Future<void> _onAccountAdded(
