@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/card_rarities.dart';
 import '../../../domain/usecase.dart';
 import '../../../domain/usecases/get_accounts.dart';
 import '../../../domain/usecases/get_cards_by_set.dart';
@@ -24,6 +25,13 @@ import 'set_detail_state.dart';
 /// mémorisée dans l'état à l'ouverture, et appliquée par
 /// `SetDetailState.visibleCards`.
 ///
+/// Les filtres (booster, rareté, possession et son sous-filtre par
+/// compte secondaire) vivent dans l'état et sont appliqués par
+/// `SetDetailState.visibleCards`. Un changement de filtre de
+/// possession retire de la sélection de rareté les puces qui ne
+/// correspondent plus à aucune carte, sans quoi la grille se viderait
+/// sans qu'aucune puce cochée ne l'explique.
+///
 /// La possession se met à jour de façon optimiste, quel que soit
 /// le compte visé : l'UI change immédiatement, avant même la
 /// réponse du use case. En cas d'échec de la persistance locale,
@@ -47,6 +55,8 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<BulkCardsMarkedOwned>(_onBulkCardsMarkedOwned);
     on<PackFilterChanged>(_onPackFilterChanged);
     on<RarityFilterChanged>(_onRarityFilterChanged);
+    on<OwnershipFilterChanged>(_onOwnershipFilterChanged);
+    on<SecondaryAccountFilterChanged>(_onSecondaryAccountFilterChanged);
   }
 
   final GetCardsBySet _getCardsBySet;
@@ -237,5 +247,40 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     Emitter<SetDetailState> emit,
   ) async {
     emit(state.copyWith(selectedRarities: event.rarities));
+  }
+
+  /// Change le filtre de possession et remet le sous-filtre par
+  /// compte à "tous" : un compte choisi pour un filtre n'a pas de
+  /// sens pour un autre.
+  Future<void> _onOwnershipFilterChanged(
+    OwnershipFilterChanged event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    final next = state.copyWith(
+      ownershipFilter: event.filter,
+      secondaryFilterAccountId: null,
+    );
+    emit(_withValidRarities(next));
+  }
+
+  Future<void> _onSecondaryAccountFilterChanged(
+    SecondaryAccountFilterChanged event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    final next = state.copyWith(secondaryFilterAccountId: event.accountId);
+    emit(_withValidRarities(next));
+  }
+
+  /// Retire de [next] les raretés cochées qui ne correspondent plus
+  /// à aucune carte après un changement de filtre de possession. On
+  /// compare au volet "tout" : une rareté cochée l'a été sur un volet
+  /// où elle était proposée, donc présente dans le volet "tout"
+  /// exactement quand elle l'est dans son propre volet.
+  SetDetailState _withValidRarities(SetDetailState next) {
+    final available =
+        next.availableRaritiesForGroup(CardGroupFilter.all).toSet();
+    final kept = next.selectedRarities.where(available.contains).toSet();
+    if (kept.length == next.selectedRarities.length) return next;
+    return next.copyWith(selectedRarities: kept);
   }
 }

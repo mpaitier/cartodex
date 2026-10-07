@@ -7,25 +7,35 @@ import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
+import '../bloc/ownership_filter.dart';
 import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
 import '../widgets/bulk_add_confirmation_dialog.dart';
+import '../widgets/card_grid_density.dart';
 import '../widgets/card_grid_pager.dart';
 import '../widgets/owner_filter_banner.dart';
+import '../widgets/ownership_filter_bar.dart';
 import '../widgets/pack_filter_bar.dart';
+import '../widgets/pinch_gesture_detector.dart';
 import '../widgets/rarity_filter_bar.dart';
+import '../widgets/secondary_account_filter_bar.dart';
 import '../widgets/secondary_account_picker_dialog.dart';
 import '../widgets/set_progress_summary.dart';
 
-/// Écran de détail d'un set : ses cartes, filtrables par booster et
-/// par rareté (multi-sélection), avec un swipe gauche/droite pour
-/// isoler les cartes losange ou non-losange (voir
-/// [CardGridPager][../widgets/card_grid_pager.dart]). Le tap simple
-/// bascule la possession pour le compte principal ; le double-tap
-/// ouvre un popup pour choisir un compte secondaire ; le bouton "+"
-/// ajoute d'un coup toutes les cartes actuellement affichées au
-/// compte principal.
+/// Écran de détail d'un set : ses cartes, filtrables par booster, par
+/// rareté (multi-sélection) et par possession (principal, secondaires
+/// avec un sous-filtre par compte, manquantes), avec un swipe
+/// gauche/droite pour isoler les cartes losange ou non-losange (voir
+/// [CardGridPager][../widgets/card_grid_pager.dart]). Un pincement à
+/// deux doigts change la densité de la grille : les doigts qui se
+/// rapprochent passent de 3 à 5 colonnes (sans nom ni rareté sous les
+/// cartes), les doigts qui s'écartent reviennent à 3.
+///
+/// Le tap simple bascule la possession pour le compte principal ; le
+/// double-tap ouvre un popup pour choisir un compte secondaire ; le
+/// bouton "+" ajoute d'un coup toutes les cartes actuellement
+/// affichées au compte principal.
 ///
 /// Quand [ownerFilterAccountId] est fourni (ouverture depuis le
 /// détail des cartes en plus d'un compte secondaire), seules les
@@ -100,6 +110,10 @@ class _SetDetailViewState extends State<_SetDetailView> {
   /// défaut, comme `CardGridPager` (`PageController(initialPage: 1)`).
   CardGroupFilter _activeGroup = CardGroupFilter.all;
 
+  /// Densité de la grille (3 ou 5 colonnes), changée par pincement.
+  /// État purement local à l'affichage, comme [_activeGroup].
+  CardGridDensity _density = CardGridDensity.comfortable;
+
   @override
   Widget build(BuildContext context) {
     final ownerName = widget.ownerFilterAccountName;
@@ -144,6 +158,21 @@ class _SetDetailViewState extends State<_SetDetailView> {
                     .read<SetDetailBloc>()
                     .add(RarityFilterChanged(rarities)),
               ),
+              OwnershipFilterBar(
+                availableFilters: state.availableOwnershipFilters,
+                selectedFilter: state.ownershipFilter,
+                onFilterSelected: (filter) => context
+                    .read<SetDetailBloc>()
+                    .add(OwnershipFilterChanged(filter)),
+              ),
+              if (state.ownershipFilter == OwnershipFilter.secondary)
+                SecondaryAccountFilterBar(
+                  accounts: state.secondaryAccountsWithCards,
+                  selectedAccountId: state.effectiveSecondaryFilterAccountId,
+                  onAccountSelected: (accountId) => context
+                      .read<SetDetailBloc>()
+                      .add(SecondaryAccountFilterChanged(accountId)),
+                ),
               Expanded(child: _buildBody(context, state)),
             ],
           ),
@@ -186,15 +215,27 @@ class _SetDetailViewState extends State<_SetDetailView> {
       );
     }
 
-    return CardGridPager(
-      cards: state.visibleCards,
-      primaryOwnedCardIds: state.primaryOwnedCardIds,
-      secondaryOwnedCardIds: state.secondaryOwnedCardIds,
-      onTap: (cardId) =>
-          context.read<SetDetailBloc>().add(CardOwnershipToggled(cardId)),
-      onDoubleTap: (cardId) => _onCardDoubleTap(context, state, cardId),
-      onPageChanged: (group) => _onPagerPageChanged(context, state, group),
+    // Doigts qui se rapprochent = on dézoome = plus de colonnes ;
+    // doigts qui s'écartent = on zoome = moins de colonnes.
+    return PinchGestureDetector(
+      onPinchIn: () => _setDensity(CardGridDensity.compact),
+      onPinchOut: () => _setDensity(CardGridDensity.comfortable),
+      child: CardGridPager(
+        cards: state.visibleCards,
+        primaryOwnedCardIds: state.primaryOwnedCardIds,
+        secondaryOwnedCardIds: state.secondaryOwnedCardIds,
+        density: _density,
+        onTap: (cardId) =>
+            context.read<SetDetailBloc>().add(CardOwnershipToggled(cardId)),
+        onDoubleTap: (cardId) => _onCardDoubleTap(context, state, cardId),
+        onPageChanged: (group) => _onPagerPageChanged(context, state, group),
+      ),
     );
+  }
+
+  void _setDensity(CardGridDensity density) {
+    if (density == _density) return;
+    setState(() => _density = density);
   }
 
   /// Met à jour le volet actif, et retire de la sélection de rareté
@@ -220,7 +261,7 @@ class _SetDetailViewState extends State<_SetDetailView> {
   /// Bouton "+" : demande confirmation, puis ajoute au compte
   /// principal toutes les cartes actuellement affichées dans le
   /// volet actif — pas tout le set, juste ce que l'écran montre en
-  /// ce moment (filtres de booster/rareté inclus).
+  /// ce moment (filtres de booster/rareté/possession inclus).
   Future<void> _onAddAllVisiblePressed(
     BuildContext context,
     SetDetailState state,

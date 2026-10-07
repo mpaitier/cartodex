@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/constants/card_rarities.dart';
+import 'ownership_filter.dart';
 
 /// Événements gérés par [SetDetailBloc][set_detail_bloc.dart].
 abstract class SetDetailEvent extends Equatable {
@@ -88,4 +89,29 @@ class RarityFilterChanged extends SetDetailEvent {
 
   @override
   List<Object?> get props => [rarities];
+}
+
+/// Déclenché par la sélection d'une puce dans
+/// [OwnershipFilterBar][../widgets/ownership_filter_bar.dart].
+/// Remet à zéro le sous-filtre par compte secondaire.
+class OwnershipFilterChanged extends SetDetailEvent {
+  const OwnershipFilterChanged(this.filter);
+
+  final OwnershipFilter filter;
+
+  @override
+  List<Object?> get props => [filter];
+}
+
+/// Déclenché par la sélection d'une puce dans
+/// [SecondaryAccountFilterBar][../widgets/secondary_account_filter_bar.dart],
+/// visible seulement quand le filtre "secondaires" est actif. `null`
+/// signifie "tous les secondaires".
+class SecondaryAccountFilterChanged extends SetDetailEvent {
+  const SecondaryAccountFilterChanged(this.accountId);
+
+  final String? accountId;
+
+  @override
+  List<Object?> get props => [accountId];
 }
