@@ -5,6 +5,7 @@ import '../../../core/constants/card_rarities.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/pokemon_card.dart';
+import 'grayscale_filter.dart';
 
 /// Une tuile de la grille de cartes : illustration centrée, nom,
 /// numéro et rareté, et un badge de possession.
@@ -119,9 +120,12 @@ class CardGridItem extends StatelessWidget {
 /// absolue sur son exactitude pour chaque carte : si le chargement
 /// échoue, ou tant qu'aucune URL n'est disponible, retombe sur le
 /// numéro de la carte affiché en grand plutôt qu'une icône
-/// générique identique pour toutes les cartes. Grisée quand la
-/// carte n'est pas possédée, pour distinguer les deux états au
-/// premier coup d'œil même sans visuel.
+/// générique identique pour toutes les cartes.
+///
+/// Quand la carte n'est possédée par aucun compte (principal ou
+/// secondaire), l'illustration passe en noir et blanc (voir
+/// [GrayscaleFilter]) et le fond est légèrement assombri, pour
+/// distinguer les deux états au premier coup d'œil.
 ///
 /// Chaque URL tentée est loguée (voir [AppLogger]) : en INFO au
 /// moment de la construction, en ERROR si `CachedNetworkImage`
@@ -152,27 +156,30 @@ class _CardArt extends StatelessWidget {
       color: owned ? Colors.black12 : Colors.black.withValues(alpha: 0.04),
       child: Padding(
         padding: EdgeInsets.all(compact ? 2 : 4),
-        child: CachedNetworkImage(
-          imageUrl: url,
-          fit: BoxFit.contain,
-          alignment: Alignment.center,
-          placeholder: (context, _) => const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+        child: GrayscaleFilter(
+          enabled: !owned,
+          child: CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+            placeholder: (context, _) => const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             ),
+            errorWidget: (context, failedUrl, error) {
+              // L'URL et l'erreur exacte permettent de tester le lien
+              // directement dans un navigateur (voir AppLogger, qui ne
+              // s'exécute qu'en debug).
+              AppLogger.log(
+                'ERROR',
+                'Carte #$number introuvable : $failedUrl ($error)',
+              );
+              return _NumberFallback(owned: owned, number: number);
+            },
           ),
-          errorWidget: (context, failedUrl, error) {
-            // L'URL et l'erreur exacte permettent de tester le lien
-            // directement dans un navigateur (voir AppLogger, qui ne
-            // s'exécute qu'en debug).
-            AppLogger.log(
-              'ERROR',
-              'Carte #$number introuvable : $failedUrl ($error)',
-            );
-            return _NumberFallback(owned: owned, number: number);
-          },
         ),
       ),
     );
@@ -210,6 +217,9 @@ class _NumberFallback extends StatelessWidget {
 /// L'icône du badge secondaire est foncée : le blanc ne se lit pas
 /// sur du jaune. En mode [compact], le badge est réduit pour ne pas
 /// masquer l'illustration.
+///
+/// Le badge n'est jamais filtré en noir et blanc : il se trouve hors
+/// de l'illustration, et ses couleurs portent l'information.
 class _OwnershipBadge extends StatelessWidget {
   const _OwnershipBadge({
     required this.ownedByPrimary,
