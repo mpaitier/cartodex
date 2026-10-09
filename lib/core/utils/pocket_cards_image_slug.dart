@@ -8,21 +8,24 @@
 /// - "Volbeat" (carte) → "volbeat"
 /// - "Team Rocket's Moltres ex" (carte) → "team-rockets-moltres-ex"
 /// - "Porygon2" (carte) → "porygon-2"
+/// - "Nidoran♀" (carte) → "nidoran-f"
 /// - "Ruler of the Skies" (set) → "ruler-of-the-skies"
 /// - "Genetic Apex" + "Mewtwo" (booster) → "genetic-apex-mewtwo"
 /// - "Mega Rising" + "Mega Blaziken" (booster) → "mega-rising-blaziken"
 ///
 /// Elle peut donc échouer sur des noms à ponctuation inhabituelle (ex:
-/// "Mr. Mime", "Nidoran♀"/"Nidoran♂", accents...), ou sur des erreurs de
-/// saisie présentes dans le référentiel distant lui-même. Trois cas
-/// récurrents sont traités directement dans [_slugify] :
+/// "Mr. Mime", accents...), ou sur des erreurs de saisie présentes dans
+/// le référentiel distant lui-même. Quatre cas récurrents sont traités
+/// directement dans [_slugify] :
 /// - deux mots concaténés sans espace mais séparés par une majuscule
 ///   (ex: "Teal MaskOgerpon") ;
 /// - un préfixe de forme régionale collé au nom du Pokémon, sans
 ///   même de majuscule pour le signaler (ex: "Galarianzigzagoon",
 ///   tout en minuscules) — voir [_regionalFormPrefixes] ;
 /// - un chiffre collé à la fin d'un nom, que le site sépare par un
-///   tiret (ex: "Porygon2" → "porygon-2").
+///   tiret (ex: "Porygon2" → "porygon-2") ;
+/// - un symbole de genre en fin de nom, que le site écrit sous forme
+///   de lettre (♀ → "f", ♂ → "m") — voir [_genderSymbolSuffixes].
 ///
 /// Pour tout autre cas non couvert, voir [_cardSlugOverrides]
 /// ci-dessous et [AppLogger][../utils/app_logger.dart] côté widgets,
@@ -42,6 +45,17 @@ abstract class PocketCardsImageSlug {
     'Hisuian',
     'Paldean',
   ];
+
+  /// Correspondance entre les symboles de genre du référentiel distant
+  /// et le suffixe utilisé par pocketcards.net (ex: "Nidoran♀" →
+  /// "nidoran-f"). Sans cette table, le symbole serait traité comme
+  /// une ponctuation quelconque et disparaîtrait, laissant "nidoran"
+  /// seul (404). Le suffixe "m" pour ♂ est déduit par symétrie avec
+  /// "f" : à confirmer sur une carte Nidoran♂ réelle.
+  static const Map<String, String> _genderSymbolSuffixes = {
+    '♀': 'f',
+    '♂': 'm',
+  };
 
   /// Préfixe des noms de booster du set "Mega Rising" (ex: "Mega
   /// Blaziken"), absent du nom de fichier correspondant sur
@@ -89,7 +103,9 @@ abstract class PocketCardsImageSlug {
   }
 
   static String _slugify(String raw) {
-    final withRegionalFormSpace = _insertMissingRegionalFormSpace(raw);
+    final withGenderLetters = _replaceGenderSymbols(raw);
+    final withRegionalFormSpace =
+        _insertMissingRegionalFormSpace(withGenderLetters);
     // Le référentiel distant concatène aussi parfois deux mots sans
     // espace tout en gardant une majuscule pour marquer la coupure
     // (ex: "Teal MaskOgerpon") : on la réinsère avant toute majuscule
@@ -113,12 +129,25 @@ abstract class PocketCardsImageSlug {
     final withoutApostrophes = lowerCased.replaceAll(RegExp("['’]"), '');
     // Tout ce qui n'est ni lettre/chiffre ni espace/tiret devient un
     // espace, pour être normalisé en un seul tiret juste après
-    // (accents, ponctuation, symboles de genre...).
+    // (accents, ponctuation...).
     final normalized = withoutApostrophes.replaceAll(
       RegExp(r'[^a-z0-9\s-]'),
       ' ',
     );
     return normalized.trim().replaceAll(RegExp(r'[\s-]+'), '-');
+  }
+
+  /// Remplace chaque symbole de [_genderSymbolSuffixes] par un espace
+  /// suivi de sa lettre (ex: "Nidoran♀" → "Nidoran f"), pour que la
+  /// normalisation en tiret fasse le reste ("nidoran-f"). À appeler
+  /// avant tout le reste de [_slugify] : le filtre de ponctuation
+  /// final supprimerait sinon le symbole sans laisser de trace.
+  static String _replaceGenderSymbols(String raw) {
+    var result = raw;
+    _genderSymbolSuffixes.forEach((symbol, letter) {
+      result = result.replaceAll(symbol, ' $letter');
+    });
+    return result;
   }
 
   /// Si [raw] commence par l'un de [_regionalFormPrefixes] (insensible
