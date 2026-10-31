@@ -64,10 +64,12 @@ class CardModel extends PokemonCard {
       // d'abord une table de correctifs manuels avant la conversion
       // générique, pour les quelques cartes dont le nom brut du
       // référentiel distant contient une erreur de saisie (voir sa
-      // documentation).
+      // documentation). Le code de set passe lui aussi par
+      // [PocketCardsImageSlug.fromSetCode], le site abrégeant les
+      // promos ("PROMO-B" → "pb").
       imageUrl: '${AppConstants.pocketCardsImageBaseUrl}/'
           '${PocketCardsImageSlug.fromCardName(id, name)}-'
-          '${setId.toLowerCase()}-'
+          '${PocketCardsImageSlug.fromSetCode(setId)}-'
           '${number.padLeft(3, '0')}.webp',
       rarity: json['rarity'] as String?,
       packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],
