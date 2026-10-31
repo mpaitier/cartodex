@@ -16,7 +16,44 @@ void main() {
     });
   });
 
+  group('PocketCardsImageSlug.fromCardName', () {
+    test('les accents sont ramenés à la lettre de base', () {
+      expect(
+        PocketCardsImageSlug.fromCardName('A2b-70', 'Pokémon Center Lady'),
+        'pokemon-center-lady',
+      );
+      expect(PocketCardsImageSlug.fromCardName('X-1', 'Flabébé'), 'flabebe');
+    });
+
+    test('une majuscule accentuée garde le découpage camelCase', () {
+      expect(
+        PocketCardsImageSlug.fromCardName('X-1', 'TealÉclair'),
+        'teal-eclair',
+      );
+    });
+
+    test('les noms sans accent sont inchangés', () {
+      expect(
+        PocketCardsImageSlug.fromCardName('X-1', "Team Rocket's Moltres ex"),
+        'team-rockets-moltres-ex',
+      );
+      expect(PocketCardsImageSlug.fromCardName('X-1', 'Porygon2'), 'porygon-2');
+    });
+  });
+
   group('CardModel.fromJson imageUrl', () {
+    test('carte au nom accentué', () {
+      final card = CardModel.fromJson({
+        'set': 'A2b',
+        'number': 70,
+        'name': 'Pokémon Center Lady',
+      });
+      expect(
+        card.imageUrl,
+        'https://pocketcards.net/images/cards/pokemon-center-lady-a2b-070.webp',
+      );
+    });
+
     test('carte promo', () {
       final card = CardModel.fromJson({
         'set': 'PROMO-B',
