@@ -39,6 +39,21 @@ void main() {
       );
       expect(PocketCardsImageSlug.fromCardName('X-1', 'Porygon2'), 'porygon-2');
     });
+
+    test('les corrections manuelles passent avant la conversion', () {
+      expect(
+        PocketCardsImageSlug.fromCardName('A2a-23', 'Palkia'),
+        'origin-forme-palkia',
+      );
+      expect(
+        PocketCardsImageSlug.fromCardName('A2a-60', 'Dialga'),
+        'origin-forme-dialga',
+      );
+    });
+
+    test('une correction ne touche que sa carte', () {
+      expect(PocketCardsImageSlug.fromCardName('A2-1', 'Palkia'), 'palkia');
+    });
   });
 
   group('CardModel.fromJson imageUrl', () {

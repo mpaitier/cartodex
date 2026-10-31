@@ -76,8 +76,15 @@ abstract class PocketCardsImageSlug {
   /// passé par [_slugify] (y compris ses règles de découpage) —
   /// réservé aux erreurs de saisie qu'aucune règle générique ne
   /// couvre. Clé : id de la carte tel que construit par
-  /// `CardModel.fromJson` (`<setId>-<numéro>`, ex: "B4-19").
-  static const Map<String, String> _cardSlugOverrides = {};
+  /// `CardModel.fromJson` (`<setId>-<numéro>`, ex: "B4-19", numéro
+  /// sans zéros de tête).
+  static const Map<String, String> _cardSlugOverrides = {
+    // Triumphant Light : le référentiel nomme ces cartes "Palkia" et
+    // "Dialga", mais ce sont les Formes Originelles, et le fichier
+    // du site porte le nom complet.
+    'A2a-23': 'origin-forme-palkia',
+    'A2a-60': 'origin-forme-dialga',
+  };
 
   /// Le slug de carte pour [cardId] (`<setId>-<numéro>`, voir
   /// `CardModel.fromJson`) et son [name], sans le suffixe set/numéro
