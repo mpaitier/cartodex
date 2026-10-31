@@ -20,6 +20,11 @@ import 'stats_state.dart';
 /// recalcule sans repasser par l'état de chargement : les chiffres
 /// précédents restent affichés le temps du calcul, pas d'écran vide
 /// à chaque appui sur le bouton.
+///
+/// Le choix de série des boosters prioritaires
+/// ([StatsBoosterSeriesSelected]) ne fait que filtrer des chiffres
+/// déjà calculés : il est conservé lors des recalculs, et ne
+/// déclenche aucun accès aux données.
 class StatsBloc extends Bloc<StatsEvent, StatsState> {
   StatsBloc({
     required GetAccounts getAccounts,
@@ -29,6 +34,7 @@ class StatsBloc extends Bloc<StatsEvent, StatsState> {
         super(const StatsState()) {
     on<StatsStarted>(_onStarted);
     on<StatsRarityScopeChanged>(_onRarityScopeChanged);
+    on<StatsBoosterSeriesSelected>(_onBoosterSeriesSelected);
   }
 
   final GetAccounts _getAccounts;
@@ -46,6 +52,19 @@ class StatsBloc extends Bloc<StatsEvent, StatsState> {
     if (event.scope == state.rarityScope) return;
     emit(state.copyWith(rarityScope: event.scope));
     await _load(emit);
+  }
+
+  void _onBoosterSeriesSelected(
+    StatsBoosterSeriesSelected event,
+    Emitter<StatsState> emit,
+  ) {
+    final key = event.seriesKey;
+    if (key == state.boosterSeriesKey) return;
+    emit(
+      key == null
+          ? state.copyWith(clearBoosterSeriesKey: true)
+          : state.copyWith(boosterSeriesKey: key),
+    );
   }
 
   Future<void> _load(Emitter<StatsState> emit) async {

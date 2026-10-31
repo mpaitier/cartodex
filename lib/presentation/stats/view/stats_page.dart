@@ -9,7 +9,7 @@ import '../bloc/stats_bloc.dart';
 import '../bloc/stats_event.dart';
 import '../bloc/stats_state.dart';
 import '../widgets/overall_progress_card.dart';
-import '../widgets/priority_boosters_list.dart';
+import '../widgets/priority_boosters_section.dart';
 import '../widgets/rarity_scope_action.dart';
 import '../widgets/series_progress_list.dart';
 
@@ -20,6 +20,8 @@ import '../widgets/series_progress_list.dart';
 /// jaune par ce que les comptes secondaires possèdent en plus — voir
 /// [StatsBloc]. Le bouton de la top bar ([RarityScopeAction]) restreint
 /// le tout à une famille de raretés : rond (toutes), losange, étoile.
+/// La section des boosters prioritaires a en plus son propre
+/// sélecteur de série ([PriorityBoostersSection]).
 class StatsPage extends StatelessWidget {
   const StatsPage({super.key});
 
@@ -94,12 +96,14 @@ class _StatsView extends StatelessWidget {
         const SizedBox(height: 8),
         SeriesProgressList(seriesStats: stats.seriesStats),
         const SizedBox(height: 24),
-        Text(
-          'Boosters à ouvrir en priorité',
-          style: Theme.of(context).textTheme.titleMedium,
+        PriorityBoostersSection(
+          series: state.boosterSeries,
+          selectedSeriesKey: state.effectiveBoosterSeriesKey,
+          setProgress: state.priorityBoosters,
+          onSeriesSelected: (seriesKey) => context
+              .read<StatsBloc>()
+              .add(StatsBoosterSeriesSelected(seriesKey)),
         ),
-        const SizedBox(height: 8),
-        PriorityBoostersList(setProgress: stats.priorityBoosterProgress),
       ],
     );
   }

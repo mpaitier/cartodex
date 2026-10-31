@@ -26,3 +26,18 @@ class StatsRarityScopeChanged extends StatsEvent {
   @override
   List<Object?> get props => [scope];
 }
+
+/// Déclenché par le sélecteur de série de la section "Boosters à
+/// ouvrir en priorité" : restreint cette liste à une série.
+///
+/// [seriesKey] reprend `SeriesStats.seriesKey` ("A", "B",
+/// "DELUXE"…) ; `null` revient à toutes les séries. Simple filtre
+/// d'affichage, aucun recalcul des statistiques.
+class StatsBoosterSeriesSelected extends StatsEvent {
+  const StatsBoosterSeriesSelected(this.seriesKey);
+
+  final String? seriesKey;
+
+  @override
+  List<Object?> get props => [seriesKey];
+}

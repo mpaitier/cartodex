@@ -6,7 +6,7 @@ import '../../set_detail/widgets/pack_avatar.dart';
 import 'progress_count_label.dart';
 
 /// Boosters à ouvrir en priorité, groupés par set — voir
-/// `CollectionStats.priorityBoosterProgress` (sets pas encore
+/// `CollectionStats.priorityBoosterProgressFor` (sets pas encore
 /// complets côté boosters, du moins avancé au plus avancé ; sets
 /// promotionnels exclus).
 ///
@@ -21,14 +21,24 @@ import 'progress_count_label.dart';
 /// Chaque progression se lit "X (+Y) / Z" : X pour le compte
 /// principal, Y ce que les secondaires ont en plus, Z le total.
 class PriorityBoostersList extends StatelessWidget {
-  const PriorityBoostersList({required this.setProgress, super.key});
+  const PriorityBoostersList({
+    required this.setProgress,
+    this.emptyMessage = 'Tous les boosters synchronisés sont complets 🎉',
+    super.key,
+  });
 
   final List<SetBoosterProgress> setProgress;
+
+  /// Texte affiché quand [setProgress] est vide (tout est complet).
+  final String emptyMessage;
 
   @override
   Widget build(BuildContext context) {
     if (setProgress.isEmpty) {
-      return const Text('Tous les boosters synchronisés sont complets 🎉');
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(emptyMessage),
+      );
     }
     return Column(
       children: [

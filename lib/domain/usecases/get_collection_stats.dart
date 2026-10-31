@@ -157,8 +157,9 @@ class GetCollectionStats
       );
       overall += setCount;
 
+      final seriesKey = _seriesKeyFor(set);
       final accumulator = seriesAccumulators.putIfAbsent(
-        _seriesKeyFor(set),
+        seriesKey,
         () => _SeriesAccumulator(label: _seriesLabelFor(set)),
       );
       accumulator.progress += setCount;
@@ -205,6 +206,7 @@ class GetCollectionStats
         SetBoosterProgress(
           setId: set.id,
           setName: set.name,
+          seriesKey: seriesKey,
           progress: _countFor(
             unionIds,
             primaryIds: primaryIds,
