@@ -21,8 +21,11 @@ class CardSetsSyncRequested extends CardSetsEvent {
   const CardSetsSyncRequested();
 }
 
-/// Déclenché par la sélection d'un onglet dans
-/// [SeriesFilterBar][../widgets/series_filter_bar.dart].
+/// Déclenché quand l'utilisateur change de série, par l'un des trois
+/// chemins possibles : un bouton de
+/// [SeriesFilterBar][../widgets/series_filter_bar.dart], une tuile de
+/// [SeriesPickerSheet][../widgets/series_picker_sheet.dart], ou un
+/// swipe dans [SeriesSetsPager][../widgets/series_sets_pager.dart].
 class SeriesFilterChanged extends CardSetsEvent {
   const SeriesFilterChanged(this.seriesKey);
 

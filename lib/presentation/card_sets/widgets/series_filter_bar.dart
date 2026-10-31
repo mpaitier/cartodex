@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
 
-import '../bloc/card_sets_state.dart';
+import '../bloc/series_tab.dart';
+import 'series_more_button.dart';
+import 'series_tab_button.dart';
 
-/// Menu flottant en bas d'écran pour filtrer les sets par série.
+/// Menu flottant en bas d'écran pour choisir la série affichée.
 ///
-/// Prend toute la largeur disponible (un onglet par série, répartis
-/// à parts égales), plutôt qu'une rangée de puces qu'il faudrait
-/// faire défiler. Se rend invisible s'il n'y a rien à filtrer (une
-/// seule série connue).
+/// [tabs] ne contient que les onglets "rapides"
+/// (`CardSetsState.quickTabs`) : les séries les plus récentes, la
+/// série sélectionnée et "Promo". La barre garde ainsi la même taille
+/// quel que soit le nombre de séries. Quand [onMorePressed] est
+/// fourni, un bouton en bout de barre donne accès à toutes les
+/// séries.
+///
+/// Se rend invisible s'il n'y a rien à choisir (une seule série
+/// connue).
 class SeriesFilterBar extends StatelessWidget {
   const SeriesFilterBar({
     required this.tabs,
     required this.selectedKey,
     required this.onSelected,
+    this.onMorePressed,
     super.key,
   });
 
@@ -20,9 +28,14 @@ class SeriesFilterBar extends StatelessWidget {
   final String? selectedKey;
   final ValueChanged<String> onSelected;
 
+  /// `null` quand toutes les séries tiennent déjà dans la barre : le
+  /// bouton "Toutes les séries" n'est alors pas affiché.
+  final VoidCallback? onMorePressed;
+
   @override
   Widget build(BuildContext context) {
-    if (tabs.length <= 1) {
+    final morePressed = onMorePressed;
+    if (tabs.length <= 1 && morePressed == null) {
       return const SizedBox.shrink();
     }
     return SafeArea(
@@ -33,53 +46,24 @@ class SeriesFilterBar extends StatelessWidget {
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
           clipBehavior: Clip.antiAlias,
-          child: Row(
-            children: [
-              for (final tab in tabs)
-                Expanded(
-                  child: _SeriesTabButton(
-                    tab: tab,
-                    selected: tab.key == selectedKey,
-                    onTap: () => onSelected(tab.key),
+          // IntrinsicHeight + stretch : le bouton "Toutes les séries"
+          // prend la même hauteur que les boutons de série, sinon sa
+          // zone de tap serait plus petite que la barre.
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final tab in tabs)
+                  Expanded(
+                    child: SeriesTabButton(
+                      tab: tab,
+                      selected: tab.key == selectedKey,
+                      onTap: () => onSelected(tab.key),
+                    ),
                   ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SeriesTabButton extends StatelessWidget {
-  const _SeriesTabButton({
-    required this.tab,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final SeriesTab tab;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        color: selected
-            ? theme.colorScheme.primary.withValues(alpha: 0.12)
-            : Colors.transparent,
-        alignment: Alignment.center,
-        child: Text(
-          tab.label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: selected ? theme.colorScheme.primary : null,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                if (morePressed != null) SeriesMoreButton(onPressed: morePressed),
+              ],
+            ),
           ),
         ),
       ),
