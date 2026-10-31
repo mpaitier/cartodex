@@ -14,9 +14,10 @@ import '../../sync/bloc/sync_state.dart';
 import '../bloc/card_sets_bloc.dart';
 import '../bloc/card_sets_event.dart';
 import '../bloc/card_sets_state.dart';
-import '../widgets/card_set_grid.dart';
 import '../widgets/card_sets_empty_view.dart';
 import '../widgets/series_filter_bar.dart';
+import '../widgets/series_picker_sheet.dart';
+import '../widgets/series_sets_pager.dart';
 import '../widgets/sync_catalog_action.dart';
 import '../widgets/sync_firebase_action.dart';
 
@@ -28,8 +29,14 @@ import '../widgets/sync_firebase_action.dart';
 /// synchronisation avec le compte applicatif (Firebase — voir
 /// `SyncFirebaseAction`, `SyncBloc`, fourni ici avec le même cycle
 /// de vie que l'écran). Un appui sur une tuile ouvre [SetDetailPage]
-/// pour ce set ; le menu flottant du bas ([SeriesFilterBar]) filtre
-/// la grille par série.
+/// pour ce set.
+///
+/// Les sets sont rangés par série, une page par série
+/// ([SeriesSetsPager]) : on passe de l'une à l'autre au swipe, par la
+/// barre du bas ([SeriesFilterBar], qui ne montre que les séries
+/// récentes), ou par la feuille "Toutes les séries"
+/// ([SeriesPickerSheet]). Les trois passent par le même événement
+/// [SeriesFilterChanged].
 ///
 /// Chaque tuile montre la progression du compte principal (voir
 /// `SetProgressBorder`). Elle est recalculée au retour du détail d'un
@@ -99,11 +106,12 @@ class _CardSetsView extends StatelessWidget {
                   right: 0,
                   bottom: 0,
                   child: SeriesFilterBar(
-                    tabs: state.seriesTabs,
+                    tabs: state.quickTabs,
                     selectedKey: state.selectedSeriesKey,
-                    onSelected: (key) => context
-                        .read<CardSetsBloc>()
-                        .add(SeriesFilterChanged(key)),
+                    onSelected: (key) => _selectSeries(context, key),
+                    onMorePressed: state.hasHiddenSeries
+                        ? () => _openSeriesPicker(context, state)
+                        : null,
                   ),
                 ),
               ],
@@ -144,12 +152,37 @@ class _CardSetsView extends StatelessWidget {
     // sous le menu flottant.
     return Padding(
       padding: const EdgeInsets.only(bottom: 72),
-      child: CardSetGrid(
-        sets: state.visibleSets,
+      child: SeriesSetsPager(
+        tabs: state.seriesTabs,
+        selectedKey: state.selectedSeriesKey,
+        setsForSeries: state.setsForSeries,
         progressBySetId: state.progressBySetId,
         onSetTap: (set) => _onSetTap(context, set),
+        onSeriesChanged: (key) => _selectSeries(context, key),
       ),
     );
+  }
+
+  void _selectSeries(BuildContext context, String seriesKey) {
+    context.read<CardSetsBloc>().add(SeriesFilterChanged(seriesKey));
+  }
+
+  /// Ouvre la feuille "Toutes les séries" et applique le choix. Le
+  /// Bloc est lu avant l'attente, pour ne pas toucher au `context`
+  /// après la fermeture de la feuille.
+  Future<void> _openSeriesPicker(
+    BuildContext context,
+    CardSetsState state,
+  ) async {
+    final bloc = context.read<CardSetsBloc>();
+    final seriesKey = await SeriesPickerSheet.show(
+      context,
+      overviews: state.seriesOverviews,
+      selectedKey: state.selectedSeriesKey,
+    );
+    if (seriesKey != null && !bloc.isClosed) {
+      bloc.add(SeriesFilterChanged(seriesKey));
+    }
   }
 
   void _onSetTap(BuildContext context, CardSet set) {

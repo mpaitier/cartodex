@@ -2,12 +2,21 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/card_rarities.dart';
+import '../../../core/theme/app_color_filters.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/widgets/diagonal_grayscale_split.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
 /// Une tuile de la grille de cartes : illustration centrée, nom,
 /// numéro et rareté, et un badge de possession.
+///
+/// L'illustration reflète la possession d'un coup d'œil, même sans
+/// regarder le badge :
+/// - possédée par le compte principal : en couleur ;
+/// - possédée seulement par un compte secondaire : coupée en deux en
+///   diagonale, moitié haute grisée ;
+/// - possédée par personne : entièrement grisée.
 ///
 /// En mode [compact] (grille à 5 colonnes, voir `CardGridDensity`),
 /// seuls l'illustration et le badge (réduit) restent : le texte ne
@@ -60,6 +69,7 @@ class CardGridItem extends StatelessWidget {
                   child: _CardArt(
                     imageUrl: card.imageUrl,
                     owned: owned,
+                    secondaryOnly: ownedBySecondary && !ownedByPrimary,
                     number: _paddedNumber,
                     compact: compact,
                   ),
@@ -119,9 +129,13 @@ class CardGridItem extends StatelessWidget {
 /// absolue sur son exactitude pour chaque carte : si le chargement
 /// échoue, ou tant qu'aucune URL n'est disponible, retombe sur le
 /// numéro de la carte affiché en grand plutôt qu'une icône
-/// générique identique pour toutes les cartes. Grisée quand la
-/// carte n'est pas possédée, pour distinguer les deux états au
-/// premier coup d'œil même sans visuel.
+/// générique identique pour toutes les cartes. Le fond est plus
+/// marqué quand la carte est possédée.
+///
+/// Le grisage est appliqué dans `imageBuilder`, une fois l'image
+/// obtenue (voir [_applyOwnershipFilter]) : le chargement, le
+/// placeholder et les logs ne sont faits qu'une seule fois, même
+/// quand [DiagonalGrayscaleSplit] dessine l'image deux fois.
 ///
 /// Chaque URL tentée est loguée (voir [AppLogger]) : en INFO au
 /// moment de la construction, en ERROR si `CachedNetworkImage`
@@ -132,14 +146,35 @@ class _CardArt extends StatelessWidget {
   const _CardArt({
     required this.imageUrl,
     required this.owned,
+    required this.secondaryOnly,
     required this.number,
     required this.compact,
   });
 
   final String? imageUrl;
   final bool owned;
+
+  /// Possédée par au moins un compte secondaire, mais pas par le
+  /// compte principal.
+  final bool secondaryOnly;
+
   final String number;
   final bool compact;
+
+  /// Grisage de l'illustration selon la possession : rien pour une
+  /// carte du compte principal, la moitié haute pour une carte
+  /// possédée seulement par un secondaire, tout pour une carte
+  /// possédée par personne.
+  Widget _applyOwnershipFilter(Widget image) {
+    if (!owned) {
+      return ColorFiltered(
+        colorFilter: AppColorFilters.grayscale,
+        child: image,
+      );
+    }
+    if (secondaryOnly) return DiagonalGrayscaleSplit(child: image);
+    return image;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,8 +189,14 @@ class _CardArt extends StatelessWidget {
         padding: EdgeInsets.all(compact ? 2 : 4),
         child: CachedNetworkImage(
           imageUrl: url,
-          fit: BoxFit.contain,
-          alignment: Alignment.center,
+          imageBuilder: (context, imageProvider) {
+            final image = Image(
+              image: imageProvider,
+              fit: BoxFit.contain,
+              alignment: Alignment.center,
+            );
+            return _applyOwnershipFilter(image);
+          },
           placeholder: (context, _) => const Center(
             child: SizedBox(
               width: 20,

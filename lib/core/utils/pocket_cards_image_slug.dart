@@ -11,11 +11,15 @@
 /// - "Ruler of the Skies" (set) → "ruler-of-the-skies"
 /// - "Genetic Apex" + "Mewtwo" (booster) → "genetic-apex-mewtwo"
 /// - "Mega Rising" + "Mega Blaziken" (booster) → "mega-rising-blaziken"
+/// - "PROMO-B" (code de set dans le nom d'une carte) → "pb"
+/// - "Pokémon Center Lady" (carte) → "pokemon-center-lady"
 ///
 /// Elle peut donc échouer sur des noms à ponctuation inhabituelle (ex:
-/// "Mr. Mime", "Nidoran♀"/"Nidoran♂", accents...), ou sur des erreurs de
-/// saisie présentes dans le référentiel distant lui-même. Trois cas
-/// récurrents sont traités directement dans [_slugify] :
+/// "Mr. Mime", "Nidoran♀"/"Nidoran♂"...), ou sur des erreurs de
+/// saisie présentes dans le référentiel distant lui-même. Les lettres
+/// accentuées sont ramenées à leur lettre de base (voir
+/// [_removeDiacritics]), et trois autres cas récurrents sont traités
+/// directement dans [_slugify] :
 /// - deux mots concaténés sans espace mais séparés par une majuscule
 ///   (ex: "Teal MaskOgerpon") ;
 /// - un préfixe de forme régionale collé au nom du Pokémon, sans
@@ -48,13 +52,39 @@ abstract class PocketCardsImageSlug {
   /// pocketcards.net — voir [fromBoosterName].
   static const String _boosterMegaPrefix = 'Mega ';
 
+  /// Lettres accentuées et leur lettre de base, pour [_removeDiacritics].
+  /// pocketcards.net écrit "pokemon" là où le nom porte "Pokémon" ;
+  /// sans cette table, le "é" devenait un tiret ("pok-mon", 404).
+  /// Couvre les accents latins courants : un caractère absent de la
+  /// table reste traité comme de la ponctuation par [_slugify].
+  static const Map<String, String> _diacritics = {
+    'à': 'a', 'á': 'a', 'â': 'a', 'ä': 'a', 'ã': 'a', 'å': 'a', //
+    'À': 'A', 'Á': 'A', 'Â': 'A', 'Ä': 'A', 'Ã': 'A', 'Å': 'A', //
+    'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e', //
+    'È': 'E', 'É': 'E', 'Ê': 'E', 'Ë': 'E', //
+    'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i', //
+    'Ì': 'I', 'Í': 'I', 'Î': 'I', 'Ï': 'I', //
+    'ò': 'o', 'ó': 'o', 'ô': 'o', 'ö': 'o', 'õ': 'o', //
+    'Ò': 'O', 'Ó': 'O', 'Ô': 'O', 'Ö': 'O', 'Õ': 'O', //
+    'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u', //
+    'Ù': 'U', 'Ú': 'U', 'Û': 'U', 'Ü': 'U', //
+    'ç': 'c', 'Ç': 'C', 'ñ': 'n', 'Ñ': 'N', //
+  };
+
   /// Corrections manuelles pour les cartes dont le nom brut du
   /// référentiel distant ne donne toujours pas le bon slug une fois
   /// passé par [_slugify] (y compris ses règles de découpage) —
   /// réservé aux erreurs de saisie qu'aucune règle générique ne
   /// couvre. Clé : id de la carte tel que construit par
-  /// `CardModel.fromJson` (`<setId>-<numéro>`, ex: "B4-19").
-  static const Map<String, String> _cardSlugOverrides = {};
+  /// `CardModel.fromJson` (`<setId>-<numéro>`, ex: "B4-19", numéro
+  /// sans zéros de tête).
+  static const Map<String, String> _cardSlugOverrides = {
+    // Triumphant Light : le référentiel nomme ces cartes "Palkia" et
+    // "Dialga", mais ce sont les Formes Originelles, et le fichier
+    // du site porte le nom complet.
+    'A2a-23': 'origin-forme-palkia',
+    'A2a-60': 'origin-forme-dialga',
+  };
 
   /// Le slug de carte pour [cardId] (`<setId>-<numéro>`, voir
   /// `CardModel.fromJson`) et son [name], sans le suffixe set/numéro
@@ -65,6 +95,25 @@ abstract class PocketCardsImageSlug {
   /// plutôt que de casser silencieusement autre chose.
   static String fromCardName(String cardId, String name) {
     return _cardSlugOverrides[cardId] ?? _slugify(name);
+  }
+
+  /// Préfixe des codes de set promotionnels dans le référentiel
+  /// distant (ex: "PROMO-A", "PROMO-B") — voir [fromSetCode].
+  static const String _promoSetCodePrefix = 'PROMO-';
+
+  /// Le segment de code de set dans le nom de fichier d'une carte.
+  ///
+  /// En général, simplement le code en minuscules ("A1" → "a1",
+  /// "B2a" → "b2a"). Les promos font exception : le site les abrège
+  /// en "p" suivi de la lettre de série ("PROMO-A" → "pa", "PROMO-B"
+  /// → "pb"), d'après "pikachu-pa-015" et "psyduck-pb-008". Le
+  /// code complet ("promo-b") renvoie un 404.
+  static String fromSetCode(String setCode) {
+    if (setCode.startsWith(_promoSetCodePrefix)) {
+      final series = setCode.substring(_promoSetCodePrefix.length);
+      return 'p${series.toLowerCase()}';
+    }
+    return setCode.toLowerCase();
   }
 
   /// Le slug de logo pour un nom de set (ex: "Ruler of the Skies" →
@@ -89,7 +138,11 @@ abstract class PocketCardsImageSlug {
   }
 
   static String _slugify(String raw) {
-    final withRegionalFormSpace = _insertMissingRegionalFormSpace(raw);
+    // En premier : les règles de découpage plus bas ne reconnaissent
+    // que les lettres sans accent ([a-z], [A-Z]).
+    final withoutDiacritics = _removeDiacritics(raw);
+    final withRegionalFormSpace =
+        _insertMissingRegionalFormSpace(withoutDiacritics);
     // Le référentiel distant concatène aussi parfois deux mots sans
     // espace tout en gardant une majuscule pour marquer la coupure
     // (ex: "Teal MaskOgerpon") : on la réinsère avant toute majuscule
@@ -119,6 +172,17 @@ abstract class PocketCardsImageSlug {
       ' ',
     );
     return normalized.trim().replaceAll(RegExp(r'[\s-]+'), '-');
+  }
+
+  /// Remplace chaque lettre accentuée de [raw] par sa lettre de base
+  /// (voir [_diacritics]), en gardant la casse : "Pokémon" →
+  /// "Pokemon", "Éclair" → "Eclair".
+  static String _removeDiacritics(String raw) {
+    final buffer = StringBuffer();
+    for (final char in raw.split('')) {
+      buffer.write(_diacritics[char] ?? char);
+    }
+    return buffer.toString();
   }
 
   /// Si [raw] commence par l'un de [_regionalFormPrefixes] (insensible

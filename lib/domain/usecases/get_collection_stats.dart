@@ -7,14 +7,16 @@ import '../entities/collection_stats.dart';
 import '../entities/pokemon_card.dart';
 import '../entities/progress_count.dart';
 import '../entities/rarity_scope.dart';
+import '../entities/set_category.dart';
 import '../repositories/card_repository.dart';
 import '../usecase.dart';
 
-/// Clé de regroupement des sets promotionnels dans
-/// [CollectionStats.seriesStats] — même principe que
-/// `CardSetsState.seriesTabs` côté présentation (un "Promo" combiné,
-/// affiché en dernier), mais recalculé ici pour rester indépendant
-/// de la couche présentation.
+/// Clés de regroupement des sections spéciales dans
+/// [CollectionStats.seriesStats] : même principe que
+/// `CardSetsState.seriesTabs` côté présentation ("Deluxe" puis
+/// "Promo", après les séries lettrées), mais recalculé ici pour
+/// rester indépendant de la couche présentation.
+const _deluxeSeriesKey = 'DELUXE';
 const _promoSeriesKey = 'PROMO';
 
 /// Calcule les statistiques de complétion : taux global, par série,
@@ -112,6 +114,30 @@ class GetCollectionStats
     );
   }
 
+  /// Clé de regroupement d'un set dans [CollectionStats.seriesStats].
+  String _seriesKeyFor(CardSet set) {
+    switch (set.category) {
+      case SetCategory.main:
+        return set.seriesId;
+      case SetCategory.deluxe:
+        return _deluxeSeriesKey;
+      case SetCategory.promo:
+        return _promoSeriesKey;
+    }
+  }
+
+  /// Libellé affiché pour un groupe de [_seriesKeyFor].
+  String _seriesLabelFor(CardSet set) {
+    switch (set.category) {
+      case SetCategory.main:
+        return set.seriesId;
+      case SetCategory.deluxe:
+        return 'Deluxe';
+      case SetCategory.promo:
+        return 'Promo';
+    }
+  }
+
   CollectionStats _buildStats({
     required List<CardSet> sets,
     required Map<String, List<PokemonCard>> cardsBySetId,
@@ -131,16 +157,17 @@ class GetCollectionStats
       );
       overall += setCount;
 
-      final seriesKey = set.isPromo ? _promoSeriesKey : set.seriesId;
       final accumulator = seriesAccumulators.putIfAbsent(
-        seriesKey,
-        () => _SeriesAccumulator(label: set.isPromo ? 'Promo' : set.seriesId),
+        _seriesKeyFor(set),
+        () => _SeriesAccumulator(label: _seriesLabelFor(set)),
       );
       accumulator.progress += setCount;
 
       // Progression par booster : on ignore les sets promotionnels
       // (jamais recommandé d'ouvrir un booster promo) et les sets
-      // sans booster connu — rien à recommander dans ce cas.
+      // sans booster connu — rien à recommander dans ce cas. Les
+      // boosters Deluxe restent pris en compte : ils s'ouvrent comme
+      // n'importe quel booster.
       if (set.isPromo || set.packs.isEmpty) continue;
 
       final cardIdsByPack = <String, Set<String>>{};
@@ -189,14 +216,15 @@ class GetCollectionStats
     }
 
     // Séries lettrées dans leur ordre de rencontre (déjà du plus
-    // récent au plus ancien, comme `sets`), puis "Promo" en dernier
-    // s'il y en a un — même convention que `CardSetsState.seriesTabs`.
-    final orderedKeys = seriesAccumulators.keys
-        .where((key) => key != _promoSeriesKey)
-        .toList();
-    if (seriesAccumulators.containsKey(_promoSeriesKey)) {
-      orderedKeys.add(_promoSeriesKey);
-    }
+    // récent au plus ancien, comme `sets`), puis "Deluxe", puis
+    // "Promo" en dernier — même convention que
+    // `CardSetsState.seriesTabs`.
+    const specialKeys = [_deluxeSeriesKey, _promoSeriesKey];
+    final orderedKeys = [
+      ...seriesAccumulators.keys.where((key) => !specialKeys.contains(key)),
+      for (final key in specialKeys)
+        if (seriesAccumulators.containsKey(key)) key,
+    ];
     final seriesStats = orderedKeys.map((key) {
       final accumulator = seriesAccumulators[key]!;
       return SeriesStats(
