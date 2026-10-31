@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../domain/entities/card_set.dart';
+import '../../../domain/entities/set_category.dart';
 import '../../../domain/entities/set_progress.dart';
 import 'series_overview.dart';
 import 'series_tab.dart';
@@ -37,10 +38,12 @@ class CardSetsState extends Equatable {
     this.errorMessage,
   });
 
-  /// Nombre de séries principales toujours visibles dans
+  /// Nombre de séries lettrées toujours visibles dans
   /// [SeriesFilterBar][../widgets/series_filter_bar.dart] (les plus
   /// récentes). Les plus anciennes restent accessibles par le swipe
-  /// et par le bouton "Toutes les séries".
+  /// et par le bouton "Toutes les séries". Les sections spéciales
+  /// (Deluxe, Promo) ne comptent pas dans ce nombre : elles sont
+  /// toujours affichées.
   static const int quickSeriesCount = 3;
 
   final CardSetsStatus status;
@@ -61,40 +64,50 @@ class CardSetsState extends Equatable {
   final String? errorMessage;
 
   /// Toutes les séries, dans l'ordre des pages du swipe : une par
-  /// série principale (label = la clé elle-même, ex: "A"), de la plus
-  /// récente à la plus ancienne, puis un seul onglet "Promo" qui
-  /// regroupe tous les sets hors série, toujours en dernier.
+  /// série lettrée (label = la clé elle-même, ex: "A"), de la plus
+  /// récente à la plus ancienne, puis "Deluxe" pour les boosters
+  /// Deluxe, puis "Promo" pour tous les sets hors série, toujours en
+  /// dernier.
   ///
   /// [sets] étant déjà trié du plus récent au plus ancien (voir
   /// `CardLocalDataSource.getCachedCardSets`), l'ordre de première
   /// rencontre d'une série suffit, sans calcul de date.
   List<SeriesTab> get seriesTabs {
     final letteredKeys = <String>[];
+    var hasDeluxe = false;
     var hasPromo = false;
     for (final set in sets) {
-      if (set.isPromo) {
-        hasPromo = true;
-      } else if (!letteredKeys.contains(set.seriesId)) {
-        letteredKeys.add(set.seriesId);
+      switch (set.category) {
+        case SetCategory.main:
+          if (!letteredKeys.contains(set.seriesId)) {
+            letteredKeys.add(set.seriesId);
+          }
+        case SetCategory.deluxe:
+          hasDeluxe = true;
+        case SetCategory.promo:
+          hasPromo = true;
       }
     }
     return [
       for (final key in letteredKeys) SeriesTab(key: key, label: key),
+      if (hasDeluxe)
+        const SeriesTab(key: SeriesTab.deluxeKey, label: 'Deluxe'),
       if (hasPromo)
         const SeriesTab(key: SeriesTab.promoKey, label: 'Promo'),
     ];
   }
 
   /// Les onglets affichés dans la barre du bas : les
-  /// [quickSeriesCount] séries principales les plus récentes, puis la
+  /// [quickSeriesCount] séries lettrées les plus récentes, puis la
   /// série sélectionnée si elle est plus ancienne (pour que la barre
-  /// montre toujours où l'on se trouve), puis "Promo".
+  /// montre toujours où l'on se trouve), puis les sections spéciales
+  /// ("Deluxe", "Promo").
   List<SeriesTab> get quickTabs {
     final lettered = <SeriesTab>[];
-    SeriesTab? promo;
+    final special = <SeriesTab>[];
     for (final tab in seriesTabs) {
-      if (tab.isPromo) {
-        promo = tab;
+      if (tab.isSpecial) {
+        special.add(tab);
       } else {
         lettered.add(tab);
       }
@@ -103,25 +116,32 @@ class CardSetsState extends Equatable {
     for (final tab in lettered.skip(quickSeriesCount)) {
       if (tab.key == selectedSeriesKey) quick.add(tab);
     }
-    return [...quick, if (promo != null) promo];
+    return [...quick, ...special];
   }
 
-  /// Vrai dès qu'au moins une série principale ne tient pas dans les
+  /// Vrai dès qu'au moins une série lettrée ne tient pas dans les
   /// [quickSeriesCount] places fixes de la barre : le bouton "Toutes
   /// les séries" est alors affiché. Ne dépend pas de la sélection,
   /// pour que le bouton ne disparaisse pas d'un swipe à l'autre.
   bool get hasHiddenSeries =>
-      seriesTabs.where((tab) => !tab.isPromo).length > quickSeriesCount;
+      seriesTabs.where((tab) => !tab.isSpecial).length > quickSeriesCount;
 
-  /// Les sets d'une série : tous les sets de série principale de
-  /// [seriesKey], ou tous les sets hors série pour
+  /// Les sets d'un onglet : les sets de série principale de
+  /// [seriesKey], ou tous les boosters Deluxe pour
+  /// [SeriesTab.deluxeKey], ou tous les sets hors série pour
   /// [SeriesTab.promoKey].
   List<CardSet> setsForSeries(String seriesKey) {
+    if (seriesKey == SeriesTab.deluxeKey) {
+      return sets.where((set) => set.category == SetCategory.deluxe).toList();
+    }
     if (seriesKey == SeriesTab.promoKey) {
-      return sets.where((set) => set.isPromo).toList();
+      return sets.where((set) => set.category == SetCategory.promo).toList();
     }
     return sets
-        .where((set) => !set.isPromo && set.seriesId == seriesKey)
+        .where(
+          (set) =>
+              set.category == SetCategory.main && set.seriesId == seriesKey,
+        )
         .toList();
   }
 

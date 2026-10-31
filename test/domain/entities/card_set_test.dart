@@ -1,9 +1,10 @@
 import 'package:cartodex/domain/entities/card_set.dart';
+import 'package:cartodex/domain/entities/set_category.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-CardSet _set(String id, String seriesId) => CardSet(
+CardSet _set(String id, String seriesId, {String? name}) => CardSet(
       id: id,
-      name: id,
+      name: name ?? id,
       totalCardCount: 0,
       seriesId: seriesId,
     );
@@ -41,6 +42,36 @@ void main() {
     test('une clé de série inhabituelle part en promo', () {
       expect(_set('SP1', 'SP').isPromo, isTrue);
       expect(_set('A1', 'SP').isPromo, isTrue);
+    });
+  });
+
+  group('CardSet.category', () {
+    test('les boosters Deluxe sortent de leur série', () {
+      final ex = _set('A4b', 'A', name: 'Deluxe Pack: ex');
+      final mega = _set('B4b', 'B', name: 'Deluxe Pack: Mega');
+      expect(ex.category, SetCategory.deluxe);
+      expect(mega.category, SetCategory.deluxe);
+      expect(ex.isPromo, isFalse);
+    });
+
+    test('Deluxe est reconnu même avec un code inhabituel', () {
+      expect(
+        _set('DX1', 'SP', name: 'Deluxe Pack: Future').category,
+        SetCategory.deluxe,
+      );
+    });
+
+    test('la casse du nom ne compte pas', () {
+      expect(_set('C4b', 'C', name: 'DELUXE PACK: X').isDeluxe, isTrue);
+    });
+
+    test('un nom sans "Deluxe Pack" ne suffit pas', () {
+      expect(_set('A4', 'A', name: 'Deluxe').category, SetCategory.main);
+      expect(_set('A1', 'A', name: 'Genetic Apex').category, SetCategory.main);
+    });
+
+    test('les promos restent promo', () {
+      expect(_set('PROMO-A', 'A').category, SetCategory.promo);
     });
   });
 }

@@ -8,10 +8,10 @@ import 'series_tab_button.dart';
 ///
 /// [tabs] ne contient que les onglets "rapides"
 /// (`CardSetsState.quickTabs`) : les séries les plus récentes, la
-/// série sélectionnée et "Promo". La barre garde ainsi la même taille
-/// quel que soit le nombre de séries. Quand [onMorePressed] est
-/// fourni, un bouton en bout de barre donne accès à toutes les
-/// séries.
+/// série sélectionnée, puis "Deluxe" et "Promo". La barre garde ainsi
+/// une taille stable quel que soit le nombre de séries. Quand
+/// [onMorePressed] est fourni, un bouton en bout de barre donne accès
+/// à toutes les séries.
 ///
 /// Se rend invisible s'il n'y a rien à choisir (une seule série
 /// connue).
@@ -23,6 +23,13 @@ class SeriesFilterBar extends StatelessWidget {
     this.onMorePressed,
     super.key,
   });
+
+  /// Part de largeur d'une série lettrée ("A") face à une section
+  /// spéciale ("Deluxe", "Promo") : une lettre seule n'a pas besoin
+  /// d'autant de place qu'un mot, et ce partage évite que "Deluxe"
+  /// soit tronqué quand la barre se remplit.
+  static const int _letteredFlex = 2;
+  static const int _specialFlex = 3;
 
   final List<SeriesTab> tabs;
   final String? selectedKey;
@@ -55,6 +62,7 @@ class SeriesFilterBar extends StatelessWidget {
               children: [
                 for (final tab in tabs)
                   Expanded(
+                    flex: tab.isSpecial ? _specialFlex : _letteredFlex,
                     child: SeriesTabButton(
                       tab: tab,
                       selected: tab.key == selectedKey,
