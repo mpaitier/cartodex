@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../theme/app_color_filters.dart';
 import 'upper_diagonal_clipper.dart';
 
 /// Affiche [child] coupé en deux par la diagonale haut gauche - bas
@@ -7,7 +8,7 @@ import 'upper_diagonal_clipper.dart';
 /// normale.
 ///
 /// [child] est rendu deux fois l'un sur l'autre (la copie du dessus
-/// passe par un filtre gris puis est découpée par
+/// passe par [AppColorFilters.grayscale] puis est découpée par
 /// [UpperDiagonalClipper]). C'est plus léger qu'un `BackdropFilter`
 /// par tuile, qui coûterait cher dans une grille de plusieurs
 /// dizaines de cartes. [child] ne doit donc pas porter de
@@ -19,15 +20,6 @@ class DiagonalGrayscaleSplit extends StatelessWidget {
 
   final Widget child;
 
-  /// Niveaux de gris pondérés par la luminance perçue (coefficients
-  /// Rec. 709), transparence conservée.
-  static const ColorFilter _grayscale = ColorFilter.matrix(<double>[
-    0.2126, 0.7152, 0.0722, 0, 0, //
-    0.2126, 0.7152, 0.0722, 0, 0, //
-    0.2126, 0.7152, 0.0722, 0, 0, //
-    0, 0, 0, 1, 0, //
-  ]);
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -36,7 +28,10 @@ class DiagonalGrayscaleSplit extends StatelessWidget {
         child,
         ClipPath(
           clipper: const UpperDiagonalClipper(),
-          child: ColorFiltered(colorFilter: _grayscale, child: child),
+          child: ColorFiltered(
+            colorFilter: AppColorFilters.grayscale,
+            child: child,
+          ),
         ),
       ],
     );
