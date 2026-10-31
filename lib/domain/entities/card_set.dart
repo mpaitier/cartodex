@@ -17,6 +17,11 @@ class CardSet extends Equatable {
     this.packs = const [],
   });
 
+  /// Une clé de série "classique" : une seule lettre majuscule
+  /// ("A", "B", "C"...). Toute autre clé de `sets.json` (ex: "SP")
+  /// est considérée comme hors série.
+  static final RegExp _mainSeriesKeyPattern = RegExp(r'^[A-Z]$');
+
   /// Identifiant du set (ex: "A1").
   final String id;
 
@@ -31,7 +36,9 @@ class CardSet extends Equatable {
 
   /// Clé de série de la source (ex: "A", "B") — le regroupement de
   /// haut niveau de `sets.json`, utilisé pour le filtre par série
-  /// (voir `SeriesFilterBar`).
+  /// (voir `SeriesFilterBar`). Aucune liste de séries n'est codée en
+  /// dur : une nouvelle clé (ex: "C") apparaît d'elle-même après une
+  /// synchronisation.
   final String seriesId;
 
   /// Url du logo du set (sans extension, ajoutée par
@@ -52,11 +59,29 @@ class CardSet extends Equatable {
   /// cartes.
   final List<String> packs;
 
-  /// Vrai pour les sets promotionnels (code préfixé "PROMO-", ex:
-  /// "PROMO-B"). Dérivé de [id] plutôt que stocké séparément : pure
+  /// Vrai pour un set d'une série principale : clé de série d'une
+  /// seule lettre, et code de la forme "<lettre de la série><numéro>"
+  /// avec un suffixe minuscule optionnel (ex: "A1", "A1a", "B2b",
+  /// "C1").
+  ///
+  /// Le code doit commencer par la lettre de sa propre série : un
+  /// set rangé sous "A" mais codé autrement est traité comme hors
+  /// série plutôt que mélangé aux sets de A.
+  bool get isMainSeries {
+    if (!_mainSeriesKeyPattern.hasMatch(seriesId)) return false;
+    return RegExp('^$seriesId\\d+[a-z]?\$').hasMatch(id);
+  }
+
+  /// Vrai pour tout ce qui n'est pas un set de série principale :
+  /// les promos ("PROMO-A", "PROMO-B", "PROMO-C"...) mais aussi tout
+  /// set au code ou à la série inhabituels (ex: "SP"). Ces sets sont
+  /// regroupés dans l'onglet "Promo" et exclus des recommandations
+  /// de boosters (voir `GetCollectionStats`).
+  ///
+  /// Dérivé de [id] et [seriesId] plutôt que stocké séparément : pure
   /// fonction de l'identifiant, pas une donnée indépendante à
   /// synchroniser.
-  bool get isPromo => id.startsWith('PROMO-');
+  bool get isPromo => !isMainSeries;
 
   @override
   List<Object?> get props => [
