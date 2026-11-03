@@ -250,8 +250,7 @@ class GetCollectionStats
 
       setBoosterProgress.add(
         SetBoosterProgress(
-          setId: set.id,
-          setName: set.name,
+          set: set,
           seriesKey: seriesKey,
           progress: _countFor(
             unionIds,

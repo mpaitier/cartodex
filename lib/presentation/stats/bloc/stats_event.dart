@@ -16,6 +16,14 @@ class StatsStarted extends StatsEvent {
   const StatsStarted();
 }
 
+/// Déclenché au retour du détail d'un set ouvert depuis les boosters
+/// prioritaires : la possession a pu y changer. Recalcule les
+/// statistiques sans repasser par l'état de chargement, pour ne pas
+/// vider l'écran à chaque retour.
+class StatsRefreshRequested extends StatsEvent {
+  const StatsRefreshRequested();
+}
+
 /// Déclenché par le bouton de la top bar : change le périmètre de
 /// raretés (Σ = toutes, losange, étoile) et recalcule.
 class StatsRarityScopeChanged extends StatsEvent {

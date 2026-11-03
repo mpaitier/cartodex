@@ -1,6 +1,10 @@
+import 'package:cartodex/domain/entities/card_set.dart';
 import 'package:cartodex/domain/entities/collection_stats.dart';
 import 'package:cartodex/domain/entities/progress_count.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+CardSet _cardSet(String id) =>
+    CardSet(id: id, name: id, totalCardCount: 0, seriesId: id.substring(0, 1));
 
 ProgressCount _count(int owned, int total) =>
     ProgressCount(owned: owned, secondaryExtra: 0, total: total);
@@ -28,8 +32,7 @@ SetBoosterProgress _set(
   double? expected,
 }) =>
     SetBoosterProgress(
-      setId: id,
-      setName: id,
+      set: _cardSet(id),
       seriesKey: seriesKey,
       progress: _count(owned, total),
       boosters: [_booster(id, id, owned, total, expected: expected)],
@@ -93,8 +96,7 @@ void main() {
     test('un set à plusieurs boosters se classe sur son meilleur booster, '
         'et ses boosters sont triés de la même façon', () {
       final multi = SetBoosterProgress(
-        setId: 'A1',
-        setName: 'A1',
+        set: _cardSet('A1'),
         seriesKey: 'A',
         progress: _count(5, 20),
         boosters: [
@@ -130,8 +132,7 @@ void main() {
   group('SetBoosterProgress.expectedNewCards', () {
     test('vaut l’espérance du meilleur booster', () {
       final set = SetBoosterProgress(
-        setId: 'A1',
-        setName: 'A1',
+        set: _cardSet('A1'),
         seriesKey: 'A',
         progress: _count(0, 10),
         boosters: [

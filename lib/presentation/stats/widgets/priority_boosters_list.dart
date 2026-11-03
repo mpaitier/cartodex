@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../domain/entities/card_set.dart';
 import '../../../domain/entities/collection_stats.dart';
 import '../../../domain/entities/progress_count.dart';
 import '../../set_detail/widgets/pack_avatar.dart';
@@ -24,14 +25,20 @@ import 'progress_count_label.dart';
 /// le nom de chaque booster, le nombre moyen de cartes manquantes par
 /// ouverture ([ExpectedNewCardsLabel]), quand les probabilités du set
 /// sont connues.
+///
+/// Un appui sur la ligne d'un set ou sur celle de l'un de ses boosters
+/// remonte le set via [onSetTap] : la page ouvre alors son détail.
 class PriorityBoostersList extends StatelessWidget {
   const PriorityBoostersList({
     required this.setProgress,
+    required this.onSetTap,
     this.emptyMessage = 'Tous les boosters synchronisés sont complets 🎉',
     super.key,
   });
 
   final List<SetBoosterProgress> setProgress;
+
+  final ValueChanged<CardSet> onSetTap;
 
   /// Texte affiché quand [setProgress] est vide (tout est complet).
   final String emptyMessage;
@@ -46,16 +53,21 @@ class PriorityBoostersList extends StatelessWidget {
     }
     return Column(
       children: [
-        for (final set in setProgress) _SetBoosterBlock(set: set),
+        for (final set in setProgress)
+          _SetBoosterBlock(set: set, onTap: () => onSetTap(set.set)),
       ],
     );
   }
 }
 
 class _SetBoosterBlock extends StatelessWidget {
-  const _SetBoosterBlock({required this.set});
+  const _SetBoosterBlock({required this.set, required this.onTap});
 
   final SetBoosterProgress set;
+
+  /// Ouvre le détail du set, depuis sa ligne comme depuis celle de
+  /// l'un de ses boosters.
+  final VoidCallback onTap;
 
   /// L'icône du booster unique d'un set à un seul booster (nommée
   /// d'après le set seul, sans nom de booster). `null`
@@ -77,19 +89,23 @@ class _SetBoosterBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ProgressRow(
-            leading: _singleBoosterAvatar,
-            label: set.setName,
-            labelStyle: theme.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
-            progress: set.progress,
-            expectedNewCards: _singleBoosterExpectedNewCards,
+          _TappableRow(
+            onTap: onTap,
+            child: _ProgressRow(
+              leading: _singleBoosterAvatar,
+              label: set.setName,
+              labelStyle: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+              progress: set.progress,
+              expectedNewCards: _singleBoosterExpectedNewCards,
+            ),
           ),
-          if (set.hasMultipleBoosters) _BoosterBracket(boosters: set.boosters),
+          if (set.hasMultipleBoosters)
+            _BoosterBracket(boosters: set.boosters, onTap: onTap),
         ],
       ),
     );
@@ -99,9 +115,10 @@ class _SetBoosterBlock extends StatelessWidget {
 /// Le trait vertical qui relie la progression globale d'un set à
 /// celle de chacun de ses boosters, affichée en dessous.
 class _BoosterBracket extends StatelessWidget {
-  const _BoosterBracket({required this.boosters});
+  const _BoosterBracket({required this.boosters, required this.onTap});
 
   final List<BoosterStats> boosters;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +138,7 @@ class _BoosterBracket extends StatelessWidget {
               child: Column(
                 children: [
                   for (final booster in boosters)
-                    _BoosterRow(booster: booster),
+                    _BoosterRow(booster: booster, onTap: onTap),
                 ],
               ),
             ),
@@ -133,14 +150,15 @@ class _BoosterBracket extends StatelessWidget {
 }
 
 class _BoosterRow extends StatelessWidget {
-  const _BoosterRow({required this.booster});
+  const _BoosterRow({required this.booster, required this.onTap});
 
   final BoosterStats booster;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return _TappableRow(
+      onTap: onTap,
       child: _ProgressRow(
         leading: PackAvatar(
           setName: booster.setName,
@@ -150,6 +168,27 @@ class _BoosterRow extends StatelessWidget {
         label: booster.packName,
         progress: booster.progress,
         expectedNewCards: booster.expectedNewCards,
+      ),
+    );
+  }
+}
+
+/// Rend une ligne de la liste cliquable, avec l'effet d'encre
+/// habituel et une marge verticale qui agrandit la zone d'appui.
+class _TappableRow extends StatelessWidget {
+  const _TappableRow({required this.onTap, required this.child});
+
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: child,
       ),
     );
   }

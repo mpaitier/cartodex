@@ -5,6 +5,8 @@ import '../../../core/di/injection_container.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
+import '../../../domain/entities/card_set.dart';
+import '../../set_detail/view/set_detail_page.dart';
 import '../bloc/stats_bloc.dart';
 import '../bloc/stats_event.dart';
 import '../bloc/stats_state.dart';
@@ -21,7 +23,10 @@ import '../widgets/series_progress_list.dart';
 /// [StatsBloc]. Le bouton de la top bar ([RarityScopeAction]) restreint
 /// le tout à une famille de raretés : Σ (toutes), losange, étoile.
 /// La section des boosters prioritaires a en plus son propre
-/// sélecteur de série ([PriorityBoostersSection]).
+/// sélecteur de série ([PriorityBoostersSection]). Un appui sur un set
+/// ou un booster de cette section ouvre le détail du set
+/// ([SetDetailPage]), sans filtre ; les statistiques sont recalculées
+/// au retour.
 class StatsPage extends StatelessWidget {
   const StatsPage({super.key});
 
@@ -103,8 +108,23 @@ class _StatsView extends StatelessWidget {
           onSeriesSelected: (seriesKey) => context
               .read<StatsBloc>()
               .add(StatsBoosterSeriesSelected(seriesKey)),
+          onSetTap: (set) => _openSet(context, set),
         ),
       ],
     );
+  }
+
+  /// Ouvre le détail de [set], puis demande au Bloc de recalculer une
+  /// fois revenu : des cartes ont pu y être cochées. Le Bloc est lu
+  /// avant l'attente, pour ne pas toucher au `context` après la
+  /// navigation.
+  Future<void> _openSet(BuildContext context, CardSet set) async {
+    final bloc = context.read<StatsBloc>();
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => SetDetailPage(set: set)),
+    );
+    if (!bloc.isClosed) {
+      bloc.add(const StatsRefreshRequested());
+    }
   }
 }

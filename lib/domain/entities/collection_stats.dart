@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import 'card_set.dart';
 import 'progress_count.dart';
 
 /// Statistiques de complétion d'un compte, calculées par
@@ -149,15 +150,20 @@ class SeriesStats extends Equatable {
 /// [progress] (union, pas somme).
 class SetBoosterProgress extends Equatable {
   const SetBoosterProgress({
-    required this.setId,
-    required this.setName,
+    required this.set,
     required this.seriesKey,
     required this.progress,
     required this.boosters,
   });
 
-  final String setId;
-  final String setName;
+  /// Le set lui-même, gardé en entier plutôt que son seul
+  /// identifiant : l'écran de statistiques l'ouvre tel quel dans le
+  /// détail d'un set (`SetDetailPage`), qui attend un [CardSet].
+  final CardSet set;
+
+  String get setId => set.id;
+
+  String get setName => set.name;
 
   /// Série à laquelle le set est rattaché, avec la même clé que
   /// [SeriesStats.seriesKey] ("A", "B", "DELUXE"…). Permet de filtrer
@@ -195,8 +201,7 @@ class SetBoosterProgress extends Equatable {
 
   SetBoosterProgress copyWith({List<BoosterStats>? boosters}) {
     return SetBoosterProgress(
-      setId: setId,
-      setName: setName,
+      set: set,
       seriesKey: seriesKey,
       progress: progress,
       boosters: boosters ?? this.boosters,
@@ -204,7 +209,7 @@ class SetBoosterProgress extends Equatable {
   }
 
   @override
-  List<Object?> get props => [setId, setName, seriesKey, progress, boosters];
+  List<Object?> get props => [set, seriesKey, progress, boosters];
 }
 
 /// Complétion d'un booster précis d'un set précis (ex: le booster
