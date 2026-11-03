@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/collection_stats.dart';
 import '../../../domain/entities/progress_count.dart';
 import '../../set_detail/widgets/pack_avatar.dart';
+import 'expected_new_cards_label.dart';
 import 'progress_count_label.dart';
 
 /// Boosters à ouvrir en priorité, groupés par set — voir
 /// `CollectionStats.priorityBoosterProgressFor` (sets pas encore
-/// complets côté boosters, du moins avancé au plus avancé ; sets
-/// promotionnels exclus).
+/// complets côté boosters, du plus intéressant au moins intéressant à
+/// ouvrir ; sets promotionnels exclus).
 ///
 /// Un set à un seul booster s'affiche comme une simple ligne, avec
 /// l'icône de ce booster : ce booster unique EST le set du point de
@@ -19,7 +20,10 @@ import 'progress_count_label.dart';
 /// vertical.
 ///
 /// Chaque progression se lit "X (+Y) / Z" : X pour le compte
-/// principal, Y ce que les secondaires ont en plus, Z le total.
+/// principal, Y ce que les secondaires ont en plus, Z le total. Sous
+/// le nom de chaque booster, le nombre moyen de cartes manquantes par
+/// ouverture ([ExpectedNewCardsLabel]), quand les probabilités du set
+/// sont connues.
 class PriorityBoostersList extends StatelessWidget {
   const PriorityBoostersList({
     required this.setProgress,
@@ -63,6 +67,12 @@ class _SetBoosterBlock extends StatelessWidget {
     return PackAvatar(setName: set.setName, radius: 10);
   }
 
+  /// L'espérance affichée sur la ligne du set : seulement pour un set
+  /// à un seul booster, où elle est celle de ce booster. Pour un set à
+  /// plusieurs boosters, chaque ligne de booster porte la sienne.
+  double? get _singleBoosterExpectedNewCards =>
+      set.hasMultipleBoosters ? null : set.expectedNewCards;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -77,6 +87,7 @@ class _SetBoosterBlock extends StatelessWidget {
             labelStyle: theme.textTheme.bodyMedium
                 ?.copyWith(fontWeight: FontWeight.bold),
             progress: set.progress,
+            expectedNewCards: _singleBoosterExpectedNewCards,
           ),
           if (set.hasMultipleBoosters) _BoosterBracket(boosters: set.boosters),
         ],
@@ -138,6 +149,7 @@ class _BoosterRow extends StatelessWidget {
         ),
         label: booster.packName,
         progress: booster.progress,
+        expectedNewCards: booster.expectedNewCards,
       ),
     );
   }
@@ -146,22 +158,26 @@ class _BoosterRow extends StatelessWidget {
 /// Une ligne "[icône] nom — X (+Y) / Z", réutilisée pour la ligne
 /// d'un set et pour celle de chacun de ses boosters. [leading] est
 /// facultatif : sans lui, la ligne commence directement par le nom.
+/// [expectedNewCards], quand il est fourni, s'affiche sous le nom.
 class _ProgressRow extends StatelessWidget {
   const _ProgressRow({
     required this.label,
     required this.progress,
     this.leading,
     this.labelStyle,
+    this.expectedNewCards,
   });
 
   final String label;
   final ProgressCount progress;
   final Widget? leading;
   final TextStyle? labelStyle;
+  final double? expectedNewCards;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final expected = expectedNewCards;
     return Row(
       children: [
         if (leading != null) ...[
@@ -169,7 +185,15 @@ class _ProgressRow extends StatelessWidget {
           const SizedBox(width: 8),
         ],
         Expanded(
-          child: Text(label, style: labelStyle ?? theme.textTheme.bodySmall),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label, style: labelStyle ?? theme.textTheme.bodySmall),
+              if (expected != null)
+                ExpectedNewCardsLabel(expectedNewCards: expected),
+            ],
+          ),
         ),
         ProgressCountLabel(progress: progress),
       ],

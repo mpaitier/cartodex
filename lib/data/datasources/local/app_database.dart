@@ -10,14 +10,15 @@ import 'tables/accounts_table.dart';
 import 'tables/card_sets_table.dart';
 import 'tables/cards_table.dart';
 import 'tables/owned_cards_table.dart';
+import 'tables/pull_rates_table.dart';
 
 part 'app_database.g.dart';
 
 /// Base de données locale de l'application.
 ///
-/// Regroupe le référentiel de cartes ([CardSets], [Cards]), la
-/// possession de chaque carte ([OwnedCards]) et les comptes suivis
-/// ([Accounts]).
+/// Regroupe le référentiel de cartes ([CardSets], [Cards], et les
+/// probabilités de tirage des boosters [PullRates]), la possession de
+/// chaque carte ([OwnedCards]) et les comptes suivis ([Accounts]).
 ///
 /// Le fichier `app_database.g.dart` est généré par `build_runner` :
 /// voir la commande indiquée dans le README, il n'est pas fourni
@@ -30,7 +31,10 @@ part 'app_database.g.dart';
 ///   texte (UUID pour les nouveaux comptes), en vue de la
 ///   synchronisation multi-appareils. Voir
 ///   [_migrateAccountIdsToText].
-@DriftDatabase(tables: [CardSets, Cards, OwnedCards, Accounts])
+/// - v3 : ajout de [PullRates] (probabilités de tirage des boosters).
+///   Table nouvelle, vide jusqu'à la prochaine synchronisation du
+///   référentiel : rien à recopier.
+@DriftDatabase(tables: [CardSets, Cards, OwnedCards, Accounts, PullRates])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -39,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withExecutor(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -48,6 +52,9 @@ class AppDatabase extends _$AppDatabase {
       onUpgrade: (migrator, from, to) async {
         if (from < 2) {
           await _migrateAccountIdsToText(migrator);
+        }
+        if (from < 3) {
+          await migrator.createTable(pullRates);
         }
       },
     );

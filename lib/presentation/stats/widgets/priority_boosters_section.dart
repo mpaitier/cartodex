@@ -5,7 +5,7 @@ import 'booster_series_selector.dart';
 import 'priority_boosters_list.dart';
 
 /// Section "Boosters à ouvrir en priorité" de l'écran de
-/// statistiques : titre, sélecteur de série
+/// statistiques : titre et rappel du critère de tri, sélecteur de série
 /// ([BoosterSeriesSelector]) puis la liste des boosters
 /// ([PriorityBoostersList]) de la série choisie.
 ///
@@ -38,12 +38,21 @@ class PriorityBoostersSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Boosters à ouvrir en priorité',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Classés selon le nombre moyen de cartes manquantes obtenues '
+          'par ouverture, d’après les taux de tirage du jeu.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 8),
         BoosterSeriesSelector(

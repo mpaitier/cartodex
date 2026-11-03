@@ -49,21 +49,29 @@ class CollectionStats extends Equatable {
       priorityBoosterProgressFor(null);
 
   /// [setBoosterProgress] restreint aux sets pas encore complets côté
-  /// boosters, du moins avancé au plus avancé — les meilleurs
-  /// candidats à ouvrir en priorité : plus un set est loin d'être
-  /// complet, plus une carte tirée dans l'un de ses boosters a de
-  /// chances d'être encore manquante. À l'intérieur d'un set à
-  /// plusieurs boosters, ceux-ci sont eux aussi triés du moins avancé
-  /// au plus avancé, pour indiquer lequel ouvrir en premier au sein
-  /// du set.
+  /// boosters, du plus intéressant au moins intéressant à ouvrir.
+  ///
+  /// Le critère est l'espérance de cartes manquantes par ouverture
+  /// ([BoosterStats.expectedNewCards], voir `BoosterExpectedValue`) :
+  /// nombre de cartes manquantes de chaque rareté × probabilité de
+  /// tirer cette rareté. Un set se classe selon son meilleur booster
+  /// ([SetBoosterProgress.expectedNewCards]), puisqu'on n'en ouvre
+  /// qu'un à la fois ; à l'intérieur d'un set à plusieurs boosters,
+  /// ceux-ci sont triés de la même façon, pour indiquer lequel ouvrir
+  /// en premier.
+  ///
+  /// Les sets et boosters sans probabilités connues (référentiel pas
+  /// encore resynchronisé, set absent de la source) passent après les
+  /// autres, du moins avancé au plus avancé : l'ancien critère, à
+  /// défaut de mieux.
   ///
   /// Quand [seriesKey] est fourni, seuls les sets de cette série
   /// (voir [SeriesStats.seriesKey]) sont gardés ; `null` garde toutes
   /// les séries.
   ///
-  /// Le tri ne regarde que le compte principal ([ProgressCount.owned]) :
-  /// les cartes des secondaires ne rendent pas un booster moins utile
-  /// au principal.
+  /// Seul le compte principal compte, pour l'espérance comme pour la
+  /// progression ([ProgressCount.owned]) : les cartes des secondaires
+  /// ne rendent pas un booster moins utile au principal.
   List<SetBoosterProgress> priorityBoosterProgressFor(String? seriesKey) {
     final incomplete = setBoosterProgress
         .where((set) => seriesKey == null || set.seriesKey == seriesKey)
@@ -72,16 +80,45 @@ class CollectionStats extends Equatable {
           if (!set.hasMultipleBoosters) return set;
           final sortedBoosters = List<BoosterStats>.from(set.boosters)
             ..sort(
-              (a, b) =>
-                  a.progress.primaryRatio.compareTo(b.progress.primaryRatio),
+              (a, b) => _comparePriority(
+                a.expectedNewCards,
+                a.progress,
+                b.expectedNewCards,
+                b.progress,
+              ),
             );
           return set.copyWith(boosters: sortedBoosters);
         })
         .toList()
       ..sort(
-        (a, b) => a.progress.primaryRatio.compareTo(b.progress.primaryRatio),
+        (a, b) => _comparePriority(
+          a.expectedNewCards,
+          a.progress,
+          b.expectedNewCards,
+          b.progress,
+        ),
       );
     return incomplete;
+  }
+
+  /// Ordre de priorité entre deux boosters (ou deux sets) : la plus
+  /// forte espérance d'abord ; sans espérance connue, après les
+  /// autres, puis du moins avancé au plus avancé.
+  static int _comparePriority(
+    double? expectedA,
+    ProgressCount progressA,
+    double? expectedB,
+    ProgressCount progressB,
+  ) {
+    if (expectedA != null && expectedB != null) {
+      final byExpected = expectedB.compareTo(expectedA);
+      if (byExpected != 0) return byExpected;
+    } else if (expectedA != null) {
+      return -1;
+    } else if (expectedB != null) {
+      return 1;
+    }
+    return progressA.primaryRatio.compareTo(progressB.primaryRatio);
   }
 
   @override
@@ -143,6 +180,19 @@ class SetBoosterProgress extends Equatable {
 
   bool get isComplete => progress.isComplete;
 
+  /// Espérance de cartes manquantes par ouverture du meilleur booster
+  /// du set — celui qu'on ouvrirait. `null` quand aucun booster n'a de
+  /// probabilités connues.
+  double? get expectedNewCards {
+    double? best;
+    for (final booster in boosters) {
+      final expected = booster.expectedNewCards;
+      if (expected == null) continue;
+      if (best == null || expected > best) best = expected;
+    }
+    return best;
+  }
+
   SetBoosterProgress copyWith({List<BoosterStats>? boosters}) {
     return SetBoosterProgress(
       setId: setId,
@@ -165,6 +215,7 @@ class BoosterStats extends Equatable {
     required this.setName,
     required this.packName,
     required this.progress,
+    this.expectedNewCards,
   });
 
   final String setId;
@@ -172,8 +223,15 @@ class BoosterStats extends Equatable {
   final String packName;
   final ProgressCount progress;
 
+  /// Nombre moyen de cartes manquantes au compte principal obtenues
+  /// en ouvrant ce booster une fois (voir `BoosterExpectedValue`),
+  /// dans le périmètre de raretés des statistiques. `null` quand les
+  /// probabilités de tirage du set ne sont pas connues.
+  final double? expectedNewCards;
+
   bool get isComplete => progress.isComplete;
 
   @override
-  List<Object?> get props => [setId, setName, packName, progress];
+  List<Object?> get props =>
+      [setId, setName, packName, progress, expectedNewCards];
 }

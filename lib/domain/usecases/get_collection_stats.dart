@@ -8,7 +8,9 @@ import '../entities/pokemon_card.dart';
 import '../entities/progress_count.dart';
 import '../entities/rarity_scope.dart';
 import '../entities/set_category.dart';
+import '../entities/set_pull_rates.dart';
 import '../repositories/card_repository.dart';
+import '../services/booster_expected_value.dart';
 import '../usecase.dart';
 
 /// Clés de regroupement des sections spéciales dans
@@ -30,16 +32,26 @@ const _promoSeriesKey = 'PROMO';
 /// - Z : cartes existantes dans le périmètre de raretés demandé
 ///   ([GetCollectionStatsParams.rarityScope]).
 ///
-/// Combine trois appels déjà exposés par [CardRepository]
-/// (`getCardSets`, `getCardsBySet` pour chaque set, `getOwnedCardIds`)
-/// plutôt que d'ajouter une méthode dédiée au repository : ce calcul
-/// est une règle métier, pas un accès aux données, et a donc sa place
-/// dans un use case plutôt que dans le repository ou dans un Bloc.
+/// Chaque booster reçoit en plus son espérance de cartes manquantes
+/// par ouverture ([BoosterStats.expectedNewCards]), calculée par
+/// [BoosterExpectedValue] à partir des probabilités de tirage du set :
+/// c'est elle qui ordonne les boosters à ouvrir en priorité.
+///
+/// Combine les appels déjà exposés par [CardRepository]
+/// (`getCardSets`, `getCardsBySet` pour chaque set, `getOwnedCardIds`,
+/// `getPullRates`) plutôt que d'ajouter une méthode dédiée au
+/// repository : ce calcul est une règle métier, pas un accès aux
+/// données, et a donc sa place dans un use case plutôt que dans le
+/// repository ou dans un Bloc.
 class GetCollectionStats
     implements UseCase<CollectionStats, GetCollectionStatsParams> {
-  const GetCollectionStats(this._repository);
+  const GetCollectionStats(
+    this._repository, {
+    BoosterExpectedValue expectedValue = const BoosterExpectedValue(),
+  }) : _expectedValue = expectedValue;
 
   final CardRepository _repository;
+  final BoosterExpectedValue _expectedValue;
 
   @override
   Future<Either<Failure, CollectionStats>> call(
@@ -68,21 +80,36 @@ class GetCollectionStats
     // double-comptage entre X et Y.
     final secondaryOnlyIds = secondaryIds.difference(primaryIds);
 
+    // Toutes les cartes de chaque set, sans filtre de rareté : le
+    // calcul d'espérance a besoin du pool complet de chaque booster
+    // (voir BoosterExpectedValue). Le périmètre de raretés est
+    // appliqué dans _buildStats.
     final cardsBySetId = <String, List<PokemonCard>>{};
     for (final set in sets) {
       final cardsResult = await _repository.getCardsBySet(set.id);
       final cardsFailure = cardsResult.fold((f) => f, (_) => null);
       if (cardsFailure != null) return Left(cardsFailure);
-      cardsBySetId[set.id] = cardsResult
-          .getOrElse(() => const <PokemonCard>[])
-          .where((card) => params.rarityScope.includes(card.rarity))
-          .toList();
+      cardsBySetId[set.id] =
+          cardsResult.getOrElse(() => const <PokemonCard>[]);
     }
+
+    // Sans probabilités lisibles, les statistiques restent valables :
+    // seul le tri des boosters perd son critère principal (voir
+    // CollectionStats.priorityBoosterProgressFor). Pas de quoi bloquer
+    // tout l'écran.
+    final pullRatesResult = await _repository.getPullRates();
+    final pullRatesBySetId = {
+      for (final rates
+          in pullRatesResult.getOrElse(() => const <SetPullRates>[]))
+        rates.setId: rates,
+    };
 
     return Right(
       _buildStats(
         sets: sets,
         cardsBySetId: cardsBySetId,
+        pullRatesBySetId: pullRatesBySetId,
+        rarityScope: params.rarityScope,
         primaryIds: primaryIds,
         secondaryOnlyIds: secondaryOnlyIds,
       ),
@@ -141,6 +168,8 @@ class GetCollectionStats
   CollectionStats _buildStats({
     required List<CardSet> sets,
     required Map<String, List<PokemonCard>> cardsBySetId,
+    required Map<String, SetPullRates> pullRatesBySetId,
+    required RarityScope rarityScope,
     required Set<String> primaryIds,
     required Set<String> secondaryOnlyIds,
   }) {
@@ -148,8 +177,16 @@ class GetCollectionStats
     final seriesAccumulators = <String, _SeriesAccumulator>{};
     final setBoosterProgress = <SetBoosterProgress>[];
 
+    // Une carte "utile" pour l'espérance : dans le périmètre de
+    // raretés demandé, et pas encore possédée par le principal.
+    bool isWanted(PokemonCard card) =>
+        rarityScope.includes(card.rarity) && !primaryIds.contains(card.id);
+
     for (final set in sets) {
-      final cards = cardsBySetId[set.id] ?? const <PokemonCard>[];
+      final allCards = cardsBySetId[set.id] ?? const <PokemonCard>[];
+      final cards = allCards
+          .where((card) => rarityScope.includes(card.rarity))
+          .toList();
       final setCount = _countFor(
         cards.map((c) => c.id),
         primaryIds: primaryIds,
@@ -187,6 +224,7 @@ class GetCollectionStats
         unionIds.addAll(ids);
       }
 
+      final pullRates = pullRatesBySetId[set.id];
       final boosters = cardIdsByPack.entries
           .map(
             (entry) => BoosterStats(
@@ -198,6 +236,14 @@ class GetCollectionStats
                 primaryIds: primaryIds,
                 secondaryOnlyIds: secondaryOnlyIds,
               ),
+              expectedNewCards: pullRates == null
+                  ? null
+                  : _expectedValue.compute(
+                      pullRates: pullRates,
+                      boosterCards:
+                          allCards.where((c) => c.packs.contains(entry.key)),
+                      isWanted: isWanted,
+                    ),
             ),
           )
           .toList();
