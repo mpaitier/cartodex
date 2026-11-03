@@ -18,6 +18,11 @@ import 'card_sets_state.dart';
 /// (voir [GetSetsProgress]). Un échec de ce calcul ne fait jamais
 /// tomber l'écran : les sets s'affichent, simplement sans bordure de
 /// progression.
+///
+/// Le bandeau de chaque série additionne cette même progression
+/// (`CardSetsState.seriesProgressFor`) ; son bouton de raretés
+/// ([SeriesRarityScopeChanged]) ne fait que changer le périmètre
+/// affiché, sans nouvel accès aux données.
 class CardSetsBloc extends Bloc<CardSetsEvent, CardSetsState> {
   CardSetsBloc({
     required GetCardSets getCardSets,
@@ -31,6 +36,7 @@ class CardSetsBloc extends Bloc<CardSetsEvent, CardSetsState> {
     on<CardSetsSyncRequested>(_onSyncRequested);
     on<SeriesFilterChanged>(_onSeriesFilterChanged);
     on<CardSetsProgressRefreshRequested>(_onProgressRefreshRequested);
+    on<SeriesRarityScopeChanged>(_onSeriesRarityScopeChanged);
   }
 
   final GetCardSets _getCardSets;
@@ -119,5 +125,13 @@ class CardSetsBloc extends Bloc<CardSetsEvent, CardSetsState> {
     Emitter<CardSetsState> emit,
   ) async {
     emit(state.copyWith(selectedSeriesKey: event.seriesKey));
+  }
+
+  void _onSeriesRarityScopeChanged(
+    SeriesRarityScopeChanged event,
+    Emitter<CardSetsState> emit,
+  ) {
+    if (event.scope == state.seriesRarityScope) return;
+    emit(state.copyWith(seriesRarityScope: event.scope));
   }
 }

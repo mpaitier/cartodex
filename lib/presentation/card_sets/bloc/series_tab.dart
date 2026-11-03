@@ -33,6 +33,11 @@ class SeriesTab extends Equatable {
   /// long qu'une simple lettre.
   bool get isSpecial => isDeluxe || isPromo;
 
+  /// Titre complet, pour le bandeau de progression en haut de la
+  /// série : "Série A" pour une série lettrée, le libellé seul pour
+  /// une section spéciale ("Deluxe", "Promo").
+  String get title => isSpecial ? label : 'Série $label';
+
   @override
   List<Object?> get props => [key, label];
 }

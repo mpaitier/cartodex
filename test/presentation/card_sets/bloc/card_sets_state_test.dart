@@ -1,4 +1,6 @@
 import 'package:cartodex/domain/entities/card_set.dart';
+import 'package:cartodex/domain/entities/progress_count.dart';
+import 'package:cartodex/domain/entities/rarity_scope.dart';
 import 'package:cartodex/domain/entities/set_progress.dart';
 import 'package:cartodex/presentation/card_sets/bloc/card_sets_state.dart';
 import 'package:cartodex/presentation/card_sets/bloc/series_tab.dart';
@@ -156,6 +158,72 @@ void main() {
       expect(e.tab.key, 'E');
       expect(e.setCount, 1);
       expect(e.hasProgress, isFalse);
+    });
+  });
+
+  group('CardSetsState.seriesProgressFor', () {
+    // Deux sets de la série A : losanges et étoiles séparés, avec des
+    // cartes que seuls les secondaires possèdent.
+    final sets = [_set('A2', 'A'), _set('A1', 'A'), _set('B1', 'B')];
+    const progress = {
+      'A2': SetProgress(
+        setId: 'A2',
+        base: RarityGroupProgress(
+          primaryOwned: 10,
+          allAccountsOwned: 12,
+          total: 20,
+        ),
+        alternative: RarityGroupProgress(
+          primaryOwned: 1,
+          allAccountsOwned: 1,
+          total: 5,
+        ),
+      ),
+      'A1': SetProgress(
+        setId: 'A1',
+        base: RarityGroupProgress(
+          primaryOwned: 30,
+          allAccountsOwned: 30,
+          total: 30,
+        ),
+        alternative: RarityGroupProgress(
+          primaryOwned: 0,
+          allAccountsOwned: 3,
+          total: 10,
+        ),
+      ),
+    };
+
+    test('Σ additionne losanges et étoiles de tous les sets de la série',
+        () {
+      final state = CardSetsState(sets: sets, progressBySetId: progress);
+      expect(
+        state.seriesProgressFor('A'),
+        const ProgressCount(owned: 41, secondaryExtra: 5, total: 65),
+      );
+    });
+
+    test('losange et étoile ne gardent que leur groupe', () {
+      final diamond = CardSetsState(
+        sets: sets,
+        progressBySetId: progress,
+        seriesRarityScope: RarityScope.diamond,
+      );
+      expect(
+        diamond.seriesProgressFor('A'),
+        const ProgressCount(owned: 40, secondaryExtra: 2, total: 50),
+      );
+
+      final star = diamond.copyWith(seriesRarityScope: RarityScope.star);
+      expect(
+        star.seriesProgressFor('A'),
+        const ProgressCount(owned: 1, secondaryExtra: 3, total: 15),
+      );
+    });
+
+    test('sans progression connue pour la série, rien à afficher', () {
+      final state = CardSetsState(sets: sets, progressBySetId: progress);
+      expect(state.seriesProgressFor('B'), isNull);
     });
   });
 }

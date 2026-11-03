@@ -38,6 +38,10 @@ import '../widgets/sync_firebase_action.dart';
 /// ([SeriesPickerSheet]). Les trois passent par le même événement
 /// [SeriesFilterChanged].
 ///
+/// En haut de chaque série, un bandeau résume sa progression
+/// (`SeriesProgressBanner`), restreignable aux losanges ou aux étoiles
+/// par son bouton ([SeriesRarityScopeChanged]).
+///
 /// Chaque tuile montre la progression du compte principal (voir
 /// `SetProgressBorder`). Elle est recalculée au retour du détail d'un
 /// set ou de la gestion des comptes, et après une synchronisation
@@ -157,6 +161,11 @@ class _CardSetsView extends StatelessWidget {
         selectedKey: state.selectedSeriesKey,
         setsForSeries: state.setsForSeries,
         progressBySetId: state.progressBySetId,
+        progressForSeries: state.seriesProgressFor,
+        rarityScope: state.seriesRarityScope,
+        onRarityScopePressed: () => context
+            .read<CardSetsBloc>()
+            .add(SeriesRarityScopeChanged(state.seriesRarityScope.next)),
         onSetTap: (set) => _onSetTap(context, set),
         onSeriesChanged: (key) => _selectSeries(context, key),
       ),
