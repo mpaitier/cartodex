@@ -59,6 +59,11 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  # Symboles officiels de rareté (losange, étoile, couronne, étoile
+  # chromatique), repris de pokemon-tcg-pocket-database.
+  assets:
+    - assets/images/rarities/
+
 flutter_launcher_icons:
   android: true
   ios: true

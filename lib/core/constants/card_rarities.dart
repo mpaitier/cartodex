@@ -39,8 +39,17 @@ class CardRarity extends Equatable {
   /// chromatiques.
   final int tier;
 
-  /// Le symbole répété [tier] fois (ex: "◆◆" pour un losange de
-  /// palier 2). La couronne n'a qu'un seul palier.
+  /// Nombre de fois que l'image du groupe est répétée à l'écran (voir
+  /// `CardRarityIcon`) : le palier, sauf pour la couronne, qui n'en a
+  /// qu'un.
+  int get iconCount => group == RarityGroup.crown ? 1 : tier;
+
+  /// Le symbole texte répété [iconCount] fois (ex: "◆◆" pour un
+  /// losange de palier 2).
+  ///
+  /// L'affichage passe par les images officielles (`CardRarityIcon`) :
+  /// ce texte ne sert plus que de libellé d'accessibilité et de
+  /// repli lisible dans les logs.
   String get symbol {
     final char = switch (group) {
       RarityGroup.diamond => '◆',
@@ -48,7 +57,7 @@ class CardRarity extends Equatable {
       RarityGroup.crown => '♛',
       RarityGroup.shiny => '✷',
     };
-    return group == RarityGroup.crown ? char : char * tier;
+    return char * iconCount;
   }
 
   static const Map<String, CardRarity> _byCode = {

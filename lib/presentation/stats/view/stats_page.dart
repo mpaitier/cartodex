@@ -19,7 +19,7 @@ import '../widgets/series_progress_list.dart';
 /// Les chiffres sont ceux du compte principal (violet), prolongés en
 /// jaune par ce que les comptes secondaires possèdent en plus — voir
 /// [StatsBloc]. Le bouton de la top bar ([RarityScopeAction]) restreint
-/// le tout à une famille de raretés : rond (toutes), losange, étoile.
+/// le tout à une famille de raretés : Σ (toutes), losange, étoile.
 /// La section des boosters prioritaires a en plus son propre
 /// sélecteur de série ([PriorityBoostersSection]).
 class StatsPage extends StatelessWidget {

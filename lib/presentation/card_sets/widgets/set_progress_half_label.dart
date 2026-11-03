@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/set_progress.dart';
 
-/// Libellé d'une moitié de bordure : symbole et pourcentage du
-/// compte principal (ex: "◆ 93 %"), suivi en jaune de ce que les
-/// comptes secondaires ajoutent (ex: "+7").
+/// Libellé d'une moitié de bordure : symbole officiel du groupe
+/// ([symbol], voir `RaritySymbol`) et pourcentage du compte principal
+/// (ex: "◆ 93 %"), suivi en jaune de ce que les comptes secondaires
+/// ajoutent (ex: "+7").
 ///
 /// Les pourcentages sont arrondis à l'entier inférieur, pour ne
 /// jamais afficher 100 % tant qu'il manque une carte. Le gain des
@@ -18,7 +19,7 @@ class SetProgressHalfLabel extends StatelessWidget {
     super.key,
   });
 
-  final String symbol;
+  final Widget symbol;
   final RarityGroupProgress progress;
 
   static int _percent(int owned, int total) => (owned * 100) ~/ total;
@@ -28,11 +29,21 @@ class SetProgressHalfLabel extends StatelessWidget {
     final theme = Theme.of(context);
     final baseStyle = theme.textTheme.labelSmall;
 
+    final symbolSpan = WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 3),
+        child: symbol,
+      ),
+    );
+
     if (progress.isEmpty) {
-      return Text(
-        '$symbol –',
+      return Text.rich(
+        TextSpan(
+          style: baseStyle?.copyWith(color: theme.disabledColor),
+          children: [symbolSpan, const TextSpan(text: '–')],
+        ),
         textAlign: TextAlign.center,
-        style: baseStyle?.copyWith(color: theme.disabledColor),
       );
     }
 
@@ -45,8 +56,9 @@ class SetProgressHalfLabel extends StatelessWidget {
       TextSpan(
         style: baseStyle,
         children: [
+          symbolSpan,
           TextSpan(
-            text: '$symbol $primaryPercent %',
+            text: '$primaryPercent %',
             style: TextStyle(
               color: complete ? AppColors.complete : AppColors.progressPrimary,
               fontWeight: complete ? FontWeight.bold : FontWeight.normal,

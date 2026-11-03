@@ -34,7 +34,7 @@ class StatsState extends Equatable {
   final StatsStatus status;
   final CollectionStats? stats;
 
-  /// Périmètre de raretés des statistiques affichées. Rond (toutes)
+  /// Périmètre de raretés des statistiques affichées. Σ (toutes)
   /// par défaut.
   final RarityScope rarityScope;
 

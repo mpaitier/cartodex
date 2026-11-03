@@ -267,7 +267,7 @@ class GetCollectionStatsParams extends Equatable {
   /// Comptes secondaires : leur union (privée du principal) donne Y.
   final List<String> secondaryAccountIds;
 
-  /// Périmètre de raretés pris en compte (rond / losange / étoile).
+  /// Périmètre de raretés pris en compte (Σ / losange / étoile).
   final RarityScope rarityScope;
 
   @override

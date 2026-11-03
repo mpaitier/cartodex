@@ -17,7 +17,7 @@ class StatsStarted extends StatsEvent {
 }
 
 /// Déclenché par le bouton de la top bar : change le périmètre de
-/// raretés (rond = toutes, losange, étoile) et recalcule.
+/// raretés (Σ = toutes, losange, étoile) et recalcule.
 class StatsRarityScopeChanged extends StatsEvent {
   const StatsRarityScopeChanged(this.scope);
 

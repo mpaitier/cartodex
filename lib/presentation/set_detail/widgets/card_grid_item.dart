@@ -5,6 +5,7 @@ import '../../../core/constants/card_rarities.dart';
 import '../../../core/theme/app_color_filters.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/widgets/card_rarity_icon.dart';
 import '../../../core/widgets/diagonal_grayscale_split.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
@@ -94,10 +95,7 @@ class CardGridItem extends StatelessWidget {
                               style: theme.textTheme.labelSmall,
                             ),
                             if (rarity != null)
-                              Text(
-                                rarity.symbol,
-                                style: theme.textTheme.labelSmall,
-                              ),
+                              CardRarityIcon(rarity: rarity, size: 10),
                           ],
                         ),
                       ],

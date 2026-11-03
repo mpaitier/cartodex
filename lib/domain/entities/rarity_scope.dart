@@ -28,7 +28,7 @@ enum RarityScope {
     }
   }
 
-  /// Périmètre suivant dans le cycle rond → losange → étoile → rond.
+  /// Périmètre suivant dans le cycle Σ → losange → étoile → Σ.
   RarityScope get next {
     return RarityScope.values[(index + 1) % RarityScope.values.length];
   }
