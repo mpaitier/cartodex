@@ -8,8 +8,9 @@ import '../../stats/widgets/rarity_scope_icon.dart';
 /// cycle que le bouton de l'écran de statistiques
 /// (`RarityScopeAction`).
 ///
-/// Ne garde aucun état : le périmètre vit dans le Bloc de l'accueil,
-/// pour rester le même d'une série à l'autre.
+/// Ne garde aucun état : le périmètre est global à l'app
+/// (`RarityScopeCubit`), le même d'une série à l'autre et d'un écran à
+/// l'autre.
 class SeriesRarityScopeButton extends StatelessWidget {
   const SeriesRarityScopeButton({
     required this.scope,

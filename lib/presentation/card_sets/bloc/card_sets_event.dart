@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../domain/entities/rarity_scope.dart';
-
 /// Événements gérés par [CardSetsBloc][card_sets_bloc.dart].
 abstract class CardSetsEvent extends Equatable {
   const CardSetsEvent();
@@ -46,14 +44,3 @@ class CardSetsProgressRefreshRequested extends CardSetsEvent {
   const CardSetsProgressRefreshRequested();
 }
 
-/// Déclenché par le bouton du bandeau de série : passe au périmètre de
-/// raretés suivant (Σ → losange → étoile → Σ). Simple changement
-/// d'affichage, calculé à partir de la progression déjà chargée.
-class SeriesRarityScopeChanged extends CardSetsEvent {
-  const SeriesRarityScopeChanged(this.scope);
-
-  final RarityScope scope;
-
-  @override
-  List<Object?> get props => [scope];
-}

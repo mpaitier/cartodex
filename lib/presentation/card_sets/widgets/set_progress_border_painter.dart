@@ -14,6 +14,10 @@ import '../../../domain/entities/set_progress.dart';
 /// Sur une moitié, le segment du compte principal vient en premier,
 /// le segment des comptes secondaires prolonge juste après. Il passe
 /// au vert seulement si le principal, à lui seul, a tout le groupe.
+///
+/// [showBase] et [showAlternative] permettent d'éteindre une moitié
+/// (seul son fond est dessiné) quand le périmètre de raretés global
+/// l'exclut.
 class SetProgressBorderPainter extends CustomPainter {
   const SetProgressBorderPainter({
     required this.progress,
@@ -23,11 +27,19 @@ class SetProgressBorderPainter extends CustomPainter {
     required this.completeColor,
     required this.cornerRadius,
     required this.strokeWidth,
+    this.showBase = true,
+    this.showAlternative = true,
   });
 
   /// `null` quand aucune progression n'est connue : seul le fond de
   /// la bordure est dessiné.
   final SetProgress? progress;
+
+  /// Vrai pour dessiner la progression de la moitié gauche (losanges).
+  final bool showBase;
+
+  /// Vrai pour dessiner la progression de la moitié droite (étoiles).
+  final bool showAlternative;
 
   final Color trackColor;
   final Color primaryColor;
@@ -52,8 +64,16 @@ class SetProgressBorderPainter extends CustomPainter {
     );
     final radius = cornerRadius - inset;
 
-    _paintHalf(canvas, _leftHalfPath(bounds, radius), progress?.base);
-    _paintHalf(canvas, _rightHalfPath(bounds, radius), progress?.alternative);
+    _paintHalf(
+      canvas,
+      _leftHalfPath(bounds, radius),
+      showBase ? progress?.base : null,
+    );
+    _paintHalf(
+      canvas,
+      _rightHalfPath(bounds, radius),
+      showAlternative ? progress?.alternative : null,
+    );
   }
 
   /// Du haut au centre, vers la gauche puis le long du côté gauche,
@@ -134,6 +154,8 @@ class SetProgressBorderPainter extends CustomPainter {
   @override
   bool shouldRepaint(SetProgressBorderPainter oldDelegate) {
     return oldDelegate.progress != progress ||
+        oldDelegate.showBase != showBase ||
+        oldDelegate.showAlternative != showAlternative ||
         oldDelegate.trackColor != trackColor ||
         oldDelegate.primaryColor != primaryColor ||
         oldDelegate.secondaryColor != secondaryColor ||

@@ -8,8 +8,8 @@ import 'page_dots_indicator.dart';
 
 /// Grille de cartes à 3 volets, navigables au swipe :
 /// - à gauche, uniquement les cartes de rareté losange (◆ à ◆◆◆◆) ;
-/// - au milieu (volet par défaut), toutes les cartes, sans filtre
-///   de rareté supplémentaire ;
+/// - au milieu, toutes les cartes, sans filtre de rareté
+///   supplémentaire ;
 /// - à droite, uniquement les cartes de rareté non-losange (★, ♛,
 ///   ✷ — les "secrètes").
 ///
@@ -22,12 +22,16 @@ import 'page_dots_indicator.dart';
 /// sans rareté connue (certaines promos) est donc "non-losange" ici
 /// aussi, pas exclue des deux volets à la fois.
 ///
+/// [initialGroup] choisit le volet affiché à l'ouverture (celui du
+/// périmètre de raretés global, voir `SetDetailPage`) ; il n'est lu
+/// qu'une fois.
+///
 /// [density] est transmise telle quelle aux trois grilles : les
 /// volets partagent toujours le même nombre de colonnes.
 ///
 /// `StatefulWidget` uniquement pour garder le [PageController] en
 /// vie d'un build à l'autre : recréé à chaque frame, il ramènerait
-/// l'utilisateur au volet du milieu à chaque bascule de possession.
+/// l'utilisateur au volet de départ à chaque bascule de possession.
 class CardGridPager extends StatefulWidget {
   const CardGridPager({
     required this.cards,
@@ -36,6 +40,7 @@ class CardGridPager extends StatefulWidget {
     required this.onTap,
     required this.onDoubleTap,
     this.density = CardGridDensity.comfortable,
+    this.initialGroup = CardGroupFilter.all,
     this.onPageChanged,
     super.key,
   });
@@ -46,6 +51,10 @@ class CardGridPager extends StatefulWidget {
   final ValueChanged<String> onTap;
   final ValueChanged<String> onDoubleTap;
   final CardGridDensity density;
+
+  /// Volet affiché à l'ouverture. Ignoré ensuite : c'est le swipe
+  /// qui décide.
+  final CardGroupFilter initialGroup;
 
   /// Notifié à chaque changement de volet — voir [CardGroupFilter].
   /// Permet au parent d'adapter d'autres éléments d'UI (ex: les
@@ -58,8 +67,15 @@ class CardGridPager extends StatefulWidget {
 }
 
 class _CardGridPagerState extends State<CardGridPager> {
-  final PageController _controller = PageController(initialPage: 1);
-  int _currentPage = 1;
+  late final PageController _controller;
+  late int _currentPage;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPage = widget.initialGroup.index;
+    _controller = PageController(initialPage: _currentPage);
+  }
 
   @override
   void dispose() {

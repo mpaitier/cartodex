@@ -23,6 +23,10 @@ import 'series_progress_banner.dart';
 /// que lorsque la série a une progression ([progressForSeries] non
 /// nul, donc un compte principal existe).
 ///
+/// [rarityScope] est le périmètre de raretés global de l'app : il
+/// restreint le bandeau et estompe, sur chaque tuile, la moitié de
+/// progression qu'il exclut.
+///
 /// `StatefulWidget` uniquement pour garder le [PageController] en
 /// vie d'un build à l'autre.
 class SeriesSetsPager extends StatefulWidget {
@@ -56,7 +60,8 @@ class SeriesSetsPager extends StatefulWidget {
   /// [rarityScope].
   final ProgressCount? Function(String seriesKey) progressForSeries;
 
-  /// Périmètre de raretés du bandeau, commun à toutes les pages.
+  /// Périmètre de raretés global (`RarityScopeCubit`), commun à
+  /// toutes les pages : bandeau et tuiles.
   final RarityScope rarityScope;
 
   /// Appui sur le bouton de raretés du bandeau.
@@ -147,6 +152,7 @@ class _SeriesSetsPagerState extends State<SeriesSetsPager> {
                 key: PageStorageKey<String>('series_${tab.key}'),
                 sets: widget.setsForSeries(tab.key),
                 progressBySetId: widget.progressBySetId,
+                rarityScope: widget.rarityScope,
                 onSetTap: widget.onSetTap,
               ),
             ),

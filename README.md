@@ -20,9 +20,10 @@ TCGdex avait été essayé en premier. Son modèle ne décrit pas la répartitio
 - Synchronisation manuelle du référentiel depuis l'AppBar, avec indicateur de chargement. L'ouverture de l'écran ne dépend jamais du réseau.
 - Grille des sets, du plus récent au plus ancien, avec filtre par série (A, B, …) et un onglet « Promo » qui regroupe les sets promotionnels.
 - Chaque tuile affiche le logo du set, son nombre de cartes et de boosters, et une bordure de progression coupée en deux : la moitié gauche suit les cartes losange (◆), la moitié droite les cartes alternatives (★). Les pourcentages sont écrits sous la tuile.
+- Un seul filtre de raretés (Σ toutes, ◆ losange, ★ étoile) vaut pour toute l'application. On le change depuis le bandeau d'une série, la top bar des statistiques ou un swipe dans le détail d'un set, et tous les écrans suivent : bandeau, tuiles (la moitié exclue s'estompe), liste « Toutes les séries », statistiques.
 
 **Détail d'un set**
-- Trois volets au swipe : cartes losange à gauche, toutes les cartes au milieu, cartes alternatives à droite.
+- Trois volets au swipe : cartes losange à gauche, toutes les cartes au milieu, cartes alternatives à droite. L'écran s'ouvre sur le volet du filtre de raretés courant, et changer de volet change ce filtre pour toute l'app.
 - Filtre par booster, et filtre de rareté en multi-sélection dont les puces s'adaptent au volet actif.
 - Filtre de possession : tout, compte principal, comptes secondaires, cartes manquantes. Quand « secondaires » est choisi et que plusieurs comptes ont des cartes dans le set, un sous-filtre permet de cibler un compte.
 - Pincement à deux doigts : rapprocher les doigts passe la grille de 3 à 5 colonnes (illustration et badge seuls, sans nom ni rareté), les écarter revient à 3.
@@ -38,7 +39,7 @@ TCGdex avait été essayé en premier. Son modèle ne décrit pas la répartitio
 **Statistiques**
 - Progression globale, par série, et boosters à ouvrir en priorité (du moins avancé au plus avancé).
 - Chaque progression se lit « X (+Y) / Z » : X pour le compte principal, Y pour ce que les secondaires ajoutent, Z pour le total.
-- Un bouton cycle entre trois périmètres de raretés : toutes, losange, étoile.
+- Un bouton cycle entre trois périmètres de raretés : toutes, losange, étoile. C'est le même filtre que sur l'accueil.
 
 **Synchronisation cloud**
 - Connexion par email et mot de passe, ou par Google.
@@ -97,7 +98,7 @@ Quelques règles appliquées partout :
 ```
 lib/
 ├── main.dart                  # Initialisation Firebase et injection, puis runApp
-├── app.dart                   # MaterialApp, thèmes, AuthBloc fourni à la racine
+├── app.dart                   # MaterialApp, thèmes, AuthBloc et RarityScopeCubit fournis à la racine
 ├── core/
 │   ├── constants/             # AppConstants (URLs, nom de la base), CardRarity
 │   ├── di/                    # injection_container.dart (get_it)
@@ -123,6 +124,7 @@ lib/
     ├── accounts/              # Gestion des comptes de jeu
     ├── account_extras/        # Cartes qu'un secondaire possède en plus du principal
     ├── stats/                 # Statistiques de complétion
+    ├── rarity_scope/          # Filtre de raretés Σ / ◆ / ★ commun à toute l'app
     ├── auth/                  # Connexion au compte applicatif
     └── sync/                  # Synchronisation cloud
 ```

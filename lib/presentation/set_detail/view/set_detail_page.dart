@@ -7,6 +7,8 @@ import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
+import '../../rarity_scope/bloc/rarity_scope_card_group.dart';
+import '../../rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../bloc/ownership_filter.dart';
 import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
@@ -27,7 +29,11 @@ import '../widgets/set_progress_summary.dart';
 /// rareté (multi-sélection) et par possession (principal, secondaires
 /// avec un sous-filtre par compte, manquantes), avec un swipe
 /// gauche/droite pour isoler les cartes losange ou non-losange (voir
-/// [CardGridPager][../widgets/card_grid_pager.dart]). Un pincement à
+/// [CardGridPager][../widgets/card_grid_pager.dart]). Ces volets
+/// suivent le périmètre de raretés global ([RarityScopeCubit]) :
+/// l'écran s'ouvre sur le volet du périmètre courant (Σ au milieu,
+/// losange à gauche, étoile à droite), et un swipe change ce
+/// périmètre pour toute l'app. Un pincement à
 /// deux doigts change la densité de la grille : les doigts qui se
 /// rapprochent passent de 3 à 5 colonnes (sans nom ni rareté sous les
 /// cartes), les doigts qui s'écartent reviennent à 3.
@@ -104,15 +110,21 @@ class _SetDetailViewState extends State<_SetDetailView> {
   /// `SetDetailState.visibleCardsForGroup`) — sur ce volet losange,
   /// seules les cartes losange affichées sont concernées ; sur le
   /// volet étoile, seules les alternatives ; sur le volet du milieu,
-  /// toutes les cartes affichées. État purement local à l'affichage,
-  /// sur le même principe que `SetProgressSummary._includeSecondary` :
-  /// ne vaut pas la peine de vivre dans le Bloc. Volet du milieu par
-  /// défaut, comme `CardGridPager` (`PageController(initialPage: 1)`).
-  CardGroupFilter _activeGroup = CardGroupFilter.all;
+  /// toutes les cartes affichées. Initialisé à partir du périmètre de
+  /// raretés global ([RarityScopeCubit]), puis tenu à jour par le
+  /// swipe ; ne vit pas dans [SetDetailBloc], qui n'a pas besoin de
+  /// le connaître.
+  late CardGroupFilter _activeGroup;
 
   /// Densité de la grille (3 ou 5 colonnes), changée par pincement.
   /// État purement local à l'affichage, comme [_activeGroup].
   CardGridDensity _density = CardGridDensity.comfortable;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeGroup = context.read<RarityScopeCubit>().state.cardGroup;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -225,6 +237,7 @@ class _SetDetailViewState extends State<_SetDetailView> {
         primaryOwnedCardIds: state.primaryOwnedCardIds,
         secondaryOwnedCardIds: state.secondaryOwnedCardIds,
         density: _density,
+        initialGroup: _activeGroup,
         onTap: (cardId) =>
             context.read<SetDetailBloc>().add(CardOwnershipToggled(cardId)),
         onDoubleTap: (cardId) => _onCardDoubleTap(context, state, cardId),
@@ -238,18 +251,20 @@ class _SetDetailViewState extends State<_SetDetailView> {
     setState(() => _density = density);
   }
 
-  /// Met à jour le volet actif, et retire de la sélection de rareté
-  /// courante les puces devenues hors-sujet pour ce volet (ex: une
-  /// rareté étoile sélectionnée en arrivant sur le volet losange) —
-  /// sans quoi la grille se viderait silencieusement, sans qu'aucune
-  /// puce cochée ne l'explique. Les puces encore valides pour le
-  /// nouveau volet restent cochées.
+  /// Met à jour le volet actif et le périmètre de raretés global
+  /// (l'accueil et les statistiques suivent), et retire de la
+  /// sélection de rareté courante les puces devenues hors-sujet pour
+  /// ce volet (ex: une rareté étoile sélectionnée en arrivant sur le
+  /// volet losange) — sans quoi la grille se viderait
+  /// silencieusement, sans qu'aucune puce cochée ne l'explique. Les
+  /// puces encore valides pour le nouveau volet restent cochées.
   void _onPagerPageChanged(
     BuildContext context,
     SetDetailState state,
     CardGroupFilter group,
   ) {
     setState(() => _activeGroup = group);
+    context.read<RarityScopeCubit>().select(group.rarityScope);
     final stillAvailable = state.availableRaritiesForGroup(group).toSet();
     final filteredSelection =
         state.selectedRarities.where(stillAvailable.contains).toSet();
