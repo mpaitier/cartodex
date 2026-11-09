@@ -56,6 +56,56 @@ void main() {
     });
   });
 
+  group('PocketCardsImageSlug.fromBoosterName', () {
+    test('le nom du set préfixe celui du booster', () {
+      expect(
+        PocketCardsImageSlug.fromBoosterName('Genetic Apex', 'Mewtwo'),
+        'genetic-apex-mewtwo',
+      );
+      expect(
+        PocketCardsImageSlug.fromBoosterName('Wisdom of Sea and Sky', 'Ho-Oh'),
+        'wisdom-of-sea-and-sky-ho-oh',
+      );
+    });
+
+    test('le "Mega " de tête du booster est retiré', () {
+      expect(
+        PocketCardsImageSlug.fromBoosterName('Mega Rising', 'Mega Blaziken'),
+        'mega-rising-blaziken',
+      );
+    });
+
+    test('le nom du set répété dans le booster est retiré', () {
+      expect(
+        PocketCardsImageSlug.fromBoosterName(
+          'Dual Fusion',
+          'Dual Fusion Pikachu',
+        ),
+        'dual-fusion-pikachu',
+      );
+    });
+
+    test('les corrections manuelles passent avant les règles', () {
+      expect(
+        PocketCardsImageSlug.fromBoosterName(
+          'Dual Fusion',
+          'Dual Fusion Mega Mewtwo X',
+        ),
+        'dual-fusion-mewtwo',
+      );
+    });
+
+    test('un booster au nom du set donne le slug du set', () {
+      expect(
+        PocketCardsImageSlug.fromBoosterName(
+          'Ruler of the Skies',
+          'Ruler of the Skies',
+        ),
+        'ruler-of-the-skies',
+      );
+    });
+  });
+
   group('CardModel.fromJson imageUrl', () {
     test('carte au nom accentué', () {
       final card = CardModel.fromJson({
