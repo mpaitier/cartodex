@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/rarity_symbol.dart';
 import '../../../domain/entities/set_progress.dart';
 import 'set_progress_half_label.dart';
 
 /// Ligne de pourcentages sous une tuile de set : losanges à gauche,
-/// étoiles à droite, chacun sous la moitié de bordure qu'il décrit,
-/// séparés par un filet vertical.
+/// étoiles à droite (images officielles, voir `RaritySymbol`), chacun
+/// sous la moitié de bordure qu'il décrit, séparés par un filet
+/// vertical.
 class SetProgressLabels extends StatelessWidget {
   const SetProgressLabels({required this.progress, super.key});
 
@@ -16,7 +18,10 @@ class SetProgressLabels extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: SetProgressHalfLabel(symbol: '◆', progress: progress.base),
+          child: SetProgressHalfLabel(
+            symbol: const RaritySymbol.diamond(size: 10),
+            progress: progress.base,
+          ),
         ),
         Container(
           width: 1,
@@ -25,7 +30,7 @@ class SetProgressLabels extends StatelessWidget {
         ),
         Expanded(
           child: SetProgressHalfLabel(
-            symbol: '★',
+            symbol: const RaritySymbol.star(size: 10),
             progress: progress.alternative,
           ),
         ),

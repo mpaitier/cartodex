@@ -3,8 +3,10 @@ import 'package:dartz/dartz.dart';
 import '../../core/error/exceptions.dart';
 import '../../core/error/failures.dart';
 import '../../core/network/network_info.dart';
+import '../../core/utils/app_logger.dart';
 import '../../domain/entities/card_set.dart';
 import '../../domain/entities/pokemon_card.dart';
+import '../../domain/entities/set_pull_rates.dart';
 import '../../domain/repositories/card_repository.dart';
 import '../datasources/local/card_local_data_source.dart';
 import '../datasources/remote/card_remote_data_source.dart';
@@ -69,11 +71,37 @@ class CardRepositoryImpl implements CardRepository {
         );
       }
       await _localDataSource.cacheCardSets(correctedSets);
+      await _syncPullRates();
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
+    }
+  }
+
+  /// Met à jour les probabilités de tirage des boosters.
+  ///
+  /// Un échec ici ne fait pas échouer la synchronisation : les cartes
+  /// et les sets, l'essentiel, sont déjà enregistrés, et les
+  /// probabilités précédentes (s'il y en a) restent en place. Seul le
+  /// tri des boosters à ouvrir en priorité s'en ressent, il retombe
+  /// alors sur la progression (voir `CollectionStats`). Une erreur
+  /// d'écriture en base, elle, remonte normalement.
+  Future<void> _syncPullRates() async {
+    try {
+      final pullRates = await _remoteDataSource.fetchPullRates();
+      await _localDataSource.cachePullRates(pullRates);
+    } on ServerException catch (e) {
+      AppLogger.log(
+        'WARNING',
+        'Probabilités de tirage non mises à jour : ${e.message}',
+      );
+    } on FormatException catch (e) {
+      AppLogger.log(
+        'WARNING',
+        'Probabilités de tirage illisibles, non mises à jour : $e',
+      );
     }
   }
 
@@ -94,6 +122,16 @@ class CardRepositoryImpl implements CardRepository {
     try {
       final cards = await _localDataSource.getCachedCardsBySet(setId);
       return Right(cards);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<SetPullRates>>> getPullRates() async {
+    try {
+      final pullRates = await _localDataSource.getCachedPullRates();
+      return Right(pullRates);
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     }

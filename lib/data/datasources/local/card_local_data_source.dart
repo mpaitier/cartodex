@@ -2,8 +2,11 @@ import 'package:drift/drift.dart';
 
 import '../../../core/error/exceptions.dart';
 import '../../../domain/entities/card_category.dart';
+import '../../../domain/entities/pack_variant_pull_rates.dart';
+import '../../../domain/entities/slot_pull_rates.dart';
 import '../../models/card_model.dart';
 import '../../models/card_set_model.dart';
+import '../../models/set_pull_rates_model.dart';
 import 'app_database.dart';
 
 /// Accès à la base locale pour tout ce qui concerne les cartes.
@@ -22,6 +25,15 @@ abstract class CardLocalDataSource {
   Future<List<CardSetModel>> getCachedCardSets();
 
   Future<List<CardModel>> getCachedCardsBySet(String setId);
+
+  /// Remplace toutes les probabilités de tirage par [pullRates]. Pas
+  /// de mise à jour set par set : la source publie un seul fichier,
+  /// qui fait foi dans son ensemble.
+  Future<void> cachePullRates(List<SetPullRatesModel> pullRates);
+
+  /// Probabilités de tirage en cache, un élément par set. Liste vide
+  /// tant qu'aucune synchronisation ne les a récupérées.
+  Future<List<SetPullRatesModel>> getCachedPullRates();
 
   /// Cartes possédées par le compte [accountId] uniquement : la
   /// possession n'est plus globale (voir [OwnedCards][tables/owned_cards_table.dart]).
@@ -100,6 +112,35 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
       return rows.map(_cardFromRow).toList();
     } on Exception catch (e) {
       throw CacheException('Échec de la lecture des cartes en cache : $e');
+    }
+  }
+
+  @override
+  Future<void> cachePullRates(List<SetPullRatesModel> pullRates) async {
+    try {
+      await _database.batch((batch) {
+        batch.deleteWhere(_database.pullRates, (_) => const Constant(true));
+        batch.insertAll(
+          _database.pullRates,
+          [for (final set in pullRates) ..._pullRatesToCompanions(set)],
+        );
+      });
+    } on Exception catch (e) {
+      throw CacheException(
+        'Échec de la mise en cache des probabilités de tirage : $e',
+      );
+    }
+  }
+
+  @override
+  Future<List<SetPullRatesModel>> getCachedPullRates() async {
+    try {
+      final rows = await _database.select(_database.pullRates).get();
+      return _pullRatesFromRows(rows);
+    } on Exception catch (e) {
+      throw CacheException(
+        'Échec de la lecture des probabilités de tirage en cache : $e',
+      );
     }
   }
 
@@ -186,6 +227,59 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
     );
   }
 
+  /// Une ligne par (variante, emplacement, rareté) : voir
+  /// [PullRates][tables/pull_rates_table.dart].
+  Iterable<PullRatesCompanion> _pullRatesToCompanions(
+    SetPullRatesModel set,
+  ) sync* {
+    for (final variant in set.variants) {
+      for (var slot = 0; slot < variant.slots.length; slot++) {
+        final rates = variant.slots[slot].rateByRarity;
+        for (final entry in rates.entries) {
+          yield PullRatesCompanion.insert(
+            setId: set.setId,
+            packVariant: variant.name,
+            appearanceRate: variant.appearanceRate,
+            slot: slot,
+            rarity: entry.key,
+            rate: entry.value,
+          );
+        }
+      }
+    }
+  }
+
+  /// Regroupe les lignes à plat de [PullRates] par set, puis par
+  /// variante, puis par emplacement. L'ordre des variantes suit celui
+  /// de la première ligne lue de chacune ; les emplacements sont
+  /// remis dans l'ordre de leur rang.
+  List<SetPullRatesModel> _pullRatesFromRows(List<PullRateRow> rows) {
+    final bySet = <String, Map<String, _VariantRows>>{};
+    for (final row in rows) {
+      final variants = bySet.putIfAbsent(row.setId, () => {});
+      final variant = variants.putIfAbsent(
+        row.packVariant,
+        () => _VariantRows(row.appearanceRate),
+      );
+      variant.ratesBySlot.putIfAbsent(row.slot, () => {})[row.rarity] =
+          row.rate;
+    }
+    return [
+      for (final setEntry in bySet.entries)
+        SetPullRatesModel(
+          setId: setEntry.key,
+          variants: [
+            for (final variantEntry in setEntry.value.entries)
+              PackVariantPullRates(
+                name: variantEntry.key,
+                appearanceRate: variantEntry.value.appearanceRate,
+                slots: variantEntry.value.sortedSlots,
+              ),
+          ],
+        ),
+    ];
+  }
+
   CardsCompanion _cardToCompanion(CardModel card) {
     return CardsCompanion.insert(
       id: card.id,
@@ -218,5 +312,20 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
       illustrator: row.illustrator,
       packs: row.packs.isEmpty ? const [] : row.packs.split(','),
     );
+  }
+}
+
+/// Accumulateur interne de [CardLocalDataSourceImpl._pullRatesFromRows] :
+/// les lignes d'une variante de booster, le temps de les regrouper par
+/// emplacement.
+class _VariantRows {
+  _VariantRows(this.appearanceRate);
+
+  final double appearanceRate;
+  final Map<int, Map<String, double>> ratesBySlot = {};
+
+  List<SlotPullRates> get sortedSlots {
+    final slots = ratesBySlot.keys.toList()..sort();
+    return [for (final slot in slots) SlotPullRates(ratesBySlot[slot]!)];
   }
 }

@@ -21,6 +21,10 @@ import 'stats_state.dart';
 /// précédents restent affichés le temps du calcul, pas d'écran vide
 /// à chaque appui sur le bouton.
 ///
+/// Le retour du détail d'un set ouvert depuis les boosters prioritaires
+/// ([StatsRefreshRequested]) recalcule de la même façon, sans écran de
+/// chargement : la possession a pu changer entre-temps.
+///
 /// Le choix de série des boosters prioritaires
 /// ([StatsBoosterSeriesSelected]) ne fait que filtrer des chiffres
 /// déjà calculés : il est conservé lors des recalculs, et ne
@@ -33,6 +37,7 @@ class StatsBloc extends Bloc<StatsEvent, StatsState> {
         _getCollectionStats = getCollectionStats,
         super(const StatsState()) {
     on<StatsStarted>(_onStarted);
+    on<StatsRefreshRequested>(_onRefreshRequested);
     on<StatsRarityScopeChanged>(_onRarityScopeChanged);
     on<StatsBoosterSeriesSelected>(_onBoosterSeriesSelected);
   }
@@ -42,6 +47,17 @@ class StatsBloc extends Bloc<StatsEvent, StatsState> {
 
   Future<void> _onStarted(StatsStarted event, Emitter<StatsState> emit) async {
     emit(state.copyWith(status: StatsStatus.loading));
+    await _load(emit);
+  }
+
+  /// Même calcul que [_onStarted], sans l'état de chargement : les
+  /// chiffres affichés restent en place jusqu'à l'arrivée des
+  /// nouveaux. Le périmètre de raretés et le choix de série sont
+  /// conservés.
+  Future<void> _onRefreshRequested(
+    StatsRefreshRequested event,
+    Emitter<StatsState> emit,
+  ) async {
     await _load(emit);
   }
 

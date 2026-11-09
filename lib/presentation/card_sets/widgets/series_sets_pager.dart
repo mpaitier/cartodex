@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/card_set.dart';
+import '../../../domain/entities/progress_count.dart';
+import '../../../domain/entities/rarity_scope.dart';
 import '../../../domain/entities/set_progress.dart';
 import '../bloc/series_tab.dart';
 import 'card_set_grid.dart';
+import 'series_progress_banner.dart';
 
 /// Grilles de sets, une page par série, navigables au swipe : vers
 /// la gauche pour les séries plus anciennes, "Promo" en dernière
@@ -15,6 +18,11 @@ import 'card_set_grid.dart';
 ///   feuille "Toutes les séries", nouvelle série après une
 ///   synchronisation) déplace le pager sur la bonne page.
 ///
+/// Chaque page commence par le bandeau de progression de sa série
+/// ([SeriesProgressBanner]), fixe au-dessus de la grille. Il n'apparaît
+/// que lorsque la série a une progression ([progressForSeries] non
+/// nul, donc un compte principal existe).
+///
 /// `StatefulWidget` uniquement pour garder le [PageController] en
 /// vie d'un build à l'autre.
 class SeriesSetsPager extends StatefulWidget {
@@ -24,6 +32,9 @@ class SeriesSetsPager extends StatefulWidget {
     required this.setsForSeries,
     required this.onSetTap,
     required this.onSeriesChanged,
+    required this.progressForSeries,
+    required this.rarityScope,
+    required this.onRarityScopePressed,
     this.progressBySetId = const {},
     super.key,
   });
@@ -39,6 +50,17 @@ class SeriesSetsPager extends StatefulWidget {
   final ValueChanged<CardSet> onSetTap;
   final ValueChanged<String> onSeriesChanged;
   final Map<String, SetProgress> progressBySetId;
+
+  /// La progression d'une série pour son bandeau
+  /// (`CardSetsState.seriesProgressFor`), déjà restreinte à
+  /// [rarityScope].
+  final ProgressCount? Function(String seriesKey) progressForSeries;
+
+  /// Périmètre de raretés du bandeau, commun à toutes les pages.
+  final RarityScope rarityScope;
+
+  /// Appui sur le bouton de raretés du bandeau.
+  final VoidCallback onRarityScopePressed;
 
   @override
   State<SeriesSetsPager> createState() => _SeriesSetsPagerState();
@@ -108,13 +130,27 @@ class _SeriesSetsPagerState extends State<SeriesSetsPager> {
       onPageChanged: _onPageChanged,
       itemBuilder: (context, index) {
         final tab = widget.tabs[index];
-        return CardSetGrid(
-          // Une clé par série : chaque page garde sa propre position
-          // de défilement d'un swipe à l'autre.
-          key: PageStorageKey<String>('series_${tab.key}'),
-          sets: widget.setsForSeries(tab.key),
-          progressBySetId: widget.progressBySetId,
-          onSetTap: widget.onSetTap,
+        final progress = widget.progressForSeries(tab.key);
+        return Column(
+          children: [
+            if (progress != null)
+              SeriesProgressBanner(
+                title: tab.title,
+                progress: progress,
+                scope: widget.rarityScope,
+                onScopePressed: widget.onRarityScopePressed,
+              ),
+            Expanded(
+              child: CardSetGrid(
+                // Une clé par série : chaque page garde sa propre
+                // position de défilement d'un swipe à l'autre.
+                key: PageStorageKey<String>('series_${tab.key}'),
+                sets: widget.setsForSeries(tab.key),
+                progressBySetId: widget.progressBySetId,
+                onSetTap: widget.onSetTap,
+              ),
+            ),
+          ],
         );
       },
     );

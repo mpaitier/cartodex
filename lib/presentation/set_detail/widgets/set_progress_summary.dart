@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/rarity_symbol.dart';
+import '../../../core/widgets/rarity_total_symbol.dart';
 
 /// Résumé de progression affiché dans la barre de titre de
 /// [SetDetailPage][../view/set_detail_page.dart] : distingue la
@@ -86,21 +88,21 @@ class _SetProgressSummaryState extends State<SetProgressSummary> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _RarityGroupCount(
-                  symbol: '◆',
+                  symbol: const RaritySymbol.diamond(),
                   owned: baseOwned,
                   total: widget.baseTotal,
                   borderColor: borderColor,
                 ),
                 const SizedBox(width: 6),
                 _RarityGroupCount(
-                  symbol: '★',
+                  symbol: const RaritySymbol.star(),
                   owned: alternativeOwned,
                   total: widget.alternativeTotal,
                   borderColor: borderColor,
                 ),
                 const SizedBox(width: 6),
                 _RarityGroupCount(
-                  symbol: 'Σ',
+                  symbol: const RarityTotalSymbol(),
                   owned: baseOwned + alternativeOwned,
                   total: widget.baseTotal + widget.alternativeTotal,
                   borderColor: borderColor,
@@ -116,7 +118,9 @@ class _SetProgressSummaryState extends State<SetProgressSummary> {
 
 /// Une petite boîte "symbole owned/total", au contour coloré selon
 /// le mode courant (violet/jaune) et au texte en vert quand complet
-/// — comme le "72/72" bleu de l'app officielle.
+/// — comme le "72/72" bleu de l'app officielle. [symbol] est l'image
+/// officielle du groupe (`RaritySymbol`) ou le Σ du total
+/// (`RarityTotalSymbol`).
 class _RarityGroupCount extends StatelessWidget {
   const _RarityGroupCount({
     required this.symbol,
@@ -125,7 +129,7 @@ class _RarityGroupCount extends StatelessWidget {
     required this.borderColor,
   });
 
-  final String symbol;
+  final Widget symbol;
   final int owned;
   final int total;
   final Color borderColor;
@@ -139,13 +143,20 @@ class _RarityGroupCount extends StatelessWidget {
         border: Border.all(color: borderColor, width: 1.5),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(
-        '$symbol $owned/$total',
-        style: DefaultTextStyle.of(context).style.copyWith(
-              fontSize: 12,
-              fontWeight: complete ? FontWeight.bold : FontWeight.normal,
-              color: complete ? AppColors.complete : null,
-            ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          symbol,
+          const SizedBox(width: 4),
+          Text(
+            '$owned/$total',
+            style: DefaultTextStyle.of(context).style.copyWith(
+                  fontSize: 12,
+                  fontWeight: complete ? FontWeight.bold : FontWeight.normal,
+                  color: complete ? AppColors.complete : null,
+                ),
+          ),
+        ],
       ),
     );
   }

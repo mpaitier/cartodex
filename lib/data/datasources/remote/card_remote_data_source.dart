@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/error/exceptions.dart';
 import '../../models/card_model.dart';
 import '../../models/card_set_model.dart';
+import '../../models/set_pull_rates_model.dart';
 
 /// Accès au référentiel distant de cartes.
 ///
@@ -19,7 +20,8 @@ import '../../models/card_set_model.dart';
 /// cartes par booster à l'intérieur d'un set, une donnée que ce
 /// jeu-ci fournit nativement (`sets.json.packs`,
 /// `cards.json.packs`). Trois requêtes suffisent à tout récupérer,
-/// contre une par carte auparavant.
+/// contre une par carte auparavant, plus une quatrième pour les
+/// probabilités de tirage des boosters (`pullRates.json`).
 abstract class CardRemoteDataSource {
   /// Récupère tous les sets TCG Pocket, tous groupes de série
   /// confondus.
@@ -31,6 +33,10 @@ abstract class CardRemoteDataSource {
   /// listes de toute façon pour associer chaque carte au nom de
   /// son set.
   Future<List<CardModel>> fetchAllCards();
+
+  /// Récupère les probabilités de tirage des boosters, un élément par
+  /// set présent dans `pullRates.json`.
+  Future<List<SetPullRatesModel>> fetchPullRates();
 }
 
 class CardRemoteDataSourceImpl implements CardRemoteDataSource {
@@ -73,6 +79,21 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
       final key = '${raw['set']}-${raw['number']}';
       return CardModel.fromJson(raw, category: categoryByKey[key]);
     }).toList();
+  }
+
+  @override
+  Future<List<SetPullRatesModel>> fetchPullRates() async {
+    final uri =
+        Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/pullRates.json');
+    final body = jsonDecode((await _get(uri)).body) as Map<String, dynamic>;
+    return [
+      for (final entry in body.entries)
+        if (entry.value is Map<String, dynamic>)
+          SetPullRatesModel.fromJson(
+            entry.key,
+            entry.value as Map<String, dynamic>,
+          ),
+    ];
   }
 
   Future<http.Response> _get(Uri uri) async {

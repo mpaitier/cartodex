@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import '../../core/error/failures.dart';
 import '../entities/card_set.dart';
 import '../entities/pokemon_card.dart';
+import '../entities/set_pull_rates.dart';
 
 /// Frontière entre le domaine et la donnée pour tout ce qui
 /// concerne les cartes.
@@ -19,8 +20,9 @@ import '../entities/pokemon_card.dart';
 /// interface.
 abstract class CardRepository {
   /// Télécharge (ou met à jour) le référentiel de cartes TCG
-  /// Pocket et le persiste en local. N'affecte jamais les cartes
-  /// marquées comme possédées.
+  /// Pocket et le persiste en local, probabilités de tirage des
+  /// boosters comprises. N'affecte jamais les cartes marquées comme
+  /// possédées.
   Future<Either<Failure, void>> syncCardCatalog();
 
   /// Retourne tous les sets déjà synchronisés en local.
@@ -29,6 +31,12 @@ abstract class CardRepository {
   /// Retourne toutes les cartes d'un set déjà synchronisées en
   /// local.
   Future<Either<Failure, List<PokemonCard>>> getCardsBySet(String setId);
+
+  /// Retourne les probabilités de tirage des boosters, un élément par
+  /// set qui en a (les sets promotionnels n'en ont pas), telles que
+  /// synchronisées en local avec le reste du référentiel. Liste vide
+  /// tant qu'aucune synchronisation ne les a récupérées.
+  Future<Either<Failure, List<SetPullRates>>> getPullRates();
 
   /// Retourne les identifiants des cartes marquées comme possédées
   /// par le compte [accountId]. La possession est par compte, pas
