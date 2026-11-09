@@ -6,6 +6,8 @@ import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
+import '../../../domain/entities/rarity_scope.dart';
+import '../../rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../../set_detail/view/set_detail_page.dart';
 import '../bloc/stats_bloc.dart';
 import '../bloc/stats_event.dart';
@@ -21,7 +23,9 @@ import '../widgets/series_progress_list.dart';
 /// Les chiffres sont ceux du compte principal (violet), prolongés en
 /// jaune par ce que les comptes secondaires possèdent en plus — voir
 /// [StatsBloc]. Le bouton de la top bar ([RarityScopeAction]) restreint
-/// le tout à une famille de raretés : Σ (toutes), losange, étoile.
+/// le tout à une famille de raretés : Σ (toutes), losange, étoile. Ce
+/// périmètre est celui de toute l'app ([RarityScopeCubit]) : le
+/// changer ici le change aussi sur l'accueil, et inversement.
 /// La section des boosters prioritaires a en plus son propre
 /// sélecteur de série ([PriorityBoostersSection]). Un appui sur un set
 /// ou un booster de cette section ouvre le détail du set
@@ -33,7 +37,12 @@ class StatsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<StatsBloc>()..add(const StatsStarted()),
+      create: (context) => sl<StatsBloc>()
+        ..add(
+          StatsStarted(
+            rarityScope: context.read<RarityScopeCubit>().state,
+          ),
+        ),
       child: const _StatsView(),
     );
   }
@@ -44,21 +53,28 @@ class _StatsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<StatsBloc, StatsState>(
-      builder: (context, state) {
-        return AppScaffold(
-          title: 'Statistiques',
-          actions: [
-            RarityScopeAction(
-              scope: state.rarityScope,
-              onPressed: () => context
-                  .read<StatsBloc>()
-                  .add(StatsRarityScopeChanged(state.rarityScope.next)),
-            ),
-          ],
-          body: _buildBody(context, state),
-        );
-      },
+    // Le périmètre global peut changer depuis cet écran (bouton de la
+    // top bar) ou depuis le détail d'un set ouvert par-dessus (swipe
+    // entre volets) : dans les deux cas, il est relayé au Bloc.
+    return BlocListener<RarityScopeCubit, RarityScope>(
+      listener: (context, scope) =>
+          context.read<StatsBloc>().add(StatsRarityScopeChanged(scope)),
+      child: BlocBuilder<StatsBloc, StatsState>(
+        builder: (context, state) {
+          return AppScaffold(
+            title: 'Statistiques',
+            actions: [
+              BlocBuilder<RarityScopeCubit, RarityScope>(
+                builder: (context, scope) => RarityScopeAction(
+                  scope: scope,
+                  onPressed: () => context.read<RarityScopeCubit>().cycle(),
+                ),
+              ),
+            ],
+            body: _buildBody(context, state),
+          );
+        },
+      ),
     );
   }
 
@@ -83,7 +99,11 @@ class _StatsView extends StatelessWidget {
     if (state.status == StatsStatus.error) {
       return AppErrorView(
         message: state.errorMessage ?? 'Une erreur est survenue.',
-        onRetry: () => context.read<StatsBloc>().add(const StatsStarted()),
+        onRetry: () => context.read<StatsBloc>().add(
+              StatsStarted(
+                rarityScope: context.read<RarityScopeCubit>().state,
+              ),
+            ),
       );
     }
 

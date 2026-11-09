@@ -34,8 +34,9 @@ class StatsState extends Equatable {
   final StatsStatus status;
   final CollectionStats? stats;
 
-  /// Périmètre de raretés des statistiques affichées. Σ (toutes)
-  /// par défaut.
+  /// Périmètre de raretés des statistiques affichées : copie du
+  /// périmètre global de l'app (`RarityScopeCubit`), tenue à jour par
+  /// la vue. Σ (toutes) par défaut.
   final RarityScope rarityScope;
 
   /// Série choisie pour les boosters à ouvrir en priorité (clé de
