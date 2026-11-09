@@ -31,6 +31,13 @@ class ProgressCount extends Equatable {
   /// Part ajoutée par les secondaires, entre 0 et 1.
   double get secondaryExtraRatio => total == 0 ? 0 : secondaryExtra / total;
 
+  /// Cartes que personne ne possède : ni le principal, ni aucun
+  /// secondaire. Jamais négatif.
+  int get missing {
+    final value = total - owned - secondaryExtra;
+    return value < 0 ? 0 : value;
+  }
+
   /// Vrai quand le compte principal, à lui seul, possède tout. Les
   /// cartes des secondaires ne comptent pas : même règle que la
   /// bordure des tuiles de sets.

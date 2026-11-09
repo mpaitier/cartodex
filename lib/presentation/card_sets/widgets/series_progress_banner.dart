@@ -5,6 +5,7 @@ import '../../../domain/entities/progress_count.dart';
 import '../../../domain/entities/rarity_scope.dart';
 import '../../stats/widgets/progress_count_label.dart';
 import '../../stats/widgets/stacked_progress_bar.dart';
+import 'missing_cards_label.dart';
 import 'series_rarity_scope_button.dart';
 
 /// Bandeau en haut de chaque série de l'accueil : où en est la
@@ -12,9 +13,11 @@ import 'series_rarity_scope_button.dart';
 ///
 /// Même lecture que l'écran de statistiques : barre violette du
 /// compte principal prolongée en jaune par ce que les secondaires
-/// ajoutent, détail "X (+Y) / Z" et pourcentage du principal. Le
-/// bouton de droite ([SeriesRarityScopeButton]) restreint le tout aux
-/// losanges ou aux étoiles.
+/// ajoutent, détail "X (+Y) / Z" et pourcentage du principal. En
+/// face du détail, le nombre de cartes que personne ne possède
+/// encore, en rouge ([MissingCardsLabel]). Le bouton de droite
+/// ([SeriesRarityScopeButton]) restreint le tout aux losanges ou aux
+/// étoiles, nombre de cartes manquantes compris.
 ///
 /// Composant purement visuel : la progression arrive déjà calculée
 /// pour le périmètre [scope], et l'appui sur le bouton remonte via
@@ -81,7 +84,12 @@ class SeriesProgressBanner extends StatelessWidget {
                   const SizedBox(height: 6),
                   StackedProgressBar(progress: progress),
                   const SizedBox(height: 4),
-                  ProgressCountLabel(progress: progress),
+                  Row(
+                    children: [
+                      Expanded(child: ProgressCountLabel(progress: progress)),
+                      MissingCardsLabel(missing: progress.missing),
+                    ],
+                  ),
                 ],
               ),
             ),
