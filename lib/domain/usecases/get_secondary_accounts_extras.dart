@@ -20,6 +20,11 @@ import '../usecase.dart';
 /// comparer. Le découpage losange / alternatif suit
 /// [CardRarity.isBase], comme le détail d'un set.
 ///
+/// Les sets de chaque secondaire sont triés par losanges en plus, puis
+/// par étoiles en plus, l'ordre du catalogue départageant les égalités
+/// (voir [SetExtras.sortedByCounts]) : le détail d'un compte montre
+/// d'abord les sets où il apporte le plus.
+///
 /// Les cartes de chaque set ne sont lues qu'une fois, puis réutilisées
 /// pour tous les secondaires.
 class GetSecondaryAccountsExtras
@@ -95,8 +100,10 @@ class GetSecondaryAccountsExtras
         if (counts.isEmpty) continue;
         bySet.add(SetExtras(set: set, counts: counts));
       }
-      extrasByAccountId[account.id] =
-          AccountExtras(accountId: account.id, bySet: bySet);
+      extrasByAccountId[account.id] = AccountExtras(
+        accountId: account.id,
+        bySet: SetExtras.sortedByCounts(bySet),
+      );
     }
     return Right(extrasByAccountId);
   }

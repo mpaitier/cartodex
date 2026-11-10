@@ -10,8 +10,8 @@ import 'card_rarity_icon.dart';
 /// Les symboles officiels sont blancs cerclés de noir : sur le fond
 /// clair d'une tuile de carte, l'intérieur blanc disparaît et seuls
 /// les contours restent visibles. Le fond gris
-/// ([AppColors.rarityBadgeBackground], opacité de 80 %) leur rend leur
-/// contraste.
+/// ([AppColors.translucentBadgeBackground], opacité de 80 %) leur rend
+/// leur contraste.
 ///
 /// Utilisé par `CardGridItem`. Les puces du filtre de rareté gardent
 /// [CardRarityIcon] seul : elles ont déjà leur propre fond.
@@ -23,14 +23,12 @@ class CardRarityBadge extends StatelessWidget {
   /// Hauteur des symboles ; marges et arrondi du fond en découlent.
   final double size;
 
-  static const double _backgroundOpacity = 0.8;
-
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.rarityBadgeBackground.withValues(
-          alpha: _backgroundOpacity,
+        color: AppColors.translucentBadgeBackground.withValues(
+          alpha: AppColors.translucentBadgeOpacity,
         ),
         borderRadius: BorderRadius.circular(size / 2),
       ),

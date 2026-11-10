@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../bloc/accounts_sort_option.dart';
+import '../../../domain/entities/accounts_sort_option.dart';
+import 'accounts_sort_option_label.dart';
 
 /// Action d'AppBar ouvrant le menu de tri de la liste des comptes.
 ///

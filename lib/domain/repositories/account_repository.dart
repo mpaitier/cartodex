@@ -19,6 +19,14 @@ abstract class AccountRepository {
     required String gameAccountId,
   });
 
+  /// Modifie le nom et le code ami du compte [accountId]. Ne touche
+  /// ni à son rôle (principal ou non) ni à sa possession.
+  Future<Either<Failure, void>> updateAccount({
+    required String accountId,
+    required String name,
+    required String gameAccountId,
+  });
+
   /// Fait de [accountId] le nouveau compte principal. L'ancien
   /// principal redevient secondaire : il y en a toujours exactement
   /// un (dès qu'au moins un compte existe).

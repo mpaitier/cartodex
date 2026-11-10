@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/entities/account.dart';
 import '../../../domain/entities/account_extras.dart';
+import 'account_edit_button.dart';
 import 'extra_counts_label.dart';
+import 'primary_account_star_button.dart';
 
-/// Une ligne de la liste de comptes : nom et étoile.
+/// Une ligne de la liste de comptes : nom, puis à droite le bouton
+/// crayon ([AccountEditButton]) et l'étoile du compte principal
+/// ([PrimaryAccountStarButton]).
 ///
-/// L'étoile est pleine et jaune pour le compte principal, non
-/// interactive ; en contour gris pour les autres, et cliquable
-/// (l'appui échange le rôle avec le principal actuel — voir
-/// [AccountsBloc][../bloc/accounts_bloc.dart]).
+/// La marge de droite de la ligne est réduite : les deux boutons ont
+/// déjà leur propre zone d'appui, qui suffit à décoller l'étoile du
+/// bord de l'écran.
 ///
 /// Pour un compte secondaire, [extras] affiche sous le nom les cartes
 /// qu'il possède en plus du principal (losanges / étoiles), et [onTap]
@@ -19,6 +22,7 @@ class AccountListItem extends StatelessWidget {
   const AccountListItem({
     required this.account,
     required this.onCrownTap,
+    required this.onEditTap,
     this.extras,
     this.onTap,
     super.key,
@@ -26,6 +30,7 @@ class AccountListItem extends StatelessWidget {
 
   final Account account;
   final VoidCallback onCrownTap;
+  final VoidCallback onEditTap;
 
   /// `null` pour le compte principal.
   final AccountExtras? extras;
@@ -38,6 +43,7 @@ class AccountListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final extras = this.extras;
     return ListTile(
+      contentPadding: const EdgeInsetsDirectional.only(start: 16, end: 4),
       title: Text(account.name),
       subtitle: extras == null
           ? null
@@ -49,15 +55,15 @@ class AccountListItem extends StatelessWidget {
               ),
             ),
       onTap: onTap,
-      trailing: IconButton(
-        onPressed: account.isPrimary ? null : onCrownTap,
-        tooltip: account.isPrimary
-            ? 'Compte principal'
-            : 'Définir comme compte principal',
-        icon: Icon(
-          account.isPrimary ? Icons.star : Icons.star_border,
-          color: account.isPrimary ? Colors.amber[700] : Colors.grey,
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AccountEditButton(onPressed: onEditTap),
+          PrimaryAccountStarButton(
+            isPrimary: account.isPrimary,
+            onPressed: onCrownTap,
+          ),
+        ],
       ),
     );
   }
