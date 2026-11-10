@@ -59,15 +59,27 @@ class _SplitOutlinePainter extends CustomPainter {
     // pour qu'il reste entièrement dans la zone du widget.
     final inset = strokeWidth / 2;
     final outline = RRect.fromRectAndRadius(
-      Rect.fromLTWH(inset, inset, size.width - strokeWidth,
-          size.height - strokeWidth),
+      Rect.fromLTWH(
+        inset,
+        inset,
+        size.width - strokeWidth,
+        size.height - strokeWidth,
+      ),
       Radius.circular(cornerRadius),
     );
     final half = size.width / 2;
-    _paintHalf(canvas, outline, Rect.fromLTWH(0, 0, half, size.height),
-        leftColor);
-    _paintHalf(canvas, outline,
-        Rect.fromLTWH(half, 0, size.width - half, size.height), rightColor);
+    _paintHalf(
+      canvas,
+      outline,
+      Rect.fromLTWH(0, 0, half, size.height),
+      leftColor,
+    );
+    _paintHalf(
+      canvas,
+      outline,
+      Rect.fromLTWH(half, 0, size.width - half, size.height),
+      rightColor,
+    );
   }
 
   void _paintHalf(Canvas canvas, RRect outline, Rect clip, Color color) {

@@ -1,0 +1,51 @@
+# Analyse statique et tests à chaque push sur main et sur chaque pull
+# request. Aucun secret nécessaire : pas de build signé ici, et les
+# tests ne touchent ni Firebase ni le réseau.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Un nouveau push sur la même branche annule le run précédent.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    name: Analyse et tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v6
+
+      - name: Installation de Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Version de Flutter
+        run: flutter --version
+
+      - name: Dépendances
+        run: flutter pub get
+
+      # Fichiers générés non versionnés : textes traduits (lib/l10n/gen)
+      # et code Drift (*.g.dart).
+      - name: Textes traduits
+        run: flutter gen-l10n
+
+      - name: Code Drift
+        run: dart run build_runner build
+
+      # --fatal-infos : la moindre remarque du linter fait échouer le run,
+      # pour garder une analyse à zéro avertissement.
+      - name: Analyse statique
+        run: flutter analyze --fatal-infos
+
+      - name: Tests
+        run: flutter test

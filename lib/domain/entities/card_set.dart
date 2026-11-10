@@ -70,7 +70,7 @@ class CardSet extends Equatable {
 
   /// Vrai quand le code et la clé de série ont la forme d'un set de
   /// série principale : clé d'une seule lettre, et code de la forme
-  /// "<lettre de la série><numéro>" avec un suffixe minuscule
+  /// `<lettre de la série><numéro>` avec un suffixe minuscule
   /// optionnel (ex: "A1", "A1a", "B2b", "C1").
   ///
   /// Le code doit commencer par la lettre de sa propre série : un
