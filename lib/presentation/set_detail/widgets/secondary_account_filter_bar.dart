@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/account.dart';
+import 'filter_chip_wrap.dart';
 
-/// Barre horizontale de choix d'un compte secondaire précis, affichée
+/// Barre de choix d'un compte secondaire précis, affichée
 /// sous `OwnershipFilterBar` quand le filtre "secondaires" est actif :
 /// "Tous" (union de tous les secondaires), puis un compte par puce.
 ///
@@ -33,36 +34,30 @@ class SecondaryAccountFilterBar extends StatelessWidget {
     if (accounts.length <= 1) {
       return const SizedBox.shrink();
     }
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        itemCount: accounts.length + 1,
-        separatorBuilder: (context, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return ChoiceChip(
-              label: const Text('Tous'),
-              selected: selectedAccountId == null,
-              showCheckmark: false,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-              visualDensity: VisualDensity.compact,
-              onSelected: (_) => onAccountSelected(null),
-            );
-          }
-          final account = accounts[index - 1];
+    return FilterChipWrap(
+      itemCount: accounts.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
           return ChoiceChip(
-            avatar: const _Dot(),
-            label: Text(account.name),
-            selected: selectedAccountId == account.id,
+            label: const Text('Tous'),
+            selected: selectedAccountId == null,
             showCheckmark: false,
             labelPadding: const EdgeInsets.symmetric(horizontal: 4),
             visualDensity: VisualDensity.compact,
-            onSelected: (_) => onAccountSelected(account.id),
+            onSelected: (_) => onAccountSelected(null),
           );
-        },
-      ),
+        }
+        final account = accounts[index - 1];
+        return ChoiceChip(
+          avatar: const _Dot(),
+          label: Text(account.name),
+          selected: selectedAccountId == account.id,
+          showCheckmark: false,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+          visualDensity: VisualDensity.compact,
+          onSelected: (_) => onAccountSelected(account.id),
+        );
+      },
     );
   }
 }

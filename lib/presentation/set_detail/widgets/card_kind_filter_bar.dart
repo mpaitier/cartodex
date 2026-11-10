@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/entities/card_kind.dart';
 import 'card_kind_style.dart';
+import 'filter_chip_wrap.dart';
 
 /// Barre de puces du filtre par type : "Tous", puis une puce par type
 /// présent dans le set, les éléments de Pokémon d'abord (pastille de
@@ -32,44 +33,38 @@ class CardKindFilterBar extends StatelessWidget {
     if (availableKinds.length <= 1) {
       return const SizedBox.shrink();
     }
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        itemCount: availableKinds.length + 1,
-        separatorBuilder: (context, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return ChoiceChip(
-              label: const Text('Tous'),
-              selected: selectedKinds.isEmpty,
-              showCheckmark: false,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-              visualDensity: VisualDensity.compact,
-              onSelected: (_) => onSelectionChanged(const {}),
-            );
-          }
-          final kind = availableKinds[index - 1];
-          return FilterChip(
-            avatar: _KindAvatar(kind: kind),
-            label: Text(kind.label),
-            selected: selectedKinds.contains(kind),
+    return FilterChipWrap(
+      itemCount: availableKinds.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return ChoiceChip(
+            label: const Text('Tous'),
+            selected: selectedKinds.isEmpty,
             showCheckmark: false,
             labelPadding: const EdgeInsets.symmetric(horizontal: 4),
             visualDensity: VisualDensity.compact,
-            onSelected: (isSelected) {
-              final updated = Set<CardKind>.from(selectedKinds);
-              if (isSelected) {
-                updated.add(kind);
-              } else {
-                updated.remove(kind);
-              }
-              onSelectionChanged(updated);
-            },
+            onSelected: (_) => onSelectionChanged(const {}),
           );
-        },
-      ),
+        }
+        final kind = availableKinds[index - 1];
+        return FilterChip(
+          avatar: _KindAvatar(kind: kind),
+          label: Text(kind.label),
+          selected: selectedKinds.contains(kind),
+          showCheckmark: false,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+          visualDensity: VisualDensity.compact,
+          onSelected: (isSelected) {
+            final updated = Set<CardKind>.from(selectedKinds);
+            if (isSelected) {
+              updated.add(kind);
+            } else {
+              updated.remove(kind);
+            }
+            onSelectionChanged(updated);
+          },
+        );
+      },
     );
   }
 }
