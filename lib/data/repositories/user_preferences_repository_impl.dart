@@ -61,6 +61,41 @@ class UserPreferencesRepositoryImpl implements UserPreferencesRepository {
     }
   }
 
+  /// Les dates sont stockées en UTC, au format ISO 8601, et relues en
+  /// heure locale. Une date illisible est ignorée plutôt que de faire
+  /// échouer la lecture : au pire, une synchronisation de plus est
+  /// permise.
+  @override
+  Future<Either<Failure, List<DateTime>>> getSyncHistory(String userId) async {
+    try {
+      final stored = await _localDataSource.getSyncHistory(userId) ?? const [];
+      final history = <DateTime>[];
+      for (final value in stored) {
+        final date = DateTime.tryParse(value);
+        if (date != null) history.add(date.toLocal());
+      }
+      return Right(history);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> saveSyncHistory(
+    String userId,
+    List<DateTime> history,
+  ) async {
+    try {
+      await _localDataSource.saveSyncHistory(
+        userId,
+        [for (final date in history) date.toUtc().toIso8601String()],
+      );
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    }
+  }
+
   /// Valeur de [values] dont le nom vaut [stored], ou `null` si
   /// [stored] est absent ou ne correspond plus à rien.
   static T? _parseEnum<T extends Enum>(List<T> values, String? stored) {

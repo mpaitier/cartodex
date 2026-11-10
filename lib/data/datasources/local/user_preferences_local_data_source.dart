@@ -22,6 +22,12 @@ abstract class UserPreferencesLocalDataSource {
   Future<String?> getAppLanguage();
 
   Future<void> saveAppLanguage(String value);
+
+  /// Dates des synchronisations cloud de [userId], au format ISO 8601,
+  /// ou `null` si aucune n'a jamais été enregistrée.
+  Future<List<String>?> getSyncHistory(String userId);
+
+  Future<void> saveSyncHistory(String userId, List<String> values);
 }
 
 class UserPreferencesLocalDataSourceImpl
@@ -36,6 +42,11 @@ class UserPreferencesLocalDataSourceImpl
 
   /// Clé de la langue d'affichage. Même règle : ne jamais la renommer.
   static const String _appLanguageKey = 'app_language';
+
+  /// Préfixe de la clé de l'historique des synchronisations, suivi de
+  /// l'identifiant du compte applicatif : chaque compte connecté sur
+  /// l'appareil a son propre quota.
+  static const String _syncHistoryKeyPrefix = 'sync_history_';
 
   @override
   Future<String?> getAccountsSortOption() async {
@@ -72,6 +83,28 @@ class UserPreferencesLocalDataSourceImpl
       await _preferences.setString(_appLanguageKey, value);
     } on Exception catch (e) {
       throw CacheException("Échec de l'enregistrement de la langue : $e");
+    }
+  }
+
+  @override
+  Future<List<String>?> getSyncHistory(String userId) async {
+    try {
+      return await _preferences.getStringList(_syncHistoryKeyPrefix + userId);
+    } on Exception catch (e) {
+      throw CacheException(
+        "Échec de la lecture de l'historique des synchronisations : $e",
+      );
+    }
+  }
+
+  @override
+  Future<void> saveSyncHistory(String userId, List<String> values) async {
+    try {
+      await _preferences.setStringList(_syncHistoryKeyPrefix + userId, values);
+    } on Exception catch (e) {
+      throw CacheException(
+        "Échec de l'enregistrement de l'historique des synchronisations : $e",
+      );
     }
   }
 }

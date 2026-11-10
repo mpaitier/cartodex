@@ -385,6 +385,42 @@
       }
     }
   },
+  "syncRemaining": "{count, plural, one{{count} synchro restante} other{{count} synchros restantes}}",
+  "@syncRemaining": {
+    "description": "Sous « Synchroniser maintenant » : synchronisations encore possibles sur les 24 dernières heures.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncNextAvailableToday": "Prochaine synchro possible à {time}",
+  "@syncNextAvailableToday": {
+    "description": "Limite atteinte : heure (déjà formatée) de la prochaine synchro, le jour même.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNextAvailableTomorrow": "Prochaine synchro possible demain à {time}",
+  "@syncNextAvailableTomorrow": {
+    "description": "Limite atteinte : heure (déjà formatée) de la prochaine synchro, le lendemain.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncQuotaReached": "Limite de {max} synchros par 24 h atteinte.",
+  "@syncQuotaReached": {
+    "description": "Message affiché quand une synchro est refusée parce que la limite est atteinte.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "cardsLoading": "Chargement des cartes…",
   "@cardsLoading": {
     "description": "Chargement du détail d'un set."

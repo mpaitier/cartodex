@@ -37,3 +37,16 @@ class NetworkFailure extends Failure {
 class AuthFailure extends Failure {
   const AuthFailure([super.message = 'Erreur de connexion.']);
 }
+
+/// Synchronisation cloud refusée : le compte a déjà atteint sa limite
+/// sur la fenêtre en cours (voir `SyncRateLimit`). [nextAvailableAt]
+/// indique quand la prochaine sera possible.
+class SyncQuotaExceededFailure extends Failure {
+  const SyncQuotaExceededFailure(this.nextAvailableAt)
+      : super('Limite de synchronisations atteinte.');
+
+  final DateTime nextAvailableAt;
+
+  @override
+  List<Object?> get props => [message, nextAvailableAt];
+}

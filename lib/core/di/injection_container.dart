@@ -31,6 +31,7 @@ import '../../domain/usecases/get_collection_stats.dart';
 import '../../domain/usecases/get_owned_cards_id.dart';
 import '../../domain/usecases/get_secondary_accounts_extras.dart';
 import '../../domain/usecases/get_sets_progress.dart';
+import '../../domain/usecases/get_sync_quota.dart';
 import '../../domain/usecases/save_accounts_sort_option.dart';
 import '../../domain/usecases/save_app_language.dart';
 import '../../domain/usecases/set_card_owned.dart';
@@ -159,8 +160,10 @@ Future<void> init() async {
       accountRepository: sl(),
       cardRepository: sl(),
       cloudSyncRepository: sl(),
+      userPreferencesRepository: sl(),
     ),
   );
+  sl.registerLazySingleton(() => GetSyncQuota(sl()));
 
   // Blocs / Cubits
   sl.registerFactory(
@@ -201,7 +204,9 @@ Future<void> init() async {
       getCollectionStats: sl(),
     ),
   );
-  sl.registerFactory(() => SyncBloc(syncWithCloud: sl()));
+  sl.registerFactory(
+    () => SyncBloc(syncWithCloud: sl(), getSyncQuota: sl()),
+  );
   // Singleton, pas factory : un seul état de connexion pour toute
   // l'app, fourni une fois à la racine (voir CartodexApp) plutôt que
   // recréé à chaque écran.

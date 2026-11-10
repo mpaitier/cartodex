@@ -9,11 +9,13 @@ import '../../../domain/entities/card_set.dart';
 import '../../../domain/entities/rarity_scope.dart';
 import '../../../l10n/l10n.dart';
 import '../../accounts/view/accounts_page.dart';
+import '../../auth/bloc/auth_bloc.dart';
 import '../../language/widgets/language_menu_action.dart';
 import '../../rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../../set_detail/view/set_detail_page.dart';
 import '../../stats/view/stats_page.dart';
 import '../../sync/bloc/sync_bloc.dart';
+import '../../sync/bloc/sync_event.dart';
 import '../../sync/bloc/sync_state.dart';
 import '../bloc/card_sets_bloc.dart';
 import '../bloc/card_sets_event.dart';
@@ -63,7 +65,16 @@ class CardSetsPage extends StatelessWidget {
         BlocProvider(
           create: (_) => sl<CardSetsBloc>()..add(const CardSetsStarted()),
         ),
-        BlocProvider(create: (_) => sl<SyncBloc>()),
+        // Le quota de synchronisations est calculé dès l'ouverture de
+        // l'accueil, pour que le menu cloud l'affiche du premier coup.
+        BlocProvider(
+          create: (context) {
+            final bloc = sl<SyncBloc>();
+            final userId = context.read<AuthBloc>().state.user?.uid;
+            if (userId != null) bloc.add(SyncQuotaRequested(userId));
+            return bloc;
+          },
+        ),
       ],
       child: const _CardSetsView(),
     );

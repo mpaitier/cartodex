@@ -48,7 +48,8 @@ TCGdex avait été essayé en premier. Son modèle ne décrit pas la répartitio
 
 **Synchronisation cloud**
 - Connexion par email et mot de passe, ou par Google.
-- Fusion des comptes et de la possession avec Firestore, avec un bilan affiché à la fin (« 2 compte(s) récupéré(s), 14 carte(s) envoyée(s) »).
+- Fusion des comptes et de la possession avec Firestore, avec un bilan affiché à la fin (« 2 comptes récupérés, 14 cartes envoyées »).
+- Au plus 4 synchronisations sur 24 heures glissantes par compte. Le menu indique combien il en reste, puis l'heure de la prochaine possible une fois la limite atteinte.
 
 ## Stack technique
 
@@ -138,7 +139,7 @@ lib/
     ├── rarity_scope/          # Filtre de raretés Σ / ◆ / ★ commun à toute l'app
     ├── language/              # Choix de la langue d'affichage, mémorisé
     ├── auth/                  # Connexion au compte applicatif
-    └── sync/                  # Synchronisation cloud
+    └── sync/                  # Synchronisation cloud et quota de synchronisations
 ```
 
 Chaque feature de `presentation/` suit le même découpage : `bloc/` (événements, état, Bloc), `view/` (la page) et `widgets/` (les composants).
@@ -199,6 +200,8 @@ firebase deploy --only firestore:rules
 3. Import des comptes qui n'existent que dans le cloud.
 
 Le traitement s'arrête à la première erreur sans revenir en arrière. La fusion étant idempotente, une nouvelle synchronisation rattrape le reste.
+
+**Limite de synchronisations.** `SyncRateLimit` autorise 4 synchronisations réussies sur une fenêtre glissante de 24 heures, par compte applicatif. `SyncWithCloud` vérifie le quota avant toute lecture du cloud et renvoie une `SyncQuotaExceededFailure` au-delà. Une synchronisation en échec n'est pas comptée. L'historique est gardé sur l'appareil (`shared_preferences`, une clé par compte) : la limite protège le quota Firestore d'un usage en boucle, sans prétendre résister à une réinstallation ou à un changement d'heure volontaire.
 
 **Images.** La source ne fournit aucune URL exploitable. Les illustrations de cartes, logos de sets et icônes de boosters sont reconstruits à partir des noms du référentiel via `PocketCardsImageSlug`, sur le modèle de [pocketcards.net](https://pocketcards.net). Le site n'a pas d'API documentée : la conversion est déduite d'exemples observés. Elle gère les noms collés (« Teal MaskOgerpon »), les préfixes de forme régionale (« Galarianzigzagoon »), les chiffres en fin de nom (« Porygon2 ») et dispose d'une table de correctifs manuels. En debug, `AppLogger` signale chaque image introuvable.
 
