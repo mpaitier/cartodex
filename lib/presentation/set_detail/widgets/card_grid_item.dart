@@ -246,7 +246,8 @@ class _NumberFallback extends StatelessWidget {
 /// Le principal l'emporte visuellement si la carte est possédée à
 /// la fois par le compte principal et par un compte secondaire :
 /// violet profond (tap simple) prioritaire sur jaune (double-tap,
-/// compte secondaire), lui-même prioritaire sur l'état neutre.
+/// compte secondaire), lui-même prioritaire sur le badge rouge pâle
+/// des cartes que personne ne possède ([AppColors.missingCards]).
 /// L'icône du badge secondaire est foncée : le blanc ne se lit pas
 /// sur du jaune. En mode [compact], le badge est réduit pour ne pas
 /// masquer l'illustration.
@@ -285,7 +286,7 @@ class _OwnershipBadge extends StatelessWidget {
     }
     return CircleAvatar(
       radius: radius,
-      backgroundColor: Colors.black45,
+      backgroundColor: AppColors.missingCards,
       child: Icon(Icons.add, size: iconSize, color: Colors.white),
     );
   }
