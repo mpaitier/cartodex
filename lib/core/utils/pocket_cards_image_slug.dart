@@ -11,6 +11,8 @@
 /// - "Ruler of the Skies" (set) → "ruler-of-the-skies"
 /// - "Genetic Apex" + "Mewtwo" (booster) → "genetic-apex-mewtwo"
 /// - "Mega Rising" + "Mega Blaziken" (booster) → "mega-rising-blaziken"
+/// - "Dual Fusion" + "Dual Fusion Pikachu" (booster) →
+///   "dual-fusion-pikachu"
 /// - "PROMO-B" (code de set dans le nom d'une carte) → "pb"
 /// - "Pokémon Center Lady" (carte) → "pokemon-center-lady"
 ///
@@ -51,6 +53,21 @@ abstract class PocketCardsImageSlug {
   /// Blaziken"), absent du nom de fichier correspondant sur
   /// pocketcards.net — voir [fromBoosterName].
   static const String _boosterMegaPrefix = 'Mega ';
+
+  /// Corrections manuelles pour les icônes de booster qu'aucune règle
+  /// de [fromBoosterName] ne couvre. Clé : nom du set et nom brut du
+  /// booster tels que fournis par le référentiel distant, séparés par
+  /// [_boosterOverrideKeySeparator] (voir [_boosterOverrideKey]).
+  static const Map<String, String> _boosterSlugOverrides = {
+    // Dual Fusion : le fichier du site ne garde que "mewtwo", sans le
+    // "Mega" ni la lettre de forme "X". Un seul cas observé pour
+    // l'instant, trop peu pour en tirer une règle générique.
+    'Dual Fusion|Dual Fusion Mega Mewtwo X': 'dual-fusion-mewtwo',
+  };
+
+  /// Séparateur entre nom de set et nom de booster dans les clés de
+  /// [_boosterSlugOverrides]. Absent des noms du référentiel distant.
+  static const String _boosterOverrideKeySeparator = '|';
 
   /// Lettres accentuées et leur lettre de base, pour [_removeDiacritics].
   /// pocketcards.net écrit "pokemon" là où le nom porte "Pokémon" ;
@@ -125,17 +142,42 @@ abstract class PocketCardsImageSlug {
   /// "Mewtwo" → "genetic-apex-mewtwo"), le nom du booster seul
   /// ("mewtwo") ne correspondant à aucun fichier.
   ///
-  /// Les boosters de "Mega Rising" s'appellent "Mega Blaziken",
-  /// "Mega Altaria"... dans le référentiel distant, mais le fichier
-  /// est "mega-rising-blaziken" : le "Mega " de tête du nom de
-  /// booster est retiré avant l'assemblage, sans quoi le slug
-  /// contiendrait "mega" deux fois ("mega-rising-mega-blaziken", 404).
+  /// Vérifie d'abord [_boosterSlugOverrides], puis nettoie le nom du
+  /// booster avant l'assemblage :
+  /// - certains sets récents répètent leur nom dans celui du booster
+  ///   ("Dual Fusion" → booster "Dual Fusion Pikachu"). Ce préfixe est
+  ///   retiré, sans quoi le slug contiendrait le nom du set deux fois
+  ///   ("dual-fusion-dual-fusion-pikachu", 404) ;
+  /// - les boosters de "Mega Rising" s'appellent "Mega Blaziken",
+  ///   "Mega Altaria"... mais le fichier est "mega-rising-blaziken" :
+  ///   le "Mega " de tête est retiré aussi
+  ///   ("mega-rising-mega-blaziken", 404).
+  ///
+  /// Un booster qui porte exactement le nom de son set donne le même
+  /// slug que [fromSetName].
   static String fromBoosterName(String setName, String packName) {
-    final cleanedPackName = packName.startsWith(_boosterMegaPrefix)
-        ? packName.substring(_boosterMegaPrefix.length)
-        : packName;
+    final override = _boosterSlugOverrides[_boosterOverrideKey(
+      setName,
+      packName,
+    )];
+    if (override != null) return override;
+
+    if (packName == setName) return fromSetName(setName);
+
+    var cleanedPackName = packName;
+    final setNamePrefix = '$setName ';
+    if (cleanedPackName.startsWith(setNamePrefix)) {
+      cleanedPackName = cleanedPackName.substring(setNamePrefix.length);
+    }
+    if (cleanedPackName.startsWith(_boosterMegaPrefix)) {
+      cleanedPackName = cleanedPackName.substring(_boosterMegaPrefix.length);
+    }
     return _slugify('$setName $cleanedPackName');
   }
+
+  /// Clé de [_boosterSlugOverrides] pour un booster donné.
+  static String _boosterOverrideKey(String setName, String packName) =>
+      '$setName$_boosterOverrideKeySeparator$packName';
 
   static String _slugify(String raw) {
     // En premier : les règles de découpage plus bas ne reconnaissent

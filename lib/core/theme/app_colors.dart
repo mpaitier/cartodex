@@ -18,4 +18,14 @@ abstract class AppColors {
   static const Color progressPrimary = Color(0xFF7E57C2);
 
   static const Color complete = Color(0xFF66BB6A);
+
+  /// Cartes que personne ne possède encore, ni le principal ni un
+  /// secondaire (voir `MissingCardsLabel`).
+  static const Color missingCards = Color(0xFFE53935);
+
+  /// Fond du badge de rareté des tuiles de carte (voir
+  /// `CardRarityBadge`), appliqué avec une opacité de 80 % : les
+  /// symboles officiels sont blancs cerclés de noir et se perdent
+  /// sur le fond clair d'une tuile.
+  static const Color rarityBadgeBackground = Color(0xFF757575);
 }
