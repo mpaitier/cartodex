@@ -132,4 +132,21 @@ void main() {
       expect(state.singleFilteredSetExtrasFor(accounts[1]), isNull);
     });
   });
+
+  group('AccountsState.previewSetsFor', () {
+    test("sans filtre, toutes les extensions du compte, dans l'ordre", () {
+      expect(
+        [for (final e in stateWith().previewSetsFor(accounts[1])) e.set.id],
+        ['A1', 'A3b'],
+      );
+    });
+
+    test('avec un filtre, seulement les extensions filtrées', () {
+      final state = stateWith(setFilterIds: {'A3b'});
+      expect(
+        [for (final e in state.previewSetsFor(accounts[1])) e.set.id],
+        ['A3b'],
+      );
+    });
+  });
 }

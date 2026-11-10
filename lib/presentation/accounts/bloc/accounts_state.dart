@@ -112,6 +112,17 @@ class AccountsState extends Equatable {
     return null;
   }
 
+  /// Extensions à montrer dans les cases d'aperçu de [account] (voir
+  /// `TopExtraSetsPreview`) : toutes ses extensions avec des cartes en
+  /// plus sans filtre, seulement celles du filtre sinon. L'ordre reste
+  /// celui de `AccountExtras.bySet` (losanges puis étoiles en plus).
+  List<SetExtras> previewSetsFor(Account account) {
+    final bySet = extrasByAccountId[account.id]?.bySet ?? const <SetExtras>[];
+    if (!isSetFiltered) return bySet;
+    final ids = {for (final set in activeFilterSets) set.id};
+    return bySet.where((setExtras) => ids.contains(setExtras.set.id)).toList();
+  }
+
   /// Comptes à afficher, ordonnés selon [sortOption].
   ///
   /// Sans filtre, le compte principal reste toujours en premier et

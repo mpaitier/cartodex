@@ -24,7 +24,9 @@ import 'top_extra_sets_preview.dart';
 /// Avec un filtre par extension actif, [focusedCounts] remplace les
 /// totaux sous le nom par les cartes en plus des extensions filtrées.
 /// Quand une seule extension est filtrée, [focusedSetExtras] fournit
-/// en plus le cadre vert si elles complètent le principal.
+/// en plus le cadre vert si elles complètent le principal. Les cases
+/// d'aperçu montrent alors [previewSets], les seules extensions
+/// filtrées, au lieu de toutes les extensions du compte.
 class AccountListItem extends StatelessWidget {
   const AccountListItem({
     required this.account,
@@ -33,6 +35,7 @@ class AccountListItem extends StatelessWidget {
     this.extras,
     this.focusedCounts,
     this.focusedSetExtras,
+    this.previewSets,
     this.onTap,
     super.key,
   });
@@ -51,6 +54,9 @@ class AccountListItem extends StatelessWidget {
   /// Cartes en plus dans l'extension du filtre quand une seule est
   /// cochée, pour le cadre vert ; `null` sinon.
   final SetExtras? focusedSetExtras;
+
+  /// Extensions des cases d'aperçu. `null` = toutes celles de [extras].
+  final List<SetExtras>? previewSets;
 
   /// `null` pour le compte principal : la ligne n'est alors pas
   /// cliquable.
@@ -73,7 +79,7 @@ class AccountListItem extends StatelessWidget {
           ),
           if (extras != null) ...[
             const SizedBox(width: 8),
-            TopExtraSetsPreview(sets: extras.bySet),
+            TopExtraSetsPreview(sets: previewSets ?? extras.bySet),
           ],
         ],
       ),

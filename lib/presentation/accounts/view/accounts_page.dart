@@ -125,6 +125,7 @@ class _AccountsView extends StatelessWidget {
                         AccountExtras(accountId: account.id),
                 focusedCounts: state.filteredCountsFor(account),
                 focusedSetExtras: state.singleFilteredSetExtrasFor(account),
+                previewSets: state.previewSetsFor(account),
                 onTap: account.isPrimary
                     ? null
                     : () => _openExtras(context, account),
