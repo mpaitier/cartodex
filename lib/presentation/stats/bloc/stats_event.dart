@@ -11,9 +11,16 @@ abstract class StatsEvent extends Equatable {
 }
 
 /// Déclenché à l'ouverture de l'écran : cherche le compte principal
-/// et les secondaires, puis calcule les statistiques.
+/// et les secondaires, puis calcule les statistiques dans le périmètre
+/// [rarityScope] — celui de l'app au moment de l'ouverture
+/// (`RarityScopeCubit`).
 class StatsStarted extends StatsEvent {
-  const StatsStarted();
+  const StatsStarted({this.rarityScope = RarityScope.all});
+
+  final RarityScope rarityScope;
+
+  @override
+  List<Object?> get props => [rarityScope];
 }
 
 /// Déclenché au retour du détail d'un set ouvert depuis les boosters
@@ -24,8 +31,9 @@ class StatsRefreshRequested extends StatsEvent {
   const StatsRefreshRequested();
 }
 
-/// Déclenché par le bouton de la top bar : change le périmètre de
-/// raretés (Σ = toutes, losange, étoile) et recalcule.
+/// Déclenché quand le périmètre de raretés global change (Σ = toutes,
+/// losange, étoile), que ce soit depuis le bouton de la top bar ou
+/// depuis un autre écran encore ouvert au-dessus : recalcule.
 class StatsRarityScopeChanged extends StatsEvent {
   const StatsRarityScopeChanged(this.scope);
 

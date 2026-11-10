@@ -5,17 +5,23 @@ import 'core/di/injection_container.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/auth/bloc/auth_bloc.dart';
 import 'presentation/card_sets/view/card_sets_page.dart';
+import 'presentation/rarity_scope/bloc/rarity_scope_cubit.dart';
 
 class CartodexApp extends StatelessWidget {
   const CartodexApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // AuthBloc est fourni ici, à la racine : c'est un état global de
-    // l'app (le compte applicatif connecté), pas un état propre à un
-    // écran — voir sa documentation dans injection_container.dart.
-    return BlocProvider<AuthBloc>.value(
-      value: sl<AuthBloc>(),
+    // AuthBloc et RarityScopeCubit sont fournis ici, à la racine : ce
+    // sont des états globaux de l'app (le compte applicatif connecté,
+    // le périmètre de raretés Σ / losange / étoile), pas des états
+    // propres à un écran — voir leur documentation dans
+    // injection_container.dart.
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: sl<AuthBloc>()),
+        BlocProvider<RarityScopeCubit>.value(value: sl<RarityScopeCubit>()),
+      ],
       child: MaterialApp(
         title: 'Cartodex',
         debugShowCheckedModeBanner: false,

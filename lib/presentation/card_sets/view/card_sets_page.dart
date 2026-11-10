@@ -6,7 +6,9 @@ import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
+import '../../../domain/entities/rarity_scope.dart';
 import '../../accounts/view/accounts_page.dart';
+import '../../rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../../set_detail/view/set_detail_page.dart';
 import '../../stats/view/stats_page.dart';
 import '../../sync/bloc/sync_bloc.dart';
@@ -39,11 +41,14 @@ import '../widgets/sync_firebase_action.dart';
 /// [SeriesFilterChanged].
 ///
 /// En haut de chaque série, un bandeau résume sa progression
-/// (`SeriesProgressBanner`), restreignable aux losanges ou aux étoiles
-/// par son bouton ([SeriesRarityScopeChanged]).
+/// (`SeriesProgressBanner`). Son bouton fait tourner le périmètre de
+/// raretés global ([RarityScopeCubit]) : Σ, losanges, étoiles. Ce
+/// périmètre s'applique à toute l'app — bandeau, tuiles, feuille
+/// "Toutes les séries", statistiques, détail d'un set — et pas
+/// seulement à la série affichée.
 ///
 /// Chaque tuile montre la progression du compte principal (voir
-/// `SetProgressBorder`). Elle est recalculée au retour du détail d'un
+/// `SetProgressBorder`), la moitié hors périmètre étant estompée. Elle est recalculée au retour du détail d'un
 /// set ou de la gestion des comptes, et après une synchronisation
 /// cloud réussie, puisque la possession a pu y changer.
 class CardSetsPage extends StatelessWidget {
@@ -156,18 +161,18 @@ class _CardSetsView extends StatelessWidget {
     // sous le menu flottant.
     return Padding(
       padding: const EdgeInsets.only(bottom: 72),
-      child: SeriesSetsPager(
-        tabs: state.seriesTabs,
-        selectedKey: state.selectedSeriesKey,
-        setsForSeries: state.setsForSeries,
-        progressBySetId: state.progressBySetId,
-        progressForSeries: state.seriesProgressFor,
-        rarityScope: state.seriesRarityScope,
-        onRarityScopePressed: () => context
-            .read<CardSetsBloc>()
-            .add(SeriesRarityScopeChanged(state.seriesRarityScope.next)),
-        onSetTap: (set) => _onSetTap(context, set),
-        onSeriesChanged: (key) => _selectSeries(context, key),
+      child: BlocBuilder<RarityScopeCubit, RarityScope>(
+        builder: (context, scope) => SeriesSetsPager(
+          tabs: state.seriesTabs,
+          selectedKey: state.selectedSeriesKey,
+          setsForSeries: state.setsForSeries,
+          progressBySetId: state.progressBySetId,
+          progressForSeries: (key) => state.seriesProgressFor(key, scope),
+          rarityScope: scope,
+          onRarityScopePressed: () => context.read<RarityScopeCubit>().cycle(),
+          onSetTap: (set) => _onSetTap(context, set),
+          onSeriesChanged: (key) => _selectSeries(context, key),
+        ),
       ),
     );
   }
@@ -176,17 +181,19 @@ class _CardSetsView extends StatelessWidget {
     context.read<CardSetsBloc>().add(SeriesFilterChanged(seriesKey));
   }
 
-  /// Ouvre la feuille "Toutes les séries" et applique le choix. Le
-  /// Bloc est lu avant l'attente, pour ne pas toucher au `context`
-  /// après la fermeture de la feuille.
+  /// Ouvre la feuille "Toutes les séries" et applique le choix. Les
+  /// pourcentages de la feuille suivent le périmètre de raretés
+  /// global. Le Bloc est lu avant l'attente, pour ne pas toucher au
+  /// `context` après la fermeture de la feuille.
   Future<void> _openSeriesPicker(
     BuildContext context,
     CardSetsState state,
   ) async {
     final bloc = context.read<CardSetsBloc>();
+    final scope = context.read<RarityScopeCubit>().state;
     final seriesKey = await SeriesPickerSheet.show(
       context,
-      overviews: state.seriesOverviews,
+      overviews: state.seriesOverviews(scope),
       selectedKey: state.selectedSeriesKey,
     );
     if (seriesKey != null && !bloc.isClosed) {

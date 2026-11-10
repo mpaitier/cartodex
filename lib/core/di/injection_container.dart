@@ -38,6 +38,7 @@ import '../../presentation/account_extras/bloc/account_extras_bloc.dart';
 import '../../presentation/accounts/bloc/accounts_bloc.dart';
 import '../../presentation/auth/bloc/auth_bloc.dart';
 import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
+import '../../presentation/rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../../presentation/set_detail/bloc/set_detail_bloc.dart';
 import '../../presentation/stats/bloc/stats_bloc.dart';
 import '../../presentation/sync/bloc/sync_bloc.dart';
@@ -185,4 +186,7 @@ Future<void> init() async {
       signOut: sl(),
     ),
   );
+  // Singleton aussi : un seul périmètre de raretés (Σ / losange /
+  // étoile) pour toute l'app, fourni à la racine comme AuthBloc.
+  sl.registerLazySingleton(RarityScopeCubit.new);
 }

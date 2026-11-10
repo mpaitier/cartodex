@@ -37,7 +37,6 @@ class CardSetsState extends Equatable {
     this.sets = const [],
     this.selectedSeriesKey,
     this.progressBySetId = const {},
-    this.seriesRarityScope = RarityScope.all,
     this.errorMessage,
   });
 
@@ -63,12 +62,6 @@ class CardSetsState extends Equatable {
   /// qu'aucun compte principal n'existe : les tuiles n'affichent
   /// alors aucune progression.
   final Map<String, SetProgress> progressBySetId;
-
-  /// Périmètre de raretés du bandeau de progression de série (voir
-  /// [seriesProgressFor]) : Σ (toutes) par défaut, puis losanges, puis
-  /// étoiles. Commun à toutes les séries, pour qu'un swipe garde le
-  /// même périmètre.
-  final RarityScope seriesRarityScope;
 
   final String? errorMessage;
 
@@ -163,21 +156,22 @@ class CardSetsState extends Equatable {
   }
 
   /// Un résumé par série, dans l'ordre de [seriesTabs], pour
-  /// [SeriesPickerSheet][../widgets/series_picker_sheet.dart].
-  List<SeriesOverview> get seriesOverviews => [
-        for (final tab in seriesTabs) _overviewFor(tab),
+  /// [SeriesPickerSheet][../widgets/series_picker_sheet.dart], limité
+  /// aux cartes du périmètre de raretés global [scope].
+  List<SeriesOverview> seriesOverviews(RarityScope scope) => [
+        for (final tab in seriesTabs) _overviewFor(tab, scope),
       ];
 
-  SeriesOverview _overviewFor(SeriesTab tab) {
+  SeriesOverview _overviewFor(SeriesTab tab, RarityScope scope) {
     final seriesSets = setsForSeries(tab.key);
     var primaryOwned = 0;
     var total = 0;
     for (final set in seriesSets) {
       final progress = progressBySetId[set.id];
       if (progress == null) continue;
-      primaryOwned +=
-          progress.base.primaryOwned + progress.alternative.primaryOwned;
-      total += progress.base.total + progress.alternative.total;
+      final count = _scopedProgress(progress, scope);
+      primaryOwned += count.owned;
+      total += count.total;
     }
     return SeriesOverview(
       tab: tab,
@@ -187,8 +181,8 @@ class CardSetsState extends Equatable {
     );
   }
 
-  /// Progression d'une série pour son bandeau, dans le périmètre
-  /// [seriesRarityScope] : "X (+Y) / Z", avec X pour le compte
+  /// Progression d'une série pour son bandeau, dans le périmètre de
+  /// raretés global [scope] : "X (+Y) / Z", avec X pour le compte
   /// principal et Y ce que les secondaires ajoutent.
   ///
   /// Additionne la progression déjà chargée pour les tuiles
@@ -196,20 +190,23 @@ class CardSetsState extends Equatable {
   /// `null` tant qu'aucun set de la série n'a de progression (pas
   /// encore de compte principal) : le bandeau n'a alors rien à
   /// montrer.
-  ProgressCount? seriesProgressFor(String seriesKey) {
+  ProgressCount? seriesProgressFor(String seriesKey, RarityScope scope) {
     ProgressCount? sum;
     for (final set in setsForSeries(seriesKey)) {
       final progress = progressBySetId[set.id];
       if (progress == null) continue;
-      sum = (sum ?? ProgressCount.zero) + _scopedProgress(progress);
+      sum = (sum ?? ProgressCount.zero) + _scopedProgress(progress, scope);
     }
     return sum;
   }
 
-  /// La part de [progress] qui entre dans [seriesRarityScope] : les
-  /// losanges, les cartes alternatives, ou les deux.
-  ProgressCount _scopedProgress(SetProgress progress) {
-    switch (seriesRarityScope) {
+  /// La part de [progress] qui entre dans [scope] : les losanges, les
+  /// cartes alternatives, ou les deux.
+  static ProgressCount _scopedProgress(
+    SetProgress progress,
+    RarityScope scope,
+  ) {
+    switch (scope) {
       case RarityScope.all:
         return _countOf(progress.base) + _countOf(progress.alternative);
       case RarityScope.diamond:
@@ -235,7 +232,6 @@ class CardSetsState extends Equatable {
     List<CardSet>? sets,
     String? selectedSeriesKey,
     Map<String, SetProgress>? progressBySetId,
-    RarityScope? seriesRarityScope,
     String? errorMessage,
   }) {
     return CardSetsState(
@@ -243,7 +239,6 @@ class CardSetsState extends Equatable {
       sets: sets ?? this.sets,
       selectedSeriesKey: selectedSeriesKey ?? this.selectedSeriesKey,
       progressBySetId: progressBySetId ?? this.progressBySetId,
-      seriesRarityScope: seriesRarityScope ?? this.seriesRarityScope,
       errorMessage: errorMessage,
     );
   }
@@ -254,7 +249,6 @@ class CardSetsState extends Equatable {
         sets,
         selectedSeriesKey,
         progressBySetId,
-        seriesRarityScope,
         errorMessage,
       ];
 }

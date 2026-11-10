@@ -5,7 +5,8 @@ import 'series_tab.dart';
 /// Résumé d'une série pour
 /// [SeriesPickerSheet][../widgets/series_picker_sheet.dart] : combien
 /// de sets elle contient, et où en est le compte principal sur
-/// l'ensemble de ces sets.
+/// l'ensemble de ces sets, dans le périmètre de raretés global
+/// (Σ / losange / étoile).
 ///
 /// Calculé par `CardSetsState.seriesOverviews` à partir de la
 /// progression déjà chargée pour les tuiles : aucun appel
@@ -21,8 +22,8 @@ class SeriesOverview extends Equatable {
   final SeriesTab tab;
   final int setCount;
 
-  /// Cartes de la série possédées par le compte principal, toutes
-  /// raretés confondues (losanges et cartes alternatives).
+  /// Cartes de la série possédées par le compte principal, limitées
+  /// au périmètre de raretés choisi (les deux familles pour Σ).
   final int primaryOwned;
 
   /// Nombre de cartes de la série prises en compte. Vaut 0 tant

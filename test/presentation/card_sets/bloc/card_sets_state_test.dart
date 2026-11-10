@@ -51,6 +51,9 @@ const _promo = SeriesTab.promoKey;
 
 List<String> _keys(List<SeriesTab> tabs) => tabs.map((t) => t.key).toList();
 
+/// (cartes du compte principal, total) d'un `SeriesOverview`.
+typedef SeriesOverviewCounts = (int, int);
+
 void main() {
   group('CardSetsState.seriesTabs', () {
     test('séries récentes en premier, puis Deluxe, puis Promo', () {
@@ -144,7 +147,9 @@ void main() {
           'B4b': _progress('B4b', owned: 0, total: 100),
         },
       );
-      final b = state.seriesOverviews.firstWhere((o) => o.tab.key == 'B');
+      final b = state
+          .seriesOverviews(RarityScope.all)
+          .firstWhere((o) => o.tab.key == 'B');
       expect(b.setCount, 2);
       expect(b.primaryOwned, 40);
       expect(b.total, 50);
@@ -152,9 +157,38 @@ void main() {
       expect(b.isPrimaryComplete, isFalse);
     });
 
+    test('suit le périmètre de raretés global', () {
+      const progress = SetProgress(
+        setId: 'C1',
+        base: RarityGroupProgress(
+          primaryOwned: 8,
+          allAccountsOwned: 8,
+          total: 10,
+        ),
+        alternative: RarityGroupProgress(
+          primaryOwned: 1,
+          allAccountsOwned: 1,
+          total: 5,
+        ),
+      );
+      final state = CardSetsState(
+        sets: _sets,
+        progressBySetId: const {'C1': progress},
+      );
+      SeriesOverviewCounts c(RarityScope scope) {
+        final o =
+            state.seriesOverviews(scope).firstWhere((o) => o.tab.key == 'C');
+        return (o.primaryOwned, o.total);
+      }
+
+      expect(c(RarityScope.all), (9, 15));
+      expect(c(RarityScope.diamond), (8, 10));
+      expect(c(RarityScope.star), (1, 5));
+    });
+
     test('sans progression connue, pas de pourcentage', () {
       final state = CardSetsState(sets: _sets);
-      final e = state.seriesOverviews.first;
+      final e = state.seriesOverviews(RarityScope.all).first;
       expect(e.tab.key, 'E');
       expect(e.setCount, 1);
       expect(e.hasProgress, isFalse);
@@ -198,32 +232,26 @@ void main() {
         () {
       final state = CardSetsState(sets: sets, progressBySetId: progress);
       expect(
-        state.seriesProgressFor('A'),
+        state.seriesProgressFor('A', RarityScope.all),
         const ProgressCount(owned: 41, secondaryExtra: 5, total: 65),
       );
     });
 
     test('losange et étoile ne gardent que leur groupe', () {
-      final diamond = CardSetsState(
-        sets: sets,
-        progressBySetId: progress,
-        seriesRarityScope: RarityScope.diamond,
-      );
+      final state = CardSetsState(sets: sets, progressBySetId: progress);
       expect(
-        diamond.seriesProgressFor('A'),
+        state.seriesProgressFor('A', RarityScope.diamond),
         const ProgressCount(owned: 40, secondaryExtra: 2, total: 50),
       );
-
-      final star = diamond.copyWith(seriesRarityScope: RarityScope.star);
       expect(
-        star.seriesProgressFor('A'),
+        state.seriesProgressFor('A', RarityScope.star),
         const ProgressCount(owned: 1, secondaryExtra: 3, total: 15),
       );
     });
 
     test('sans progression connue pour la série, rien à afficher', () {
       final state = CardSetsState(sets: sets, progressBySetId: progress);
-      expect(state.seriesProgressFor('B'), isNull);
+      expect(state.seriesProgressFor('B', RarityScope.all), isNull);
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/card_set.dart';
+import '../../../domain/entities/rarity_scope.dart';
 import '../../../domain/entities/set_progress.dart';
 import 'card_set_info_line.dart';
 import 'card_set_logo.dart';
@@ -15,17 +16,23 @@ import 'set_progress_labels.dart';
 /// toute interaction remonte via [onTap]. Sans [progress] (aucun
 /// compte principal, ou calcul indisponible), la bordure reste
 /// neutre et la ligne de pourcentages disparaît.
+///
+/// [rarityScope] (le périmètre de raretés global) estompe la moitié
+/// qu'il exclut, bordure et pourcentage : avec losange, seule la
+/// moitié gauche reste en couleur ; avec étoile, seule la droite.
 class CardSetGridItem extends StatelessWidget {
   const CardSetGridItem({
     required this.set,
     required this.onTap,
     this.progress,
+    this.rarityScope = RarityScope.all,
     super.key,
   });
 
   final CardSet set;
   final VoidCallback onTap;
   final SetProgress? progress;
+  final RarityScope rarityScope;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +45,7 @@ class CardSetGridItem extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       child: SetProgressBorder(
         progress: progress,
+        rarityScope: rarityScope,
         child: Card(
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
@@ -65,7 +73,10 @@ class CardSetGridItem extends StatelessWidget {
                         CardSetInfoLine(set: set),
                         if (progress != null) ...[
                           const SizedBox(height: 4),
-                          SetProgressLabels(progress: progress),
+                          SetProgressLabels(
+                            progress: progress,
+                            rarityScope: rarityScope,
+                          ),
                         ],
                       ],
                     ),

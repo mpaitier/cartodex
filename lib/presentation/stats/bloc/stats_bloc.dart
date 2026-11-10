@@ -16,10 +16,13 @@ import 'stats_state.dart';
 /// les comptes secondaires n'apportent que ce que le principal n'a
 /// pas déjà (+Y).
 ///
-/// Un changement de périmètre de raretés ([StatsRarityScopeChanged])
-/// recalcule sans repasser par l'état de chargement : les chiffres
-/// précédents restent affichés le temps du calcul, pas d'écran vide
-/// à chaque appui sur le bouton.
+/// Le périmètre de raretés est global à l'app (`RarityScopeCubit`) :
+/// la vue fournit sa valeur à l'ouverture ([StatsStarted]) puis relaie
+/// chacun de ses changements ([StatsRarityScopeChanged]). Ce Bloc en
+/// garde une copie dans son état, pour savoir à quel périmètre
+/// appartient un calcul en cours. Un changement recalcule sans
+/// repasser par l'état de chargement : les chiffres précédents restent
+/// affichés le temps du calcul, pas d'écran vide à chaque appui.
 ///
 /// Le retour du détail d'un set ouvert depuis les boosters prioritaires
 /// ([StatsRefreshRequested]) recalcule de la même façon, sans écran de
@@ -46,7 +49,12 @@ class StatsBloc extends Bloc<StatsEvent, StatsState> {
   final GetCollectionStats _getCollectionStats;
 
   Future<void> _onStarted(StatsStarted event, Emitter<StatsState> emit) async {
-    emit(state.copyWith(status: StatsStatus.loading));
+    emit(
+      state.copyWith(
+        status: StatsStatus.loading,
+        rarityScope: event.rarityScope,
+      ),
+    );
     await _load(emit);
   }
 

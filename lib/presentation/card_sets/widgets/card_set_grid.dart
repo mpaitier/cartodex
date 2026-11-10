@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/card_set.dart';
+import '../../../domain/entities/rarity_scope.dart';
 import '../../../domain/entities/set_progress.dart';
 import 'card_set_grid_item.dart';
 
@@ -9,18 +10,23 @@ import 'card_set_grid_item.dart';
 /// Extraite dans son propre composant pour garder l'écran centré
 /// sur l'orchestration des états du Bloc plutôt que sur la mise en
 /// page. [progressBySetId] est indexé par identifiant de set ; un
-/// set absent de la table s'affiche sans progression.
+/// set absent de la table s'affiche sans progression. [rarityScope]
+/// est transmis tel quel à chaque tuile.
 class CardSetGrid extends StatelessWidget {
   const CardSetGrid({
     required this.sets,
     required this.onSetTap,
     this.progressBySetId = const {},
+    this.rarityScope = RarityScope.all,
     super.key,
   });
 
   final List<CardSet> sets;
   final ValueChanged<CardSet> onSetTap;
   final Map<String, SetProgress> progressBySetId;
+
+  /// Périmètre de raretés global : voir [CardSetGridItem.rarityScope].
+  final RarityScope rarityScope;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +44,7 @@ class CardSetGrid extends StatelessWidget {
         return CardSetGridItem(
           set: set,
           progress: progressBySetId[set.id],
+          rarityScope: rarityScope,
           onTap: () => onSetTap(set),
         );
       },
