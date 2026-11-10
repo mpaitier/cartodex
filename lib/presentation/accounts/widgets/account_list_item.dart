@@ -5,6 +5,7 @@ import '../../../domain/entities/account_extras.dart';
 import 'account_edit_button.dart';
 import 'extra_counts_label.dart';
 import 'primary_account_star_button.dart';
+import 'top_extra_sets_preview.dart';
 
 /// Une ligne de la liste de comptes : nom, puis à droite le bouton
 /// crayon ([AccountEditButton]) et l'étoile du compte principal
@@ -15,9 +16,10 @@ import 'primary_account_star_button.dart';
 /// bord de l'écran.
 ///
 /// Pour un compte secondaire, [extras] affiche sous le nom les cartes
-/// qu'il possède en plus du principal (losanges / étoiles), et [onTap]
-/// ouvre le détail par set. Le compte principal n'a ni l'un ni
-/// l'autre.
+/// qu'il possède en plus du principal (losanges / étoiles), et à côté
+/// du nom et de ces totaux, les logos des trois sets où il en a le
+/// plus ([TopExtraSetsPreview]). [onTap] ouvre le détail par set. Le
+/// compte principal n'a rien de tout cela.
 class AccountListItem extends StatelessWidget {
   const AccountListItem({
     required this.account,
@@ -44,16 +46,17 @@ class AccountListItem extends StatelessWidget {
     final extras = this.extras;
     return ListTile(
       contentPadding: const EdgeInsetsDirectional.only(start: 16, end: 4),
-      title: Text(account.name),
-      subtitle: extras == null
-          ? null
-          : Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: ExtraCountsLabel(counts: extras.totals),
-              ),
-            ),
+      title: Row(
+        children: [
+          Expanded(
+            child: _NameAndTotals(name: account.name, extras: extras),
+          ),
+          if (extras != null) ...[
+            const SizedBox(width: 8),
+            TopExtraSetsPreview(sets: extras.bySet),
+          ],
+        ],
+      ),
       onTap: onTap,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -65,6 +68,38 @@ class AccountListItem extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Nom du compte, et pour un secondaire ses totaux de cartes en plus
+/// juste en dessous.
+class _NameAndTotals extends StatelessWidget {
+  const _NameAndTotals({required this.name, required this.extras});
+
+  final String name;
+  final AccountExtras? extras;
+
+  @override
+  Widget build(BuildContext context) {
+    final extras = this.extras;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        if (extras != null) ...[
+          const SizedBox(height: 4),
+          // Réduits au besoin plutôt que de déborder : sur un petit
+          // écran, les logos des sets et les deux boutons laissent peu
+          // de largeur à cette colonne.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: ExtraCountsLabel(counts: extras.totals),
+          ),
+        ],
+      ],
     );
   }
 }

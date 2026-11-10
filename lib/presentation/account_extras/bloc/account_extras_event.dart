@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../domain/entities/account.dart';
+
 /// Événements gérés par [AccountExtrasBloc][account_extras_bloc.dart].
 abstract class AccountExtrasEvent extends Equatable {
   const AccountExtrasEvent();
@@ -9,14 +11,30 @@ abstract class AccountExtrasEvent extends Equatable {
 }
 
 /// Déclenché à l'ouverture de l'écran : calcule les cartes que le
-/// compte secondaire [accountId] possède en plus du principal.
+/// compte secondaire [account] possède en plus du principal.
 class AccountExtrasStarted extends AccountExtrasEvent {
-  const AccountExtrasStarted(this.accountId);
+  const AccountExtrasStarted(this.account);
 
-  final String accountId;
+  final Account account;
 
   @override
-  List<Object?> get props => [accountId];
+  List<Object?> get props => [account];
+}
+
+/// Déclenché par la validation de la popup de modification ouverte
+/// par le crayon de la barre du haut : change le nom et le code ami
+/// du compte affiché.
+class AccountExtrasAccountEdited extends AccountExtrasEvent {
+  const AccountExtrasAccountEdited({
+    required this.name,
+    required this.gameAccountId,
+  });
+
+  final String name;
+  final String gameAccountId;
+
+  @override
+  List<Object?> get props => [name, gameAccountId];
 }
 
 /// Déclenché au retour du détail d'un set, où la possession a pu

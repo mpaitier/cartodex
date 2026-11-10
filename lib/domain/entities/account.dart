@@ -38,6 +38,18 @@ class Account extends Equatable {
   /// compte lors de la synchronisation avec le cloud.
   final DateTime createdAt;
 
+  /// Copie du compte avec un nom et/ou un code ami différents. Le
+  /// rôle et la date de création ne changent jamais par ce biais.
+  Account copyWith({String? name, String? gameAccountId}) {
+    return Account(
+      id: id,
+      name: name ?? this.name,
+      gameAccountId: gameAccountId ?? this.gameAccountId,
+      isPrimary: isPrimary,
+      createdAt: createdAt,
+    );
+  }
+
   @override
   List<Object?> get props => [id, name, gameAccountId, isPrimary, createdAt];
 }
