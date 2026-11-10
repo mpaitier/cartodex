@@ -14,6 +14,7 @@ import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
 import '../widgets/bulk_add_action.dart';
 import '../widgets/bulk_add_confirmation_dialog.dart';
+import '../widgets/card_element_logo.dart';
 import '../widgets/card_grid_density.dart';
 import '../widgets/card_grid_pager.dart';
 import '../widgets/owner_filter_banner.dart';
@@ -121,10 +122,27 @@ class _SetDetailViewState extends State<_SetDetailView> {
   /// État purement local à l'affichage, comme [_activeGroup].
   CardGridDensity _density = CardGridDensity.comfortable;
 
+  /// Vrai une fois les logos d'éléments lancés en préchargement (voir
+  /// [didChangeDependencies]), pour ne le faire qu'une fois par écran.
+  bool _elementLogosPrecached = false;
+
   @override
   void initState() {
     super.initState();
     _activeGroup = context.read<RarityScopeCubit>().state.cardGroup;
+  }
+
+  /// Précharge les logos d'éléments du filtre par type dès l'ouverture
+  /// de l'écran, pour qu'ils soient prêts quand le panneau de filtres
+  /// s'ouvre (voir [CardElementLogo.precacheAll]). Fait ici plutôt que
+  /// dans [initState], où le préchargement ne peut pas encore lire le
+  /// contexte.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_elementLogosPrecached) return;
+    _elementLogosPrecached = true;
+    CardElementLogo.precacheAll(context);
   }
 
   @override

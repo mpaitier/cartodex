@@ -6,9 +6,12 @@ import 'card_kind_style.dart';
 import 'filter_chip_wrap.dart';
 
 /// Barre de puces du filtre par type : "Tous", puis une puce par type
-/// présent dans le set, les éléments de Pokémon d'abord (logo officiel
-/// de l'élément, voir [CardElementLogo]), les types de Dresseur
-/// ensuite (icône, voir [CardKindStyle]). Multi-sélection, comme le filtre de rareté :
+/// présent dans le set. Les éléments de Pokémon viennent d'abord et
+/// n'affichent que leur logo officiel ([CardElementLogo]), comme les
+/// raretés n'affichent que leur symbole ; leur nom apparaît en
+/// infobulle, et à côté d'une pastille de couleur si le logo est
+/// introuvable. Les types de Dresseur suivent, avec une icône et leur
+/// nom (voir [CardKindStyle]). Multi-sélection, comme le filtre de rareté :
 /// cocher plusieurs types affiche les cartes de l'un ou de l'autre.
 ///
 /// Masquée quand le set n'a qu'un seul type à proposer : le filtre
@@ -49,8 +52,14 @@ class CardKindFilterBar extends StatelessWidget {
         }
         final kind = availableKinds[index - 1];
         return FilterChip(
-          avatar: _KindAvatar(kind: kind),
-          label: Text(kind.label),
+          avatar: kind.isElement ? null : _TrainerKindIcon(kind: kind),
+          label: kind.isElement
+              ? CardElementLogo(
+                  kind: kind,
+                  errorBuilder: (_) => _ElementFallback(kind: kind),
+                )
+              : Text(kind.label),
+          tooltip: kind.label,
           selected: selectedKinds.contains(kind),
           showCheckmark: false,
           labelPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -70,20 +79,45 @@ class CardKindFilterBar extends StatelessWidget {
   }
 }
 
-/// Repère d'une puce : logo officiel pour un élément, icône pour un
-/// type de Dresseur ou un type inconnu.
-class _KindAvatar extends StatelessWidget {
-  const _KindAvatar({required this.kind});
+/// Icône d'un type de Dresseur ou d'un type inconnu, devant son nom.
+class _TrainerKindIcon extends StatelessWidget {
+  const _TrainerKindIcon({required this.kind});
 
   final CardKind kind;
 
   @override
   Widget build(BuildContext context) {
-    if (kind.isElement) return CardElementLogo(kind: kind);
     return Icon(
       kind.icon,
       size: 16,
       color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+  }
+}
+
+/// Repli d'une puce d'élément quand son logo est introuvable :
+/// pastille de la couleur de l'élément et son nom.
+class _ElementFallback extends StatelessWidget {
+  const _ElementFallback({required this.kind});
+
+  final CardKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: kind.color ?? Colors.grey,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(kind.label),
+      ],
     );
   }
 }

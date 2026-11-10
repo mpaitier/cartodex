@@ -8,9 +8,9 @@ import '../../../domain/entities/card_kind.dart';
 ///
 /// Les éléments de Pokémon s'affichent avec leur logo officiel
 /// (`CardElementLogo`) ; leur couleur ([color]), reprise de la teinte
-/// habituelle de chaque type, sert de pastille de repli tant que le
-/// logo n'est pas chargé. Les types de Dresseur et [CardKind.unknown]
-/// ont une icône ([icon]).
+/// habituelle de chaque type, sert de pastille de repli si le logo
+/// est introuvable. Les types de Dresseur et [CardKind.unknown] ont
+/// une icône ([icon]).
 extension CardKindStyle on CardKind {
   String get label {
     switch (this) {
