@@ -71,6 +71,11 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
   /// donc la liste des cartes vient de `cards.json`, complétée par
   /// `cards.extra.json` quand une carte y figure. Seul un échec des
   /// deux sources fait échouer la synchronisation.
+  ///
+  /// Le même repli s'applique quand le fichier GitHub n'a plus le
+  /// format plat attendu (voir [_isFlatCardList]). La branche `main`
+  /// suit le dépôt au fil de l'eau, elle recevra donc une éventuelle
+  /// version majeure avant npm.
   @override
   Future<List<CardModel>> fetchAllCards() async {
     final githubUri = Uri.parse(
@@ -78,7 +83,7 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
     );
     try {
       final decoded = jsonDecode((await _get(githubUri)).body);
-      if (decoded is List<dynamic>) {
+      if (decoded is List<dynamic> && _isFlatCardList(decoded)) {
         return decoded
             .cast<Map<String, dynamic>>()
             .map((raw) => _cardFromExtra(raw, raw))
@@ -86,7 +91,8 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
       }
       AppLogger.log(
         'WARNING',
-        'cards.extra.json inattendu sur GitHub, repli sur npm.',
+        'cards.extra.json au format inattendu sur GitHub '
+            '(nouvelle version majeure ?), repli sur npm.',
       );
     } on Exception catch (e) {
       AppLogger.log(
@@ -95,6 +101,24 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
       );
     }
     return _fetchAllCardsFromNpm();
+  }
+
+  /// Vrai si [cards] suit le format plat de la version 2 du
+  /// référentiel : une entrée par impression, avec `set` (texte) et
+  /// `number` (nombre) à la racine. [CardModel.fromJson] lit ces deux
+  /// champs sans contrôle ; une valeur absente y lèverait une
+  /// `TypeError`, qui n'est pas une `Exception` et échapperait donc au
+  /// repli de [fetchAllCards]. La version 3 envisagée regroupe les
+  /// réimpressions sous un tableau `sets`, sans `set` à la racine :
+  /// ce contrôle la détecte et bascule sur npm, figé en 2.x.
+  static bool _isFlatCardList(List<dynamic> cards) {
+    return cards.isNotEmpty &&
+        cards.every(
+          (raw) =>
+              raw is Map<String, dynamic> &&
+              raw['set'] is String &&
+              raw['number'] is num,
+        );
   }
 
   /// Repli de [fetchAllCards] sur la version npm : `cards.json` pour la
