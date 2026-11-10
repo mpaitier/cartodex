@@ -14,6 +14,6 @@ enum OwnershipFilter {
   /// par le principal (badge jaune).
   secondary,
 
-  /// Cartes possédées par aucun compte (badge neutre).
+  /// Cartes possédées par aucun compte (badge rouge pâle).
   notOwned,
 }

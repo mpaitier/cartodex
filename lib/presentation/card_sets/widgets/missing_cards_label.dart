@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// Nombre de cartes qui manquent encore à la collection, en rouge
-/// (ex: "12 manquantes").
+/// pâle ([AppColors.missingCards]) (ex: "12 manquantes").
 ///
 /// [missing] compte les cartes que personne ne possède, ni le compte
 /// principal ni un secondaire (voir `ProgressCount.missing`). Une

@@ -8,9 +8,11 @@ import '../bloc/ownership_filter.dart';
 /// secondaires uniquement, ou celles qu'aucun compte ne possède.
 ///
 /// Les pastilles reprennent les couleurs du badge de possession de
-/// `CardGridItem` (violet : principal, jaune : secondaires, gris :
-/// non possédées) pour que chaque puce se lise comme ce qu'elle
-/// filtre.
+/// `CardGridItem` (violet : principal, jaune : secondaires, rouge
+/// pâle : non possédées) pour que chaque puce se lise comme ce
+/// qu'elle filtre. La pastille "Manquantes" a aussi la couleur du
+/// compteur de cartes manquantes de l'accueil (`MissingCardsLabel`) :
+/// ce filtre affiche exactement les cartes qu'il compte.
 ///
 /// Se rend invisible quand [availableFilters] n'offre aucun vrai
 /// choix (moins de deux entrées — typiquement, aucun compte
@@ -79,7 +81,7 @@ class OwnershipFilterBar extends StatelessWidget {
       case OwnershipFilter.secondary:
         return const _Dot(color: AppColors.ownedBySecondaryAccount);
       case OwnershipFilter.notOwned:
-        return const _Dot(color: Colors.black45);
+        return const _Dot(color: AppColors.missingCards);
     }
   }
 }

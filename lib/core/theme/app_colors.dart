@@ -20,8 +20,14 @@ abstract class AppColors {
   static const Color complete = Color(0xFF66BB6A);
 
   /// Cartes que personne ne possède encore, ni le principal ni un
-  /// secondaire (voir `MissingCardsLabel`).
-  static const Color missingCards = Color(0xFFE53935);
+  /// secondaire : compteur `MissingCardsLabel`, badge de possession
+  /// des tuiles et pastille "Manquantes" du filtre de possession.
+  ///
+  /// Rouge pâle, réservé aux petits éléments qui comptent ou
+  /// sélectionnent ces cartes. Les grandes surfaces restent neutres :
+  /// fond gris des barres de progression, illustration grisée des
+  /// cartes non possédées.
+  static const Color missingCards = Color(0xFFE57373);
 
   /// Fond du badge de rareté des tuiles de carte (voir
   /// `CardRarityBadge`), appliqué avec une opacité de 80 % : les
