@@ -7,6 +7,10 @@ import '../../domain/entities/pokemon_card.dart';
 /// `cards.extra.json`
 /// (https://github.com/flibustier/pokemon-tcg-pocket-database) ou
 /// relu depuis le cache local.
+///
+/// Le nom français ([nameFr]) vient d'un autre fichier du référentiel,
+/// `cards.fr.json` : il est ajouté après coup par le repository, via
+/// [copyWith] (voir `CardRepositoryImpl.syncCardCatalog`).
 class CardModel extends PokemonCard {
   const CardModel({
     required super.id,
@@ -15,6 +19,7 @@ class CardModel extends PokemonCard {
     required super.category,
     required super.setId,
     required super.setName,
+    super.nameFr,
     super.imageUrl,
     super.rarity,
     super.hp,
@@ -87,7 +92,7 @@ class CardModel extends PokemonCard {
     );
   }
 
-  CardModel copyWith({String? setName}) {
+  CardModel copyWith({String? setName, String? nameFr}) {
     return CardModel(
       id: id,
       localId: localId,
@@ -95,6 +100,7 @@ class CardModel extends PokemonCard {
       category: category,
       setId: setId,
       setName: setName ?? this.setName,
+      nameFr: nameFr ?? this.nameFr,
       imageUrl: imageUrl,
       rarity: rarity,
       hp: hp,

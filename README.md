@@ -6,7 +6,7 @@ Application mobile Flutter pour suivre sa collection de cartes Pokémon TCG Pock
 
 Pokémon TCG Pocket n'expose aucune API publique qui permette de récupérer la collection d'un joueur. Cartodex combine donc trois sources, chacune avec un rôle précis :
 
-- **Catalogue des cartes** : [pokemon-tcg-pocket-database](https://github.com/flibustier/pokemon-tcg-pocket-database), trois fichiers JSON statiques servis par jsDelivr (`sets.json`, `cards.json`, `cards.extra.json`). Il est téléchargé à la demande, puis stocké en local.
+- **Catalogue des cartes** : [pokemon-tcg-pocket-database](https://github.com/flibustier/pokemon-tcg-pocket-database), des fichiers JSON statiques servis par jsDelivr (`sets.json`, `cards.json`, `cards.extra.json`, `cards.fr.json` pour les noms français, `pullRates.json`). Il est téléchargé à la demande, puis stocké en local.
 - **Possession des cartes** : saisie à la main par l'utilisateur, stockée uniquement dans une base SQLite locale (Drift). Elle ne dépend jamais du catalogue : une resynchronisation complète du référentiel n'y touche pas.
 - **Compte applicatif** (facultatif) : Firebase Auth et Firestore, pour retrouver ses comptes et sa possession sur un autre appareil.
 
@@ -28,6 +28,7 @@ TCGdex avait été essayé en premier. Son modèle ne décrit pas la répartitio
 - Filtre de possession : tout, compte principal, comptes secondaires, cartes manquantes. Quand « secondaires » est choisi et que plusieurs comptes ont des cartes dans le set, un sous-filtre permet de cibler un compte.
 - Pincement à deux doigts : rapprocher les doigts passe la grille de 3 à 5 colonnes (illustration et badge seuls, sans nom ni rareté), les écarter revient à 3.
 - Tap simple : bascule la possession pour le compte principal. Double-tap : ouvre un choix de compte secondaire.
+- Nom de chaque carte en français quand l'application est en français et que le référentiel fournit une traduction (`cards.fr.json`), en anglais sinon.
 - Bouton « + » : marque d'un coup, après confirmation, les cartes affichées à l'écran pour le compte principal.
 - Titre de l'AppBar avec les compteurs ◆ / ★ / Σ. Un tap bascule entre « compte principal seul » et « principal + secondaires ».
 
@@ -144,16 +145,19 @@ Chaque feature de `presentation/` suit le même découpage : `bloc/` (événemen
 
 ## Modèle de données
 
-### Base locale (Drift, schéma v2)
+### Base locale (Drift, schéma v4)
 
 | Table | Rôle |
 |---|---|
 | `card_sets` | Sets du référentiel : id, nom, nombre de cartes, série, logo, boosters |
-| `cards` | Cartes du référentiel : id (`A1-001`), nom, catégorie, set, image, rareté, boosters |
+| `cards` | Cartes du référentiel : id (`A1-001`), nom anglais, nom français (facultatif), catégorie, set, image, rareté, boosters |
+| `pull_rates` | Probabilités de tirage : set, variante de booster, emplacement, rareté, taux |
 | `owned_cards` | Possession, clé composite (`card_id`, `account_id`) |
 | `accounts` | Comptes de jeu suivis : id (UUID), nom, identifiant de jeu, principal ou non, date de création |
 
 Les listes (boosters, types) sont stockées en une chaîne séparée par des virgules : une carte n'a jamais que quelques valeurs, une table relationnelle serait disproportionnée.
+
+**Nom français (v4).** La colonne `name_fr` de `cards` reste vide tant que le référentiel n'a pas été resynchronisé après la mise à jour. Elle est remplie par rapprochement sur le set et le numéro avec `cards.fr.json`, et seulement quand le nom diffère du nom anglais. Le nom anglais reste la seule base des URL d'illustrations.
 
 **Migration v1 → v2.** Les identifiants de compte passent d'entiers auto-incrémentés à des UUID, pour qu'un compte créé hors ligne sur deux appareils ne puisse pas entrer en collision au moment de la synchronisation. SQLite ne sait pas changer le type d'une colonne en place : les deux tables concernées sont renommées, recréées au schéma courant, remplies par copie (l'id `1` devient `"1"`) puis supprimées, dans une transaction. Les anciens comptes sont remplacés par de vrais UUID au premier passage dans `SyncWithCloud`.
 
@@ -234,6 +238,7 @@ Firebase n'est configuré que pour Android.
 ## Limites connues
 
 - **Cloud.** La synchronisation porte sur les comptes et la possession. Le champ `isPrimary` n'est pas réconcilié entre appareils : un compte importé ne devient principal que si aucun compte n'existait en local.
+- **Noms français.** Au 10/11/2026, `cards.fr.json` ne traduit qu'une petite partie du catalogue (environ 90 cartes, surtout des promos B) et ne couvre pas les extensions les plus récentes. Les autres cartes s'affichent en anglais, même avec l'application en français. Les noms se complètent d'eux-mêmes à la synchronisation suivante quand le fichier source est enrichi.
 - **Images.** Le slug des images repose sur un site non officiel. Un nom inhabituel peut donner une image introuvable, auquel cas la tuile affiche le numéro de la carte. Les cas repérés se corrigent dans `_cardSlugOverrides`.
 - **Données de carte.** Les colonnes `hp`, `types` et `illustrator` existent en base mais la source actuelle ne les fournit pas.
 - **Tests.** Il n'y a pas encore de suite de tests automatisés. Les premiers candidats sont les use cases de calcul (`GetCollectionStats`, `GetSetsProgress`), `SyncWithCloud` et `PocketCardsImageSlug`, qui sont de la logique pure.

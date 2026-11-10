@@ -17,6 +17,10 @@ class Cards extends Table {
   TextColumn get localId => text()();
   TextColumn get name => text()();
 
+  /// Nom français, `null` sans traduction dans le référentiel (voir
+  /// `PokemonCard.nameFr`). Ajouté au schéma v4.
+  TextColumn get nameFr => text().nullable()();
+
   /// Nom brut de la catégorie (voir `CardCategory` côté domaine),
   /// converti dans la couche data.
   TextColumn get category => text()();

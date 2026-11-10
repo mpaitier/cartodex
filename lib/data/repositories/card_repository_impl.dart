@@ -45,6 +45,7 @@ class CardRepositoryImpl implements CardRepository {
       // ici, sans appel réseau supplémentaire, et on en profite pour
       // renseigner le nom du set (absent de cards.json).
       final allCards = await _remoteDataSource.fetchAllCards();
+      final frenchNames = await _fetchFrenchNames();
 
       // Le total déclaré par la source (`sets.json`) peut manquer
       // (ex: "Promo B" n'a pas de champ `count`) ou diverger du réel :
@@ -55,7 +56,12 @@ class CardRepositoryImpl implements CardRepository {
       for (final set in sets) {
         final cardsForSet = allCards
             .where((card) => card.setId == set.id)
-            .map((card) => card.copyWith(setName: set.name))
+            .map(
+              (card) => card.copyWith(
+                setName: set.name,
+                nameFr: _frenchNameFor(card, frenchNames),
+              ),
+            )
             .toList();
         await _localDataSource.cacheCards(set.id, cardsForSet);
         correctedSets.add(
@@ -78,6 +84,36 @@ class CardRepositoryImpl implements CardRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     }
+  }
+
+  /// Noms français des cartes, par identifiant de carte.
+  ///
+  /// Un échec ici ne fait pas échouer la synchronisation : les cartes
+  /// sont alors enregistrées sans nom français et s'affichent avec leur
+  /// nom anglais, comme avant l'ajout de cette source. La prochaine
+  /// synchronisation réussie les complétera.
+  Future<Map<String, String>> _fetchFrenchNames() async {
+    try {
+      return await _remoteDataSource.fetchFrenchCardNames();
+    } on ServerException catch (e) {
+      AppLogger.log('WARNING', 'Noms français non récupérés : ${e.message}');
+    } on FormatException catch (e) {
+      AppLogger.log('WARNING', 'Noms français illisibles : $e');
+    }
+    return const {};
+  }
+
+  /// Nom français de [card], rapproché par set et numéro (son
+  /// identifiant). `null` quand `cards.fr.json` n'a pas la carte ou
+  /// répète simplement le nom anglais : `PokemonCard.nameFr` ne garde
+  /// que les vraies traductions.
+  static String? _frenchNameFor(
+    PokemonCard card,
+    Map<String, String> frenchNames,
+  ) {
+    final french = frenchNames[card.id]?.trim();
+    if (french == null || french.isEmpty || french == card.name) return null;
+    return french;
   }
 
   /// Met à jour les probabilités de tirage des boosters.
