@@ -5,13 +5,12 @@ import '../../../core/constants/card_rarities.dart';
 import '../../../core/theme/app_color_filters.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_logger.dart';
-import '../../../core/widgets/card_rarity_badge.dart';
+import '../../../core/widgets/card_rarity_icon.dart';
 import '../../../core/widgets/diagonal_grayscale_split.dart';
 import '../../../domain/entities/pokemon_card.dart';
 
 /// Une tuile de la grille de cartes : illustration centrée, nom,
-/// numéro et rareté (sur fond gris, voir [CardRarityBadge]), et
-/// un badge de possession.
+/// numéro et rareté, et un badge de possession.
 ///
 /// L'illustration reflète la possession d'un coup d'œil, même sans
 /// regarder le badge :
@@ -96,7 +95,7 @@ class CardGridItem extends StatelessWidget {
                               style: theme.textTheme.labelSmall,
                             ),
                             if (rarity != null)
-                              CardRarityBadge(rarity: rarity, size: 10),
+                              CardRarityIcon(rarity: rarity, size: 10),
                           ],
                         ),
                       ],
