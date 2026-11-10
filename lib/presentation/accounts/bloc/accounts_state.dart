@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../domain/entities/account.dart';
 import '../../../domain/entities/account_extras.dart';
-import 'accounts_sort_option.dart';
+import '../../../domain/entities/accounts_sort_option.dart';
 
 /// Étape du cycle de vie de [AccountsState].
 enum AccountsStatus {
@@ -41,9 +41,10 @@ class AccountsState extends Equatable {
   /// sans compteurs plutôt que de tomber en erreur.
   final Map<String, AccountExtras> extrasByAccountId;
 
-  /// Critère de tri courant de la liste. Purement local à
-  /// l'affichage : non persisté, retombe sur l'ordre de création à la
-  /// réouverture de l'écran.
+  /// Critère de tri courant de la liste. Relu au démarrage de l'écran
+  /// depuis les préférences de l'appareil, et enregistré à chaque
+  /// changement (voir `AccountsBloc`). Ordre de création tant que
+  /// rien n'a été choisi.
   final AccountsSortOption sortOption;
 
   final String? errorMessage;

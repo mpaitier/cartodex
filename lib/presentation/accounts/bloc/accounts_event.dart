@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import 'accounts_sort_option.dart';
+import '../../../domain/entities/accounts_sort_option.dart';
 
 /// Événements gérés par [AccountsBloc][accounts_bloc.dart].
 abstract class AccountsEvent extends Equatable {
@@ -24,7 +24,8 @@ class AccountsRefreshRequested extends AccountsEvent {
 }
 
 /// Déclenché par le choix d'un critère dans le menu de tri de la
-/// liste des comptes.
+/// liste des comptes. Le choix est mémorisé pour les lancements
+/// suivants.
 class AccountsSortChanged extends AccountsEvent {
   const AccountsSortChanged(this.option);
 
@@ -43,6 +44,23 @@ class AccountAdded extends AccountsEvent {
 
   @override
   List<Object?> get props => [name, gameAccountId];
+}
+
+/// Déclenché par la validation du formulaire de modification d'un
+/// compte (bouton crayon de la liste).
+class AccountEdited extends AccountsEvent {
+  const AccountEdited({
+    required this.accountId,
+    required this.name,
+    required this.gameAccountId,
+  });
+
+  final String accountId;
+  final String name;
+  final String gameAccountId;
+
+  @override
+  List<Object?> get props => [accountId, name, gameAccountId];
 }
 
 /// Déclenché par un appui sur la couronne d'un compte secondaire :

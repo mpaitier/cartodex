@@ -29,6 +29,14 @@ abstract class AccountLocalDataSource {
 
   Future<void> setPrimaryAccount(String accountId);
 
+  /// Modifie le nom et le code ami du compte [accountId]. Lève une
+  /// [CacheException] si aucun compte ne porte cet identifiant.
+  Future<void> updateAccount({
+    required String accountId,
+    required String name,
+    required String gameAccountId,
+  });
+
   /// Remplace par de vrais UUID les identifiants de compte hérités
   /// (voir [_legacyAccountIdPattern]), et met à jour la possession
   /// qui les référence en conséquence. Sans effet s'il n'y en a
@@ -104,6 +112,30 @@ class AccountLocalDataSourceImpl implements AccountLocalDataSource {
       });
     } on Exception catch (e) {
       throw CacheException('Échec du changement de compte principal : $e');
+    }
+  }
+
+  @override
+  Future<void> updateAccount({
+    required String accountId,
+    required String name,
+    required String gameAccountId,
+  }) async {
+    final int updatedRows;
+    try {
+      updatedRows = await (_database.update(_database.accounts)
+            ..where((t) => t.id.equals(accountId)))
+          .write(
+        AccountsCompanion(
+          name: Value(name),
+          gameAccountId: Value(gameAccountId),
+        ),
+      );
+    } on Exception catch (e) {
+      throw CacheException('Échec de la modification du compte : $e');
+    }
+    if (updatedRows == 0) {
+      throw const CacheException('Compte introuvable.');
     }
   }
 

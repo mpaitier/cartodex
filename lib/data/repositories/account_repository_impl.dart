@@ -54,6 +54,24 @@ class AccountRepositoryImpl implements AccountRepository {
   }
 
   @override
+  Future<Either<Failure, void>> updateAccount({
+    required String accountId,
+    required String name,
+    required String gameAccountId,
+  }) async {
+    try {
+      await _localDataSource.updateAccount(
+        accountId: accountId,
+        name: name,
+        gameAccountId: gameAccountId,
+      );
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> migrateLegacyAccountIds() async {
     try {
       await _localDataSource.migrateLegacyAccountIds();

@@ -14,13 +14,16 @@ import '../bloc/accounts_state.dart';
 import '../widgets/account_list_item.dart';
 import '../widgets/accounts_sort_action.dart';
 import '../widgets/add_account_dialog.dart';
+import '../widgets/edit_account_dialog.dart';
 
 /// Écran de gestion des comptes suivis par l'application.
 ///
 /// Un compte secondaire affiche ses cartes en plus du principal ; un
-/// appui dessus ouvre [AccountExtrasPage], le détail par set. Un menu
-/// de tri dans l'AppBar réordonne les secondaires (le principal reste
-/// toujours en tête).
+/// appui dessus ouvre [AccountExtrasPage], le détail par set. Le
+/// crayon de chaque ligne ouvre [EditAccountDialog] pour changer le
+/// nom ou le code ami. Un menu de tri dans l'AppBar réordonne les
+/// secondaires (le principal reste toujours en tête) ; le choix est
+/// mémorisé d'un lancement à l'autre.
 class AccountsPage extends StatelessWidget {
   const AccountsPage({super.key});
 
@@ -110,6 +113,7 @@ class _AccountsView extends StatelessWidget {
           onCrownTap: () => context
               .read<AccountsBloc>()
               .add(PrimaryAccountChanged(account.id)),
+          onEditTap: () => _openEditDialog(context, account),
         );
       },
     );
@@ -130,6 +134,23 @@ class _AccountsView extends StatelessWidget {
     if (!bloc.isClosed) {
       bloc.add(const AccountsRefreshRequested());
     }
+  }
+
+  void _openEditDialog(BuildContext context, Account account) {
+    final bloc = context.read<AccountsBloc>();
+    showDialog<void>(
+      context: context,
+      builder: (_) => EditAccountDialog(
+        account: account,
+        onSubmit: (name, gameAccountId) => bloc.add(
+          AccountEdited(
+            accountId: account.id,
+            name: name,
+            gameAccountId: gameAccountId,
+          ),
+        ),
+      ),
+    );
   }
 
   void _openAddDialog(BuildContext context) {

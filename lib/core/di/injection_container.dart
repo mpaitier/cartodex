@@ -4,27 +4,33 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:get_it/get_it.dart';
 import 'package:google_sign_in/google_sign_in.dart' as google_sign_in;
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/datasources/local/account_local_data_source.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/card_local_data_source.dart';
+import '../../data/datasources/local/user_preferences_local_data_source.dart';
 import '../../data/datasources/remote/card_remote_data_source.dart';
 import '../../data/repositories/account_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/card_repository_impl.dart';
 import '../../data/repositories/cloud_sync_repository_impl.dart';
+import '../../data/repositories/user_preferences_repository_impl.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/card_repository.dart';
 import '../../domain/repositories/cloud_sync_repository.dart';
+import '../../domain/repositories/user_preferences_repository.dart';
 import '../../domain/usecases/add_account.dart';
 import '../../domain/usecases/get_accounts.dart';
+import '../../domain/usecases/get_accounts_sort_option.dart';
 import '../../domain/usecases/get_cards.dart';
 import '../../domain/usecases/get_cards_by_set.dart';
 import '../../domain/usecases/get_collection_stats.dart';
 import '../../domain/usecases/get_owned_cards_id.dart';
 import '../../domain/usecases/get_secondary_accounts_extras.dart';
 import '../../domain/usecases/get_sets_progress.dart';
+import '../../domain/usecases/save_accounts_sort_option.dart';
 import '../../domain/usecases/set_card_owned.dart';
 import '../../domain/usecases/set_primary_account.dart';
 import '../../domain/usecases/sign_in_with_email.dart';
@@ -33,6 +39,7 @@ import '../../domain/usecases/sign_out.dart';
 import '../../domain/usecases/sign_up_with_email.dart';
 import '../../domain/usecases/sync_card_catalog.dart';
 import '../../domain/usecases/sync_with_cloud.dart';
+import '../../domain/usecases/update_account.dart';
 import '../../domain/usecases/watch_auth_state.dart';
 import '../../presentation/account_extras/bloc/account_extras_bloc.dart';
 import '../../presentation/accounts/bloc/accounts_bloc.dart';
@@ -75,6 +82,7 @@ Future<void> init() async {
   sl.registerLazySingleton<FirebaseFirestore>(
     () => FirebaseFirestore.instance,
   );
+  sl.registerLazySingleton<SharedPreferencesAsync>(SharedPreferencesAsync.new);
 
   // Data sources
   sl.registerLazySingleton<CardRemoteDataSource>(
@@ -85,6 +93,9 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<AccountLocalDataSource>(
     () => AccountLocalDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<UserPreferencesLocalDataSource>(
+    () => UserPreferencesLocalDataSourceImpl(sl()),
   );
 
   // Repositories
@@ -104,6 +115,9 @@ Future<void> init() async {
   sl.registerLazySingleton<CloudSyncRepository>(
     () => CloudSyncRepositoryImpl(sl()),
   );
+  sl.registerLazySingleton<UserPreferencesRepository>(
+    () => UserPreferencesRepositoryImpl(sl()),
+  );
 
   // Use cases
   sl.registerLazySingleton(() => SyncCardCatalog(sl()));
@@ -113,6 +127,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SetCardOwned(sl()));
   sl.registerLazySingleton(() => GetAccounts(sl()));
   sl.registerLazySingleton(() => AddAccount(sl()));
+  sl.registerLazySingleton(() => UpdateAccount(sl()));
+  sl.registerLazySingleton(() => GetAccountsSortOption(sl()));
+  sl.registerLazySingleton(() => SaveAccountsSortOption(sl()));
   sl.registerLazySingleton(() => SetPrimaryAccount(sl()));
   sl.registerLazySingleton(() => GetCollectionStats(sl()));
   sl.registerLazySingleton(
@@ -160,8 +177,11 @@ Future<void> init() async {
     () => AccountsBloc(
       getAccounts: sl(),
       addAccount: sl(),
+      updateAccount: sl(),
       setPrimaryAccount: sl(),
       getSecondaryAccountsExtras: sl(),
+      getAccountsSortOption: sl(),
+      saveAccountsSortOption: sl(),
     ),
   );
   sl.registerFactory(
