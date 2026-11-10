@@ -6,7 +6,8 @@ import 'next_sync_time_text.dart';
 
 /// Contenu de l'entrée "Synchroniser maintenant" du menu cloud : le
 /// libellé, et en dessous le nombre de synchronisations restantes ou,
-/// limite atteinte, l'heure de la prochaine possible.
+/// limite atteinte, l'heure de la prochaine possible. Un compte
+/// exempté voit "Synchros illimitées".
 ///
 /// Sans [quota] (pas encore calculé), seul le libellé s'affiche.
 /// L'entrée elle-même est désactivée par l'appelant quand aucune
@@ -23,6 +24,7 @@ class SyncNowMenuLabel extends StatelessWidget {
   String? _detail(BuildContext context) {
     final quota = this.quota;
     if (quota == null) return null;
+    if (quota.isUnlimited) return context.l10n.syncUnlimited;
     final next = quota.nextAvailableAt;
     if (quota.remaining > 0 || next == null) {
       return context.l10n.syncRemaining(quota.remaining);

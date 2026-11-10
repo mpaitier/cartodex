@@ -130,6 +130,30 @@ void main() {
       expect(preferences.histories[_userId], [recent, _now]);
     });
 
+    test('un compte exempté n’est pas limité, mais reste enregistré',
+        () async {
+      final full = List.filled(
+        SyncRateLimit.maxSyncs,
+        _now.subtract(const Duration(hours: 1)),
+      );
+      preferences.histories[_userId] = full;
+      final exemptSync = SyncWithCloud(
+        accountRepository: _FakeAccounts(),
+        cardRepository: _FakeCards(),
+        cloudSyncRepository: cloud,
+        userPreferencesRepository: preferences,
+        exemptUserIds: const {_userId},
+        now: () => _now,
+      );
+
+      final result =
+          await exemptSync(const SyncWithCloudParams(userId: _userId));
+
+      expect(result.isRight(), isTrue);
+      expect(cloud.fetchCount, 1);
+      expect(preferences.histories[_userId], [...full, _now]);
+    });
+
     test('chaque compte applicatif a son propre quota', () async {
       preferences.histories['autre-compte'] = List.filled(
         SyncRateLimit.maxSyncs,
@@ -141,6 +165,24 @@ void main() {
   });
 
   group('GetSyncQuota', () {
+    test('quota illimité pour un compte exempté', () async {
+      preferences.histories[_userId] = List.filled(
+        SyncRateLimit.maxSyncs,
+        _now.subtract(const Duration(hours: 1)),
+      );
+      final getSyncQuota = GetSyncQuota(
+        preferences,
+        exemptUserIds: const {_userId},
+        now: () => _now,
+      );
+      final result =
+          await getSyncQuota(const GetSyncQuotaParams(userId: _userId));
+      expect(
+        result,
+        const Right<Failure, SyncQuota>(SyncQuota.unlimited()),
+      );
+    });
+
     test('quota restant calculé à partir de l’historique', () async {
       preferences.histories[_userId] = [
         _now.subtract(const Duration(hours: 1)),

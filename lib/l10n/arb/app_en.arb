@@ -80,6 +80,7 @@
   "syncNextAvailableToday": "Next sync available at {time}",
   "syncNextAvailableTomorrow": "Next sync available tomorrow at {time}",
   "syncQuotaReached": "Limit of {max} syncs per 24 hours reached.",
+  "syncUnlimited": "Unlimited syncs",
   "cardsLoading": "Loading cards…",
   "bulkAddTooltip": "Add the cards shown to the main account",
   "bulkAddTitle": "Add these cards?",

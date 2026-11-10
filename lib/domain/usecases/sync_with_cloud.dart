@@ -38,24 +38,30 @@ import '../usecase.dart';
 /// Limitée par [SyncRateLimit] : au-delà du quota, rien n'est lu ni
 /// écrit et l'appel renvoie une [SyncQuotaExceededFailure]. Seules les
 /// synchronisations réussies sont comptées : un échec (réseau coupé,
-/// par exemple) ne consomme pas le quota.
+/// par exemple) ne consomme pas le quota. Les comptes de
+/// [exemptUserIds] ne sont pas limités ; leurs synchronisations sont
+/// tout de même enregistrées, pour que l'historique reste juste si
+/// l'exemption est retirée.
 class SyncWithCloud implements UseCase<SyncResult, SyncWithCloudParams> {
   SyncWithCloud({
     required AccountRepository accountRepository,
     required CardRepository cardRepository,
     required CloudSyncRepository cloudSyncRepository,
     required UserPreferencesRepository userPreferencesRepository,
+    Set<String> exemptUserIds = const {},
     DateTime Function()? now,
   })  : _accountRepository = accountRepository,
         _cardRepository = cardRepository,
         _cloudSyncRepository = cloudSyncRepository,
         _userPreferencesRepository = userPreferencesRepository,
+        _exemptUserIds = exemptUserIds,
         _now = now ?? DateTime.now;
 
   final AccountRepository _accountRepository;
   final CardRepository _cardRepository;
   final CloudSyncRepository _cloudSyncRepository;
   final UserPreferencesRepository _userPreferencesRepository;
+  final Set<String> _exemptUserIds;
 
   /// Horloge, remplaçable dans les tests.
   final DateTime Function() _now;
@@ -68,10 +74,12 @@ class SyncWithCloud implements UseCase<SyncResult, SyncWithCloudParams> {
     final historyResult =
         await _userPreferencesRepository.getSyncHistory(params.userId);
     final history = historyResult.getOrElse(() => const []);
-    final quota = SyncRateLimit.quotaFor(history, _now());
-    final nextAvailableAt = quota.nextAvailableAt;
-    if (quota.remaining <= 0 && nextAvailableAt != null) {
-      return Left(SyncQuotaExceededFailure(nextAvailableAt));
+    if (!_exemptUserIds.contains(params.userId)) {
+      final quota = SyncRateLimit.quotaFor(history, _now());
+      final nextAvailableAt = quota.nextAvailableAt;
+      if (quota.remaining <= 0 && nextAvailableAt != null) {
+        return Left(SyncQuotaExceededFailure(nextAvailableAt));
+      }
     }
 
     final result = await _synchronize(params.userId);

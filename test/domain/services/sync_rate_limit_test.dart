@@ -78,6 +78,10 @@ void main() {
       expect(const SyncQuota(remaining: 1).isAvailableAt(_now), isTrue);
     });
 
+    test('un quota illimité est toujours disponible', () {
+      expect(const SyncQuota.unlimited().isAvailableAt(_now), isTrue);
+    });
+
     test('indisponible avant la prochaine heure, disponible ensuite', () {
       final next = _now.add(const Duration(hours: 2));
       final quota = SyncQuota(remaining: 0, nextAvailableAt: next);

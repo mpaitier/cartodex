@@ -201,7 +201,7 @@ firebase deploy --only firestore:rules
 
 Le traitement s'arrête à la première erreur sans revenir en arrière. La fusion étant idempotente, une nouvelle synchronisation rattrape le reste.
 
-**Limite de synchronisations.** `SyncRateLimit` autorise 4 synchronisations réussies sur une fenêtre glissante de 24 heures, par compte applicatif. `SyncWithCloud` vérifie le quota avant toute lecture du cloud et renvoie une `SyncQuotaExceededFailure` au-delà. Une synchronisation en échec n'est pas comptée. L'historique est gardé sur l'appareil (`shared_preferences`, une clé par compte) : la limite protège le quota Firestore d'un usage en boucle, sans prétendre résister à une réinstallation ou à un changement d'heure volontaire.
+**Limite de synchronisations.** `SyncRateLimit` autorise 4 synchronisations réussies sur une fenêtre glissante de 24 heures, par compte applicatif. `SyncWithCloud` vérifie le quota avant toute lecture du cloud et renvoie une `SyncQuotaExceededFailure` au-delà. Une synchronisation en échec n'est pas comptée. Les comptes listés dans `SYNC_QUOTA_EXEMPT_UIDS` (voir « Réglages de build ») échappent à la limite. L'historique est gardé sur l'appareil (`shared_preferences`, une clé par compte) : la limite protège le quota Firestore d'un usage en boucle, sans prétendre résister à une réinstallation ou à un changement d'heure volontaire.
 
 **Images.** La source ne fournit aucune URL exploitable. Les illustrations de cartes, logos de sets et icônes de boosters sont reconstruits à partir des noms du référentiel via `PocketCardsImageSlug`, sur le modèle de [pocketcards.net](https://pocketcards.net). Le site n'a pas d'API documentée : la conversion est déduite d'exemples observés. Elle gère les noms collés (« Teal MaskOgerpon »), les préfixes de forme régionale (« Galarianzigzagoon »), les chiffres en fin de nom (« Porygon2 ») et dispose d'une table de correctifs manuels. En debug, `AppLogger` signale chaque image introuvable.
 
@@ -232,6 +232,16 @@ Prérequis : un SDK Flutter compatible avec `pubspec.lock` (Dart 3.13 et Flutter
    ```
    flutter run
    ```
+
+### Réglages de build (facultatif)
+
+Certains réglages sont passés au build plutôt qu'écrits dans le code, pour ne jamais finir dans le dépôt. Copier `dart_defines.json.example` en `dart_defines.json` (ignoré par Git), le remplir, puis ajouter `--dart-define-from-file=dart_defines.json` à `flutter run` ou `flutter build` :
+
+| Clé | Rôle |
+|---|---|
+| `SYNC_QUOTA_EXEMPT_UIDS` | Identifiants Firebase (uid) exemptés de la limite de synchronisations, séparés par des virgules. Le menu cloud affiche alors « Synchros illimitées ». |
+
+Sans ce fichier, aucun compte n'est exempté.
 
 ### Build de release
 

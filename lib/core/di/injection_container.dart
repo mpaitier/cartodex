@@ -53,6 +53,7 @@ import '../../presentation/rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../../presentation/set_detail/bloc/set_detail_bloc.dart';
 import '../../presentation/stats/bloc/stats_bloc.dart';
 import '../../presentation/sync/bloc/sync_bloc.dart';
+import '../config/build_config.dart';
 import '../network/network_info.dart';
 
 /// Instance unique du service locator, utilisée dans toute
@@ -161,9 +162,15 @@ Future<void> init() async {
       cardRepository: sl(),
       cloudSyncRepository: sl(),
       userPreferencesRepository: sl(),
+      exemptUserIds: BuildConfig.syncQuotaExemptUserIds,
     ),
   );
-  sl.registerLazySingleton(() => GetSyncQuota(sl()));
+  sl.registerLazySingleton(
+    () => GetSyncQuota(
+      sl(),
+      exemptUserIds: BuildConfig.syncQuotaExemptUserIds,
+    ),
+  );
 
   // Blocs / Cubits
   sl.registerFactory(

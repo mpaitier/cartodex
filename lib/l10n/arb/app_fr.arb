@@ -421,6 +421,10 @@
       }
     }
   },
+  "syncUnlimited": "Synchros illimitées",
+  "@syncUnlimited": {
+    "description": "Sous « Synchroniser maintenant », pour un compte exempté de la limite (voir BuildConfig)."
+  },
   "cardsLoading": "Chargement des cartes…",
   "@cardsLoading": {
     "description": "Chargement du détail d'un set."
