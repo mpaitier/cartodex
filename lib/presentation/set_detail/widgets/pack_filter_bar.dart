@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/pack_display_name.dart';
 import 'pack_avatar.dart';
 
 /// Barre horizontale de filtre par booster, avec un choix "Tous"
 /// systématique en tête.
 ///
 /// [setName] est nécessaire pour retrouver l'icône de chaque booster
-/// (voir [PackAvatar]).
+/// (voir [PackAvatar]), et pour retirer le nom de l'extension quand le
+/// référentiel l'a répété dans celui du booster (voir
+/// [PackDisplayName]).
 ///
 /// Se rend invisible quand le set n'a qu'un seul booster (ou
 /// aucun) : le filtre n'apporterait rien dans ce cas.
@@ -47,7 +50,7 @@ class PackFilterBar extends StatelessWidget {
           final pack = packs[index - 1];
           return ChoiceChip(
             avatar: PackAvatar(setName: setName, packName: pack),
-            label: Text(pack),
+            label: Text(PackDisplayName.of(setName, pack)),
             selected: selectedPack == pack,
             onSelected: (_) => onPackSelected(pack),
           );
