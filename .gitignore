@@ -57,8 +57,5 @@ Thumbs.db
 *.sqlite
 *.db
 
-# Firebase configuration
-lib/firebase_options.dart
-
 # Réglages de build locaux (voir dart_defines.json.example)
 dart_defines.json

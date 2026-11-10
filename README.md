@@ -224,7 +224,11 @@ Prérequis : un SDK Flutter compatible avec `pubspec.lock` (Dart 3.13 et Flutter
    2. Dans *Authentication → Sign-in method*, activer **Email/Password** et **Google**.
    3. Ajouter une app Android avec le package `com.mpaitier.cartodex`.
    4. Ajouter dans les paramètres de l'app Android, sur la console, les empreintes SHA-1 et SHA-256 de la clé de debug (`cd android && ./gradlew signingReport`, variant `debug`) et de la clé de release (voir plus bas). Google Sign-In refuse la connexion depuis un APK dont l'empreinte n'est pas déclarée.
-   5. Télécharger `google-services.json` et le placer dans `android/app/`.
+   5. Générer la configuration Firebase de l'app avec la [CLI FlutterFire](https://firebase.google.com/docs/flutter/setup) : elle écrit `lib/firebase_options.dart` (lu par `main.dart`), `android/app/google-services.json` et met à jour `firebase.json`.
+      ```
+      dart pub global activate flutterfire_cli
+      flutterfire configure --project=<id-du-projet> --platforms=android,ios,web --android-package-name=com.mpaitier.cartodex --ios-bundle-id=com.mpaitier.cartodex
+      ```
    6. Créer la base Firestore, puis déployer les règles de sécurité avec `firebase deploy --only firestore:rules` (CLI installée par `npm install -g firebase-tools`, connexion par `firebase login`).
 4. Générer les icônes de lancement (facultatif) :
    ```
@@ -261,7 +265,9 @@ flutter build apk --release
 
 Sans `android/key.properties`, le build retombe sur la clé de debug avec un avertissement dans la console Gradle : un tel APK sert aux essais, pas à la diffusion.
 
-Firebase n'est configuré que pour Android.
+### iOS
+
+Le projet iOS compile (iOS 15 minimum, imposé par Firebase), et la CI le vérifie à chaque pull request avec `flutter build ios --release --no-codesign`. Il n'a encore jamais été lancé sur un iPhone : la connexion Google y demande en plus l'identifiant client OAuth iOS dans `Info.plist`, non configuré à ce jour.
 
 ## Tests et intégration continue
 
@@ -279,7 +285,7 @@ flutter test
 
 `flutter gen-l10n` est à relancer après chaque modification des fichiers ARB, sinon l'analyse signale les nouvelles clés comme inconnues.
 
-La CI GitHub Actions (`.github/workflows/ci.yml`) refait ces étapes à chaque push sur `main` et sur chaque pull request, avec `flutter analyze --fatal-infos` : la moindre remarque du linter fait échouer le run.
+La CI GitHub Actions (`.github/workflows/ci.yml`) refait ces étapes à chaque push sur `main` et sur chaque pull request, avec `flutter analyze --fatal-infos` : la moindre remarque du linter fait échouer le run. Si elles passent, deux jobs compilent ensuite l'app : un APK release sur Linux (signé avec la clé de debug, faute de secret) et l'app iOS sans signature sur macOS.
 
 ## Limites connues
 

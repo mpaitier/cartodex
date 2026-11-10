@@ -1,6 +1,7 @@
-# Analyse statique et tests à chaque push sur main et sur chaque pull
-# request. Aucun secret nécessaire : pas de build signé ici, et les
-# tests ne touchent ni Firebase ni le réseau.
+# Analyse statique, tests, puis builds Android et iOS, à chaque push sur
+# main et sur chaque pull request. Aucun secret nécessaire : les builds
+# ne sont pas signés (APK signé avec la clé de debug, iOS sans signature)
+# et servent seulement à vérifier que l'app compile sur chaque plateforme.
 name: CI
 
 on:
@@ -49,3 +50,43 @@ jobs:
 
       - name: Tests
         run: flutter test
+
+  build-android:
+    name: Build Android
+    needs: analyze-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: dart run build_runner build
+      # Sans android/key.properties, la release est signée avec la clé
+      # de debug (voir android/app/build.gradle.kts) : l'APK n'est pas
+      # publiable, mais la compilation complète est vérifiée.
+      - name: APK release
+        run: flutter build apk --release
+
+  build-ios:
+    name: Build iOS (sans signature)
+    needs: analyze-and-test
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: dart run build_runner build
+      # --no-codesign : aucun certificat Apple nécessaire. Le résultat ne
+      # s'installe pas sur un iPhone, il prouve seulement que le projet
+      # iOS compile (dépendances CocoaPods, version minimale, Firebase).
+      - name: App iOS release
+        run: flutter build ios --release --no-codesign
