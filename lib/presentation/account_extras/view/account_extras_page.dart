@@ -8,6 +8,8 @@ import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/account.dart';
 import '../../../domain/entities/account_extras.dart';
 import '../../../domain/entities/card_set.dart';
+import '../../accounts/widgets/account_edit_button.dart';
+import '../../accounts/widgets/edit_account_dialog.dart';
 import '../../set_detail/view/set_detail_page.dart';
 import '../bloc/account_extras_bloc.dart';
 import '../bloc/account_extras_event.dart';
@@ -19,40 +21,66 @@ import '../widgets/set_extras_list_item.dart';
 /// principal : la liste des sets où le principal n'a pas une carte que
 /// le secondaire a. Un appui sur un set ouvre son détail, restreint
 /// aux cartes possédées par ce secondaire (voir [SetDetailPage]).
+///
+/// Le crayon de la barre du haut ([AccountEditButton]) ouvre
+/// [EditAccountDialog] pour changer le nom ou le code ami du compte ;
+/// le titre suit la modification sans quitter l'écran.
 class AccountExtrasPage extends StatelessWidget {
   const AccountExtrasPage({required this.account, super.key});
 
-  /// Le compte secondaire dont on affiche le détail.
+  /// Le compte secondaire dont on affiche le détail, tel qu'il était à
+  /// l'ouverture. Pour la version à jour après une modification, voir
+  /// `AccountExtrasState.account`.
   final Account account;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) =>
-          sl<AccountExtrasBloc>()..add(AccountExtrasStarted(account.id)),
-      child: _AccountExtrasView(account: account),
+          sl<AccountExtrasBloc>()..add(AccountExtrasStarted(account)),
+      child: _AccountExtrasView(initialAccount: account),
     );
   }
 }
 
 class _AccountExtrasView extends StatelessWidget {
-  const _AccountExtrasView({required this.account});
+  const _AccountExtrasView({required this.initialAccount});
 
-  final Account account;
+  final Account initialAccount;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountExtrasBloc, AccountExtrasState>(
+    return BlocConsumer<AccountExtrasBloc, AccountExtrasState>(
+      listener: (context, state) {
+        // Un échec de modification du compte ne remplace pas la liste :
+        // il est signalé ici, sans perturber le reste de l'écran.
+        if (state.status == AccountExtrasStatus.loaded &&
+            state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage!)),
+          );
+        }
+      },
       builder: (context, state) {
+        final account = state.account ?? initialAccount;
         return AppScaffold(
           title: account.name,
-          body: _buildBody(context, state),
+          actions: [
+            AccountEditButton(
+              onPressed: () => _openEditDialog(context, account),
+            ),
+          ],
+          body: _buildBody(context, state, account),
         );
       },
     );
   }
 
-  Widget _buildBody(BuildContext context, AccountExtrasState state) {
+  Widget _buildBody(
+    BuildContext context,
+    AccountExtrasState state,
+    Account account,
+  ) {
     if (state.status == AccountExtrasStatus.initial ||
         state.status == AccountExtrasStatus.loading) {
       return const AppLoadingIndicator(message: 'Calcul en cours…');
@@ -63,7 +91,7 @@ class _AccountExtrasView extends StatelessWidget {
         message: state.errorMessage ?? 'Une erreur est survenue.',
         onRetry: () => context
             .read<AccountExtrasBloc>()
-            .add(AccountExtrasStarted(account.id)),
+            .add(AccountExtrasStarted(account)),
       );
     }
 
@@ -87,9 +115,22 @@ class _AccountExtrasView extends StatelessWidget {
         for (final setExtras in extras.bySet)
           SetExtrasListItem(
             setExtras: setExtras,
-            onTap: () => _openSet(context, setExtras),
+            onTap: () => _openSet(context, account, setExtras),
           ),
       ],
+    );
+  }
+
+  void _openEditDialog(BuildContext context, Account account) {
+    final bloc = context.read<AccountExtrasBloc>();
+    showDialog<void>(
+      context: context,
+      builder: (_) => EditAccountDialog(
+        account: account,
+        onSubmit: (name, gameAccountId) => bloc.add(
+          AccountExtrasAccountEdited(name: name, gameAccountId: gameAccountId),
+        ),
+      ),
     );
   }
 
@@ -98,7 +139,11 @@ class _AccountExtrasView extends StatelessWidget {
   /// la possession a pu changer entre-temps (ex : le principal vient
   /// de cocher une carte du secondaire). Le Bloc est lu avant
   /// l'attente, pour ne pas toucher au `context` après la navigation.
-  Future<void> _openSet(BuildContext context, SetExtras setExtras) async {
+  Future<void> _openSet(
+    BuildContext context,
+    Account account,
+    SetExtras setExtras,
+  ) async {
     final bloc = context.read<AccountExtrasBloc>();
     final CardSet set = setExtras.set;
     await Navigator.of(context).push(

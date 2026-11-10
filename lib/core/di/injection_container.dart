@@ -185,7 +185,10 @@ Future<void> init() async {
     ),
   );
   sl.registerFactory(
-    () => AccountExtrasBloc(getSecondaryAccountsExtras: sl()),
+    () => AccountExtrasBloc(
+      getSecondaryAccountsExtras: sl(),
+      updateAccount: sl(),
+    ),
   );
   sl.registerFactory(
     () => StatsBloc(
