@@ -12,7 +12,8 @@ import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import '../widgets/account_list_item.dart';
-import '../widgets/accounts_sort_action.dart';
+import '../widgets/accounts_filter_action.dart';
+import '../widgets/accounts_filter_sheet.dart';
 import '../widgets/add_account_dialog.dart';
 import '../widgets/edit_account_dialog.dart';
 
@@ -21,9 +22,10 @@ import '../widgets/edit_account_dialog.dart';
 /// Un compte secondaire affiche ses cartes en plus du principal ; un
 /// appui dessus ouvre [AccountExtrasPage], le détail par set. Le
 /// crayon de chaque ligne ouvre [EditAccountDialog] pour changer le
-/// nom ou le code ami. Un menu de tri dans l'AppBar réordonne les
-/// secondaires (le principal reste toujours en tête) ; le choix est
-/// mémorisé d'un lancement à l'autre.
+/// nom ou le code ami. Le bouton de la barre du haut ouvre le panneau
+/// de tri ([AccountsFilterSheet]) : le tri réordonne les secondaires
+/// (le principal reste en tête) et il est mémorisé d'un lancement à
+/// l'autre.
 class AccountsPage extends StatelessWidget {
   const AccountsPage({super.key});
 
@@ -59,11 +61,8 @@ class _AccountsView extends StatelessWidget {
           actions: [
             if (state.status == AccountsStatus.loaded &&
                 state.accounts.isNotEmpty)
-              AccountsSortAction(
-                selected: state.sortOption,
-                onSelected: (option) => context
-                    .read<AccountsBloc>()
-                    .add(AccountsSortChanged(option)),
+              AccountsFilterAction(
+                onPressed: () => _openFilterSheet(context),
               ),
           ],
           floatingActionButton: FloatingActionButton(
@@ -116,6 +115,22 @@ class _AccountsView extends StatelessWidget {
           onEditTap: () => _openEditDialog(context, account),
         );
       },
+    );
+  }
+
+  /// Ouvre le panneau de tri. Le Bloc de l'écran lui est
+  /// transmis explicitement : une feuille modale ne voit pas les
+  /// providers de la page.
+  void _openFilterSheet(BuildContext context) {
+    final bloc = context.read<AccountsBloc>();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: const AccountsFilterSheet(),
+      ),
     );
   }
 

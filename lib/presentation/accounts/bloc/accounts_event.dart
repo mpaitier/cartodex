@@ -23,7 +23,7 @@ class AccountsRefreshRequested extends AccountsEvent {
   const AccountsRefreshRequested();
 }
 
-/// Déclenché par le choix d'un critère dans le menu de tri de la
+/// Déclenché par le choix d'un critère dans le panneau de tri de la
 /// liste des comptes. Le choix est mémorisé pour les lancements
 /// suivants.
 class AccountsSortChanged extends AccountsEvent {
