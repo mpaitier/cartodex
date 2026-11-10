@@ -84,30 +84,36 @@ class _SetProgressSummaryState extends State<SetProgressSummary> {
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _RarityGroupCount(
-                  symbol: const RaritySymbol.diamond(),
-                  owned: baseOwned,
-                  total: widget.baseTotal,
-                  borderColor: borderColor,
-                ),
-                const SizedBox(width: 6),
-                _RarityGroupCount(
-                  symbol: const RaritySymbol.star(),
-                  owned: alternativeOwned,
-                  total: widget.alternativeTotal,
-                  borderColor: borderColor,
-                ),
-                const SizedBox(width: 6),
-                _RarityGroupCount(
-                  symbol: const RarityTotalSymbol(),
-                  owned: baseOwned + alternativeOwned,
-                  total: widget.baseTotal + widget.alternativeTotal,
-                  borderColor: borderColor,
-                ),
-              ],
+            // Réduite au besoin plutôt que de déborder : la barre du
+            // haut garde à droite les boutons de filtre et d'ajout,
+            // ce qui laisse peu de largeur au titre sur un petit écran.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _RarityGroupCount(
+                    symbol: const RaritySymbol.diamond(),
+                    owned: baseOwned,
+                    total: widget.baseTotal,
+                    borderColor: borderColor,
+                  ),
+                  const SizedBox(width: 6),
+                  _RarityGroupCount(
+                    symbol: const RaritySymbol.star(),
+                    owned: alternativeOwned,
+                    total: widget.alternativeTotal,
+                    borderColor: borderColor,
+                  ),
+                  const SizedBox(width: 6),
+                  _RarityGroupCount(
+                    symbol: const RarityTotalSymbol(),
+                    owned: baseOwned + alternativeOwned,
+                    total: widget.baseTotal + widget.alternativeTotal,
+                    borderColor: borderColor,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

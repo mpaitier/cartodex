@@ -9,25 +9,26 @@ import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
 import '../../rarity_scope/bloc/rarity_scope_card_group.dart';
 import '../../rarity_scope/bloc/rarity_scope_cubit.dart';
-import '../bloc/ownership_filter.dart';
 import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
+import '../widgets/bulk_add_action.dart';
 import '../widgets/bulk_add_confirmation_dialog.dart';
 import '../widgets/card_grid_density.dart';
 import '../widgets/card_grid_pager.dart';
 import '../widgets/owner_filter_banner.dart';
-import '../widgets/ownership_filter_bar.dart';
-import '../widgets/pack_filter_bar.dart';
 import '../widgets/pinch_gesture_detector.dart';
-import '../widgets/rarity_filter_bar.dart';
-import '../widgets/secondary_account_filter_bar.dart';
 import '../widgets/secondary_account_picker_dialog.dart';
+import '../widgets/set_detail_filter_action.dart';
+import '../widgets/set_detail_filter_sheet.dart';
 import '../widgets/set_progress_summary.dart';
 
 /// Écran de détail d'un set : ses cartes, filtrables par booster, par
-/// rareté (multi-sélection) et par possession (principal, secondaires
-/// avec un sous-filtre par compte, manquantes), avec un swipe
+/// rareté (multi-sélection), par possession (principal, secondaires
+/// avec un sous-filtre par compte, manquantes) et par type (élément,
+/// multi-sélection). Les filtres sont regroupés dans un panneau
+/// ([SetDetailFilterSheet]) ouvert par le bouton de filtre de la barre
+/// du haut, pour laisser toute la place à la grille. Un swipe
 /// gauche/droite pour isoler les cartes losange ou non-losange (voir
 /// [CardGridPager][../widgets/card_grid_pager.dart]). Ces volets
 /// suivent le périmètre de raretés global ([RarityScopeCubit]) :
@@ -40,8 +41,8 @@ import '../widgets/set_progress_summary.dart';
 ///
 /// Le tap simple bascule la possession pour le compte principal ; le
 /// double-tap ouvre un popup pour choisir un compte secondaire ; le
-/// bouton "+" ajoute d'un coup toutes les cartes actuellement
-/// affichées au compte principal.
+/// bouton d'ajout, tout à droite de la barre du haut, ajoute d'un coup
+/// toutes les cartes actuellement affichées au compte principal.
 ///
 /// Quand [ownerFilterAccountId] est fourni (ouverture depuis le
 /// détail des cartes en plus d'un compte secondaire), seules les
@@ -145,46 +146,22 @@ class _SetDetailViewState extends State<_SetDetailView> {
         return AppScaffold(
           title: widget.set.name,
           titleWidget: _titleWidget(state),
-          floatingActionButton: state.status == SetDetailStatus.loaded
-              ? FloatingActionButton(
-                  onPressed: () => _onAddAllVisiblePressed(context, state),
-                  tooltip: 'Ajouter les cartes affichées au compte principal',
-                  child: const Icon(Icons.add),
-                )
-              : null,
+          actions: [
+            if (state.status == SetDetailStatus.loaded) ...[
+              SetDetailFilterAction(
+                activeFilterCount: state.activeFilterCount,
+                onPressed: () => _openFilterSheet(context),
+              ),
+              BulkAddAction(
+                onPressed: state.visibleCardsForGroup(_activeGroup).isEmpty
+                    ? null
+                    : () => _onAddAllVisiblePressed(context, state),
+              ),
+            ],
+          ],
           body: Column(
             children: [
               if (ownerName != null) OwnerFilterBanner(accountName: ownerName),
-              PackFilterBar(
-                setName: widget.set.name,
-                packs: widget.set.packs,
-                selectedPack: state.selectedPack,
-                onPackSelected: (pack) => context
-                    .read<SetDetailBloc>()
-                    .add(PackFilterChanged(pack)),
-              ),
-              RarityFilterBar(
-                availableRarities: state.availableRaritiesForGroup(_activeGroup),
-                selectedRarities: state.selectedRarities,
-                onSelectionChanged: (rarities) => context
-                    .read<SetDetailBloc>()
-                    .add(RarityFilterChanged(rarities)),
-              ),
-              OwnershipFilterBar(
-                availableFilters: state.availableOwnershipFilters,
-                selectedFilter: state.ownershipFilter,
-                onFilterSelected: (filter) => context
-                    .read<SetDetailBloc>()
-                    .add(OwnershipFilterChanged(filter)),
-              ),
-              if (state.ownershipFilter == OwnershipFilter.secondary)
-                SecondaryAccountFilterBar(
-                  accounts: state.secondaryAccountsWithCards,
-                  selectedAccountId: state.effectiveSecondaryFilterAccountId,
-                  onAccountSelected: (accountId) => context
-                      .read<SetDetailBloc>()
-                      .add(SecondaryAccountFilterChanged(accountId)),
-                ),
               Expanded(child: _buildBody(context, state)),
             ],
           ),
@@ -273,10 +250,29 @@ class _SetDetailViewState extends State<_SetDetailView> {
     }
   }
 
-  /// Bouton "+" : demande confirmation, puis ajoute au compte
-  /// principal toutes les cartes actuellement affichées dans le
-  /// volet actif — pas tout le set, juste ce que l'écran montre en
-  /// ce moment (filtres de booster/rareté/possession inclus).
+  /// Ouvre le panneau de filtres sur le volet actif. Le Bloc de
+  /// l'écran lui est transmis explicitement : une feuille modale ne
+  /// voit pas les providers de la page.
+  void _openFilterSheet(BuildContext context) {
+    final bloc = context.read<SetDetailBloc>();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: SetDetailFilterSheet(
+          set: widget.set,
+          activeGroup: _activeGroup,
+        ),
+      ),
+    );
+  }
+
+  /// Bouton "+" de la barre du haut : demande confirmation, puis
+  /// ajoute au compte principal toutes les cartes actuellement
+  /// affichées dans le volet actif — pas tout le set, juste ce que
+  /// l'écran montre en ce moment (tous filtres inclus).
   Future<void> _onAddAllVisiblePressed(
     BuildContext context,
     SetDetailState state,

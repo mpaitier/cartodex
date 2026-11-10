@@ -6,6 +6,7 @@ import '../../../domain/usecases/get_accounts.dart';
 import '../../../domain/usecases/get_cards_by_set.dart';
 import '../../../domain/usecases/get_owned_cards_id.dart';
 import '../../../domain/usecases/set_card_owned.dart';
+import 'ownership_filter.dart';
 import 'set_detail_event.dart';
 import 'set_detail_state.dart';
 
@@ -55,6 +56,8 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<BulkCardsMarkedOwned>(_onBulkCardsMarkedOwned);
     on<PackFilterChanged>(_onPackFilterChanged);
     on<RarityFilterChanged>(_onRarityFilterChanged);
+    on<ElementFilterChanged>(_onElementFilterChanged);
+    on<FiltersCleared>(_onFiltersCleared);
     on<OwnershipFilterChanged>(_onOwnershipFilterChanged);
     on<SecondaryAccountFilterChanged>(_onSecondaryAccountFilterChanged);
   }
@@ -249,6 +252,28 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     emit(state.copyWith(selectedRarities: event.rarities));
   }
 
+  Future<void> _onElementFilterChanged(
+    ElementFilterChanged event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    emit(state.copyWith(selectedElements: event.elements));
+  }
+
+  Future<void> _onFiltersCleared(
+    FiltersCleared event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        selectedPack: null,
+        selectedRarities: const {},
+        selectedElements: const {},
+        ownershipFilter: OwnershipFilter.all,
+        secondaryFilterAccountId: null,
+      ),
+    );
+  }
+
   /// Change le filtre de possession et remet le sous-filtre par
   /// compte à "tous" : un compte choisi pour un filtre n'a pas de
   /// sens pour un autre.
@@ -260,7 +285,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
       ownershipFilter: event.filter,
       secondaryFilterAccountId: null,
     );
-    emit(_withValidRarities(next));
+    emit(_withValidFilters(next));
   }
 
   Future<void> _onSecondaryAccountFilterChanged(
@@ -268,19 +293,31 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     Emitter<SetDetailState> emit,
   ) async {
     final next = state.copyWith(secondaryFilterAccountId: event.accountId);
-    emit(_withValidRarities(next));
+    emit(_withValidFilters(next));
   }
 
-  /// Retire de [next] les raretés cochées qui ne correspondent plus
-  /// à aucune carte après un changement de filtre de possession. On
-  /// compare au volet "tout" : une rareté cochée l'a été sur un volet
-  /// où elle était proposée, donc présente dans le volet "tout"
-  /// exactement quand elle l'est dans son propre volet.
-  SetDetailState _withValidRarities(SetDetailState next) {
-    final available =
+  /// Retire de [next] les raretés et les éléments cochés qui ne
+  /// correspondent plus à aucune carte après un changement de filtre
+  /// de possession, sans quoi la grille se viderait sans qu'aucune
+  /// puce visible ne l'explique. Pour les raretés, on compare au volet
+  /// "tout" : une rareté cochée l'a été sur un volet où elle était
+  /// proposée, donc présente dans le volet "tout" exactement quand
+  /// elle l'est dans son propre volet.
+  SetDetailState _withValidFilters(SetDetailState next) {
+    final availableRarities =
         next.availableRaritiesForGroup(CardGroupFilter.all).toSet();
-    final kept = next.selectedRarities.where(available.contains).toSet();
-    if (kept.length == next.selectedRarities.length) return next;
-    return next.copyWith(selectedRarities: kept);
+    final keptRarities =
+        next.selectedRarities.where(availableRarities.contains).toSet();
+    final availableElements = next.availableElements.toSet();
+    final keptElements =
+        next.selectedElements.where(availableElements.contains).toSet();
+    if (keptRarities.length == next.selectedRarities.length &&
+        keptElements.length == next.selectedElements.length) {
+      return next;
+    }
+    return next.copyWith(
+      selectedRarities: keptRarities,
+      selectedElements: keptElements,
+    );
   }
 }
