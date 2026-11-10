@@ -1,0 +1,11 @@
+# Modèle de android/key.properties (à copier sans l'extension .example).
+# Le vrai fichier n'est jamais versionné (voir android/.gitignore), pas
+# plus que la clé elle-même.
+#
+# storeFile est relatif au dossier android/app/ : avec la clé rangée
+# hors du dépôt, donner un chemin absolu (barres obliques / acceptées
+# sous Windows).
+storePassword=mot-de-passe-du-keystore
+keyPassword=mot-de-passe-de-la-cle
+keyAlias=cartodex
+storeFile=C:/Users/nom/keys/cartodex-release.jks

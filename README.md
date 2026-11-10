@@ -217,8 +217,8 @@ Prérequis : un SDK Flutter compatible avec `pubspec.lock` (Dart 3.13 et Flutter
 3. Configurer Firebase (l'application ne démarre pas sans) :
    1. Créer un projet sur la [console Firebase](https://console.firebase.google.com).
    2. Dans *Authentication → Sign-in method*, activer **Email/Password** et **Google**.
-   3. Ajouter une app Android avec le package `com.example.cartodex`.
-   4. Récupérer l'empreinte SHA-1 de debug (`cd android && ./gradlew signingReport`, variant `debug`) et l'ajouter dans les paramètres de l'app Android sur la console. Google Sign-In en a besoin.
+   3. Ajouter une app Android avec le package `com.mpaitier.cartodex`.
+   4. Ajouter dans les paramètres de l'app Android, sur la console, les empreintes SHA-1 et SHA-256 de la clé de debug (`cd android && ./gradlew signingReport`, variant `debug`) et de la clé de release (voir plus bas). Google Sign-In refuse la connexion depuis un APK dont l'empreinte n'est pas déclarée.
    5. Télécharger `google-services.json` et le placer dans `android/app/`.
    6. Créer la base Firestore, puis déployer les règles de sécurité avec `firebase deploy --only firestore:rules` (CLI installée par `npm install -g firebase-tools`, connexion par `firebase login`).
 4. Générer les icônes de lancement (facultatif) :
@@ -230,6 +230,22 @@ Prérequis : un SDK Flutter compatible avec `pubspec.lock` (Dart 3.13 et Flutter
    flutter run
    ```
 
+### Build de release
+
+La release est signée avec une clé propre au projet, jamais versionnée. Pour la créer une fois (la garder hors du dépôt et la sauvegarder : sans elle, impossible de publier une mise à jour) :
+
+```
+keytool -genkey -v -keystore <chemin>/cartodex-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias cartodex
+```
+
+Copier ensuite `android/key.properties.example` en `android/key.properties` et y renseigner les mots de passe, l'alias et le chemin de la clé. Les empreintes à déclarer dans Firebase s'affichent avec `keytool -list -v -keystore <chemin>/cartodex-release.jks -alias cartodex`. Puis :
+
+```
+flutter build apk --release
+```
+
+Sans `android/key.properties`, le build retombe sur la clé de debug avec un avertissement dans la console Gradle : un tel APK sert aux essais, pas à la diffusion.
+
 Firebase n'est configuré que pour Android.
 
 ## Limites connues
@@ -239,4 +255,3 @@ Firebase n'est configuré que pour Android.
 - **Images.** Le slug des images repose sur un site non officiel. Un nom inhabituel peut donner une image introuvable, auquel cas la tuile affiche le numéro de la carte. Les cas repérés se corrigent dans `_cardSlugOverrides`.
 - **Données de carte.** Les colonnes `hp`, `types` et `illustrator` existent en base mais la source actuelle ne les fournit pas.
 - **Tests.** Il n'y a pas encore de suite de tests automatisés. Les premiers candidats sont les use cases de calcul (`GetCollectionStats`, `GetSetsProgress`), `SyncWithCloud` et `PocketCardsImageSlug`, qui sont de la logique pure.
-- **Livraison.** L'identifiant d'application est encore `com.example.cartodex` et le build release est signé avec la clé de debug.
