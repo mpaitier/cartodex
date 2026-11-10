@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // Traite google-services.json (voir android/settings.gradle.kts
@@ -15,8 +18,19 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Clé de signature de la release, lue dans android/key.properties
+// (jamais versionné, voir android/key.properties.example). Sans ce
+// fichier, la release retombe sur la clé de debug pour que
+// `flutter run --release` reste possible sur une machine qui n'a pas
+// la clé, avec un avertissement : un tel APK ne doit pas être publié.
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
+}
+
 android {
-    namespace = "com.example.cartodex"
+    namespace = "com.mpaitier.cartodex"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -32,8 +46,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.cartodex"
+        // Identifiant définitif de l'application : il ne peut plus
+        // changer une fois l'app publiée sur le Play Store.
+        applicationId = "com.mpaitier.cartodex"
         // Firebase (firebase_auth notamment) exige minSdk 23 — plus
         // élevé que le minimum habituel de Flutter, d'où la valeur
         // fixée en dur ici plutôt que flutter.minSdkVersion.
@@ -43,11 +58,28 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                logger.warn(
+                    "android/key.properties introuvable : la release est " +
+                        "signée avec la clé de debug (APK à ne pas publier).",
+                )
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// Règles de sécurité Firestore de Cartodex.
+//
+// Seule la synchronisation cloud écrit dans Firestore (voir
+// CloudSyncRepositoryImpl) : un document par compte de jeu, sous
+// users/{userId}/accounts/{accountId}. Tout le reste est refusé par
+// défaut.
+//
+// Déploiement : firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Chaque utilisateur ne lit et ne modifie que ses propres comptes.
+    match /users/{userId}/accounts/{accountId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && isValidAccount(request.resource.data);
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Forme d'un compte telle qu'écrite par l'application. Vérifiée
+    // sur le document complet après écriture (l'envoi se fait en
+    // fusion) : un champ inconnu ou d'un mauvais type est refusé.
+    // `ownedCardIds` est facultatif, un compte sans carte n'en a pas.
+    function isValidAccount(data) {
+      return data.keys().hasOnly(
+          ['name', 'gameAccountId', 'isPrimary', 'createdAt', 'ownedCardIds'])
+        && data.name is string
+        && data.gameAccountId is string
+        && data.isPrimary is bool
+        && data.createdAt is timestamp
+        && data.get('ownedCardIds', []) is list;
+    }
+  }
+}

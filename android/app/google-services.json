@@ -48,6 +48,58 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739770944620:android:1fbcc6eb2b8642837b5c49",
+        "android_client_info": {
+          "package_name": "com.mpaitier.cartodex"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "739770944620-mlncfu64s9foscn51stq6kqnnl0ka9n6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mpaitier.cartodex",
+            "certificate_hash": "5e88c953ca1eee4f0c256405bd08f08913cfe2d5"
+          }
+        },
+        {
+          "client_id": "739770944620-vujn1sqpubpvqbj4i3pruvpkkpadrq6s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mpaitier.cartodex",
+            "certificate_hash": "66b9f53a0f6bcea1a21dceb294a31d73ec5147c8"
+          }
+        },
+        {
+          "client_id": "739770944620-46tgrhnalpg7mrdesv446p4cf36jjf18.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhzYtOHCMqYNrfgh0vG2PDdsrGimKyuao"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "739770944620-46tgrhnalpg7mrdesv446p4cf36jjf18.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "739770944620-ug1pafjj92kcqb8mbstctmb28liv2ge5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.cartodex"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"
