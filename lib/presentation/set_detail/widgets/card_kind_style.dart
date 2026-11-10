@@ -6,10 +6,11 @@ import '../../../domain/entities/card_kind.dart';
 /// type. Gardés côté présentation : l'énumération du domaine ne porte
 /// ni texte ni couleur d'interface.
 ///
-/// Les éléments de Pokémon ont une couleur ([color]), reprise de la
-/// teinte habituelle de chaque type, affichée en pastille. Les types
-/// de Dresseur et [CardKind.unknown] ont une icône ([icon]) : des
-/// couleurs en plus se confondraient avec celles des éléments.
+/// Les éléments de Pokémon s'affichent avec leur logo officiel
+/// (`CardElementLogo`) ; leur couleur ([color]), reprise de la teinte
+/// habituelle de chaque type, sert de pastille de repli si le logo
+/// est introuvable. Les types de Dresseur et [CardKind.unknown] ont
+/// une icône ([icon]).
 extension CardKindStyle on CardKind {
   String get label {
     switch (this) {
@@ -48,8 +49,8 @@ extension CardKindStyle on CardKind {
     }
   }
 
-  /// Couleur de pastille d'un élément ; `null` pour les Dresseurs et
-  /// [CardKind.unknown], qui utilisent [icon].
+  /// Couleur de repli d'un élément (voir `CardElementLogo`) ; `null`
+  /// pour les Dresseurs et [CardKind.unknown], qui utilisent [icon].
   Color? get color {
     switch (this) {
       case CardKind.grass:

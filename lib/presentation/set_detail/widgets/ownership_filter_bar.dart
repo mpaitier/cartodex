@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../bloc/ownership_filter.dart';
+import 'filter_chip_wrap.dart';
 
-/// Barre horizontale de filtre par possession, à sélection unique :
+/// Barre de filtre par possession, à sélection unique :
 /// toutes les cartes, celles du compte principal, celles des comptes
 /// secondaires uniquement, ou celles qu'aucun compte ne possède.
 ///
@@ -34,33 +35,27 @@ class OwnershipFilterBar extends StatelessWidget {
     if (availableFilters.length <= 1) {
       return const SizedBox.shrink();
     }
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        itemCount: availableFilters.length,
-        separatorBuilder: (context, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final filter = availableFilters[index];
-          return ChoiceChip(
-            avatar: _dotFor(filter),
-            label: Text(_labelFor(filter)),
-            selected: filter == selectedFilter,
-            showCheckmark: false,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-            visualDensity: VisualDensity.compact,
-            onSelected: (_) => onFilterSelected(filter),
-          );
-        },
-      ),
+    return FilterChipWrap(
+      itemCount: availableFilters.length,
+      itemBuilder: (context, index) {
+        final filter = availableFilters[index];
+        return ChoiceChip(
+          avatar: _dotFor(filter),
+          label: Text(_labelFor(filter)),
+          selected: filter == selectedFilter,
+          showCheckmark: false,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+          visualDensity: VisualDensity.compact,
+          onSelected: (_) => onFilterSelected(filter),
+        );
+      },
     );
   }
 
   static String _labelFor(OwnershipFilter filter) {
     switch (filter) {
       case OwnershipFilter.all:
-        return 'Tout';
+        return 'Tous';
       case OwnershipFilter.primary:
         return 'Principal';
       case OwnershipFilter.secondary:
@@ -70,7 +65,7 @@ class OwnershipFilterBar extends StatelessWidget {
     }
   }
 
-  /// `null` pour "Tout" : pas de pastille, il ne représente aucun
+  /// `null` pour "Tous" : pas de pastille, il ne représente aucun
   /// état de possession en particulier.
   static Widget? _dotFor(OwnershipFilter filter) {
     switch (filter) {

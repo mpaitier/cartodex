@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/card_rarities.dart';
 import '../../../core/widgets/card_rarity_icon.dart';
+import 'filter_chip_wrap.dart';
 
-/// Barre horizontale de filtre par rareté, multi-sélection : chaque
+/// Barre de filtre par rareté, multi-sélection : chaque
 /// palier se coche indépendamment (`FilterChip`), plus un choix
-/// "Tout" (`ChoiceChip`) qui vide la sélection — un ensemble vide
+/// "Tous" (`ChoiceChip`) qui vide la sélection — un ensemble vide
 /// signifie "aucun filtre actif", pas "rien à afficher".
 ///
 /// Chaque puce montre la rareté avec les images officielles du jeu
@@ -23,7 +24,7 @@ class RarityFilterBar extends StatelessWidget {
 
   final List<CardRarity> availableRarities;
 
-  /// Vide = "Tout" (aucun filtre actif).
+  /// Vide = "Tous" (aucun filtre actif).
   final Set<CardRarity> selectedRarities;
 
   final ValueChanged<Set<CardRarity>> onSelectionChanged;
@@ -34,44 +35,38 @@ class RarityFilterBar extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final allSelected = selectedRarities.isEmpty;
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        itemCount: availableRarities.length + 1,
-        separatorBuilder: (context, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return ChoiceChip(
-              label: const Text('Tout'),
-              selected: allSelected,
-              showCheckmark: false,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-              visualDensity: VisualDensity.compact,
-              onSelected: (_) => onSelectionChanged(const {}),
-            );
-          }
-          final rarity = availableRarities[index - 1];
-          final selected = selectedRarities.contains(rarity);
-          return FilterChip(
-            label: CardRarityIcon(rarity: rarity, size: 14),
-            selected: selected,
+    return FilterChipWrap(
+      itemCount: availableRarities.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return ChoiceChip(
+            label: const Text('Tous'),
+            selected: allSelected,
             showCheckmark: false,
             labelPadding: const EdgeInsets.symmetric(horizontal: 4),
             visualDensity: VisualDensity.compact,
-            onSelected: (isSelected) {
-              final updated = Set<CardRarity>.from(selectedRarities);
-              if (isSelected) {
-                updated.add(rarity);
-              } else {
-                updated.remove(rarity);
-              }
-              onSelectionChanged(updated);
-            },
+            onSelected: (_) => onSelectionChanged(const {}),
           );
-        },
-      ),
+        }
+        final rarity = availableRarities[index - 1];
+        final selected = selectedRarities.contains(rarity);
+        return FilterChip(
+          label: CardRarityIcon(rarity: rarity, size: 14),
+          selected: selected,
+          showCheckmark: false,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+          visualDensity: VisualDensity.compact,
+          onSelected: (isSelected) {
+            final updated = Set<CardRarity>.from(selectedRarities);
+            if (isSelected) {
+              updated.add(rarity);
+            } else {
+              updated.remove(rarity);
+            }
+            onSelectionChanged(updated);
+          },
+        );
+      },
     );
   }
 }
