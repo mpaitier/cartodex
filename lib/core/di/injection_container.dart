@@ -24,6 +24,7 @@ import '../../domain/repositories/user_preferences_repository.dart';
 import '../../domain/usecases/add_account.dart';
 import '../../domain/usecases/get_accounts.dart';
 import '../../domain/usecases/get_accounts_sort_option.dart';
+import '../../domain/usecases/get_app_language.dart';
 import '../../domain/usecases/get_cards.dart';
 import '../../domain/usecases/get_cards_by_set.dart';
 import '../../domain/usecases/get_collection_stats.dart';
@@ -31,6 +32,7 @@ import '../../domain/usecases/get_owned_cards_id.dart';
 import '../../domain/usecases/get_secondary_accounts_extras.dart';
 import '../../domain/usecases/get_sets_progress.dart';
 import '../../domain/usecases/save_accounts_sort_option.dart';
+import '../../domain/usecases/save_app_language.dart';
 import '../../domain/usecases/set_card_owned.dart';
 import '../../domain/usecases/set_primary_account.dart';
 import '../../domain/usecases/sign_in_with_email.dart';
@@ -45,6 +47,7 @@ import '../../presentation/account_extras/bloc/account_extras_bloc.dart';
 import '../../presentation/accounts/bloc/accounts_bloc.dart';
 import '../../presentation/auth/bloc/auth_bloc.dart';
 import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
+import '../../presentation/language/bloc/language_cubit.dart';
 import '../../presentation/rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../../presentation/set_detail/bloc/set_detail_bloc.dart';
 import '../../presentation/stats/bloc/stats_bloc.dart';
@@ -130,6 +133,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => UpdateAccount(sl()));
   sl.registerLazySingleton(() => GetAccountsSortOption(sl()));
   sl.registerLazySingleton(() => SaveAccountsSortOption(sl()));
+  sl.registerLazySingleton(() => GetAppLanguage(sl()));
+  sl.registerLazySingleton(() => SaveAppLanguage(sl()));
   sl.registerLazySingleton(() => SetPrimaryAccount(sl()));
   sl.registerLazySingleton(() => GetCollectionStats(sl()));
   sl.registerLazySingleton(
@@ -212,4 +217,9 @@ Future<void> init() async {
   // Singleton aussi : un seul périmètre de raretés (Σ / losange /
   // étoile) pour toute l'app, fourni à la racine comme AuthBloc.
   sl.registerLazySingleton(RarityScopeCubit.new);
+  // Singleton également : une seule langue d'affichage pour toute
+  // l'app, relue au démarrage (voir main.dart) et fournie à la racine.
+  sl.registerLazySingleton(
+    () => LanguageCubit(getAppLanguage: sl(), saveAppLanguage: sl()),
+  );
 }

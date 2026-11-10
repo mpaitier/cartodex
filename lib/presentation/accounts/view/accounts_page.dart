@@ -7,6 +7,7 @@ import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/account.dart';
 import '../../../domain/entities/account_extras.dart';
+import '../../../l10n/l10n.dart';
 import '../../account_extras/view/account_extras_page.dart';
 import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
@@ -60,8 +61,9 @@ class _AccountsView extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final l10n = context.l10n;
         return AppScaffold(
-          title: 'Comptes',
+          title: l10n.accountsTitle,
           actions: [
             if (state.status == AccountsStatus.loaded &&
                 state.accounts.isNotEmpty)
@@ -72,7 +74,7 @@ class _AccountsView extends StatelessWidget {
           ],
           floatingActionButton: FloatingActionButton(
             onPressed: () => _openAddDialog(context),
-            tooltip: 'Ajouter un compte',
+            tooltip: l10n.accountsAddTooltip,
             child: const Icon(Icons.add),
           ),
           body: _buildBody(context, state),
@@ -82,21 +84,22 @@ class _AccountsView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, AccountsState state) {
+    final l10n = context.l10n;
     if (state.status == AccountsStatus.initial ||
         state.status == AccountsStatus.loading) {
-      return const AppLoadingIndicator(message: 'Chargement des comptes…');
+      return AppLoadingIndicator(message: l10n.accountsLoading);
     }
 
     if (state.status == AccountsStatus.error && state.accounts.isEmpty) {
       return AppErrorView(
-        message: state.errorMessage ?? 'Une erreur est survenue.',
+        message: state.errorMessage ?? l10n.genericError,
         onRetry: () =>
             context.read<AccountsBloc>().add(const AccountsStarted()),
       );
     }
 
     if (state.accounts.isEmpty) {
-      return const Center(child: Text('Aucun compte pour l’instant.'));
+      return Center(child: Text(l10n.accountsEmpty));
     }
 
     // Principal en tête, secondaires triés selon le critère choisi ;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/collection_stats.dart';
+import '../../../l10n/l10n.dart';
 import 'booster_series_chip.dart';
 
 /// Rangée de puces pour choisir la série dont on veut voir les
@@ -35,7 +36,7 @@ class BoosterSeriesSelector extends StatelessWidget {
       child: Row(
         children: [
           BoosterSeriesChip(
-            label: 'Toutes',
+            label: context.l10n.commonAllFeminine,
             selected: selectedKey == null,
             onSelected: () => onSelected(null),
           ),

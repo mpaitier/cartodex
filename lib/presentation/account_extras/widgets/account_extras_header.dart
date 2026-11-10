@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/account_extras.dart';
+import '../../../l10n/l10n.dart';
 import '../../accounts/widgets/extra_counts_label.dart';
 
 /// En-tête de la liste des sets : le total des cartes que le compte
@@ -19,7 +20,7 @@ class AccountExtrasHeader extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              'Cartes en plus du compte principal',
+              context.l10n.accountExtrasHeader,
               style: Theme.of(context).textTheme.titleSmall,
             ),
           ),

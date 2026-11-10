@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/card_rarities.dart';
 import '../../../core/widgets/card_rarity_icon.dart';
+import '../../../l10n/l10n.dart';
 import 'filter_chip_wrap.dart';
 
 /// Barre de filtre par rareté, multi-sélection : chaque
@@ -40,7 +41,7 @@ class RarityFilterBar extends StatelessWidget {
       itemBuilder: (context, index) {
         if (index == 0) {
           return ChoiceChip(
-            label: const Text('Tous'),
+            label: Text(context.l10n.commonAll),
             selected: allSelected,
             showCheckmark: false,
             labelPadding: const EdgeInsets.symmetric(horizontal: 4),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/card_set.dart';
 import '../../../domain/entities/collection_stats.dart';
 import '../../../domain/entities/progress_count.dart';
+import '../../../l10n/l10n.dart';
 import '../../set_detail/widgets/pack_avatar.dart';
 import 'expected_new_cards_label.dart';
 import 'progress_count_label.dart';
@@ -32,7 +33,7 @@ class PriorityBoostersList extends StatelessWidget {
   const PriorityBoostersList({
     required this.setProgress,
     required this.onSetTap,
-    this.emptyMessage = 'Tous les boosters synchronisés sont complets 🎉',
+    this.emptyMessage,
     super.key,
   });
 
@@ -41,14 +42,18 @@ class PriorityBoostersList extends StatelessWidget {
   final ValueChanged<CardSet> onSetTap;
 
   /// Texte affiché quand [setProgress] est vide (tout est complet).
-  final String emptyMessage;
+  /// Par défaut, le message "tous les boosters synchronisés sont
+  /// complets" dans la langue de l'app.
+  final String? emptyMessage;
 
   @override
   Widget build(BuildContext context) {
     if (setProgress.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(emptyMessage),
+        child: Text(
+          emptyMessage ?? context.l10n.priorityBoostersAllComplete,
+        ),
       );
     }
     return Column(

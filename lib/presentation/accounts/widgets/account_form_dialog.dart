@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Popup de saisie d'un compte : nom (affiché dans l'app) et code ami
 /// (stocké mais jamais affiché ailleurs — voir
 /// [Account.gameAccountId][../../../domain/entities/account.dart]).
@@ -55,6 +57,7 @@ class _AccountFormDialogState extends State<AccountFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AlertDialog(
       title: Text(widget.title),
       content: Form(
@@ -64,7 +67,9 @@ class _AccountFormDialogState extends State<AccountFormDialog> {
           children: [
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Nom'),
+              decoration: InputDecoration(
+                labelText: l10n.accountFormNameLabel,
+              ),
               textInputAction: TextInputAction.next,
               validator: _requiredValidator,
               autofocus: true,
@@ -72,9 +77,9 @@ class _AccountFormDialogState extends State<AccountFormDialog> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _gameAccountIdController,
-              decoration: const InputDecoration(
-                labelText: 'Code ami',
-                helperText: "Ne sera pas affiché ailleurs dans l'app",
+              decoration: InputDecoration(
+                labelText: l10n.accountFormFriendCodeLabel,
+                helperText: l10n.accountFormFriendCodeHelper,
               ),
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _submit(),
@@ -86,7 +91,7 @@ class _AccountFormDialogState extends State<AccountFormDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Annuler'),
+          child: Text(l10n.commonCancel),
         ),
         FilledButton(
           onPressed: _submit,
@@ -97,7 +102,9 @@ class _AccountFormDialogState extends State<AccountFormDialog> {
   }
 
   String? _requiredValidator(String? value) {
-    return (value == null || value.trim().isEmpty) ? 'Requis' : null;
+    return (value == null || value.trim().isEmpty)
+        ? context.l10n.commonRequired
+        : null;
   }
 
   void _submit() {

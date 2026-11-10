@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/account.dart';
+import '../../../l10n/l10n.dart';
 
 /// Popup ouvert au double-tap sur une carte : choisit le compte
 /// secondaire dont la possession de cette carte doit basculer.
@@ -28,23 +29,22 @@ class SecondaryAccountPickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     if (accounts.isEmpty) {
       return AlertDialog(
-        title: const Text('Aucun compte secondaire'),
-        content: const Text(
-          "Crée d'abord un compte secondaire depuis l'écran Comptes.",
-        ),
+        title: Text(l10n.noSecondaryAccountTitle),
+        content: Text(l10n.noSecondaryAccountMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Fermer'),
+            child: Text(l10n.commonClose),
           ),
         ],
       );
     }
 
     return SimpleDialog(
-      title: const Text('Compte secondaire'),
+      title: Text(l10n.secondaryAccountPickerTitle),
       children: [
         for (final account in accounts)
           SimpleDialogOption(

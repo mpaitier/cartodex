@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/progress_count.dart';
+import '../../../l10n/l10n.dart';
 import 'progress_count_label.dart';
 import 'stacked_progress_bar.dart';
 
@@ -16,14 +17,17 @@ class OverallProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final percent = (progress.primaryRatio * 100).toStringAsFixed(1);
+    final l10n = context.l10n;
+    final percent = (progress.primaryRatio * 100)
+        .toStringAsFixed(1)
+        .replaceAll('.', l10n.decimalSeparator);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Collection complète', style: theme.textTheme.titleMedium),
+            Text(l10n.statsOverallTitle, style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
             StackedProgressBar(progress: progress, height: 10),
             const SizedBox(height: 8),
@@ -34,7 +38,10 @@ class OverallProgressCard extends StatelessWidget {
                   progress: progress,
                   style: theme.textTheme.bodyMedium,
                 ),
-                Text('$percent %', style: theme.textTheme.bodyMedium),
+                Text(
+                  l10n.percentValue(percent),
+                  style: theme.textTheme.bodyMedium,
+                ),
               ],
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/widgets/app_scaffold.dart';
+import '../../../l10n/l10n.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -28,6 +29,9 @@ class _LoginPageState extends State<LoginPage> {
   /// l'un à l'autre plutôt que deux pages distinctes.
   bool _isSignUp = false;
 
+  /// Longueur minimale du mot de passe, imposée par Firebase Auth.
+  static const int _minPasswordLength = 6;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -49,9 +53,10 @@ class _LoginPageState extends State<LoginPage> {
         }
       },
       builder: (context, state) {
+        final l10n = context.l10n;
         final isLoading = state.status == AuthStatus.loading;
         return AppScaffold(
-          title: _isSignUp ? 'Créer un compte' : 'Connexion',
+          title: _isSignUp ? l10n.loginTitleSignUp : l10n.loginTitleSignIn,
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Form(
@@ -61,7 +66,9 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   TextFormField(
                     controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(
+                      labelText: l10n.loginEmailLabel,
+                    ),
                     keyboardType: TextInputType.emailAddress,
                     enabled: !isLoading,
                     validator: _emailValidator,
@@ -70,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
                   TextFormField(
                     controller: _passwordController,
                     decoration:
-                        const InputDecoration(labelText: 'Mot de passe'),
+                        InputDecoration(labelText: l10n.loginPasswordLabel),
                     obscureText: true,
                     enabled: !isLoading,
                     validator: _passwordValidator,
@@ -85,25 +92,31 @@ class _LoginPageState extends State<LoginPage> {
                             child:
                                 CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(_isSignUp ? 'Créer un compte' : 'Se connecter'),
+                        : Text(
+                            _isSignUp
+                                ? l10n.loginSubmitSignUp
+                                : l10n.loginSubmitSignIn,
+                          ),
                   ),
                   TextButton(
                     onPressed: isLoading
                         ? null
                         : () => setState(() => _isSignUp = !_isSignUp),
                     child: Text(
-                      _isSignUp ? "J'ai déjà un compte" : 'Créer un compte',
+                      _isSignUp
+                          ? l10n.loginSwitchToSignIn
+                          : l10n.loginSwitchToSignUp,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Row(
+                  Row(
                     children: [
-                      Expanded(child: Divider()),
+                      const Expanded(child: Divider()),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('ou'),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(l10n.loginOr),
                       ),
-                      Expanded(child: Divider()),
+                      const Expanded(child: Divider()),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -123,13 +136,16 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   String? _emailValidator(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Requis';
-    if (!value.contains('@')) return 'Email invalide';
+    final l10n = context.l10n;
+    if (value == null || value.trim().isEmpty) return l10n.commonRequired;
+    if (!value.contains('@')) return l10n.loginEmailInvalid;
     return null;
   }
 
   String? _passwordValidator(String? value) {
-    if (value == null || value.length < 6) return '6 caractères minimum';
+    if (value == null || value.length < _minPasswordLength) {
+      return context.l10n.loginPasswordTooShort(_minPasswordLength);
+    }
     return null;
   }
 

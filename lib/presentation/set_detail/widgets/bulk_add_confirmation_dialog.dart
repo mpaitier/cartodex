@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Confirmation avant l'ajout en masse au compte principal (bouton
 /// "+" de [SetDetailPage][../view/set_detail_page.dart]). Le nombre
 /// de cartes concernées dépend du volet actif de
@@ -13,20 +15,18 @@ class BulkAddConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AlertDialog(
-      title: const Text('Ajouter ces cartes ?'),
-      content: Text(
-        'Les $cardCount cartes actuellement affichées seront marquées '
-        'comme possédées par le compte principal.',
-      ),
+      title: Text(l10n.bulkAddTitle),
+      content: Text(l10n.bulkAddMessage(cardCount)),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Annuler'),
+          child: Text(l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Ajouter'),
+          child: Text(l10n.commonAdd),
         ),
       ],
     );

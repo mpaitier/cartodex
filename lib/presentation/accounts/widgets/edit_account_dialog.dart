@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/account.dart';
+import '../../../l10n/l10n.dart';
 import 'account_form_dialog.dart';
 
 /// Popup de modification d'un compte, ouverte par le bouton crayon de
@@ -21,9 +22,10 @@ class EditAccountDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AccountFormDialog(
-      title: 'Modifier le compte',
-      submitLabel: 'Enregistrer',
+      title: l10n.editAccountTitle,
+      submitLabel: l10n.commonSave,
       initialName: account.name,
       initialGameAccountId: account.gameAccountId,
       onSubmit: onSubmit,

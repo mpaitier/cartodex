@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/l10n.dart';
 import '../bloc/series_overview.dart';
 
 /// Pourcentage de complétion d'une série par le compte principal,
@@ -22,7 +23,7 @@ class SeriesCompletionIndicator extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          '$percent %',
+          context.l10n.percentValue('$percent'),
           style: theme.textTheme.labelSmall?.copyWith(color: color),
         ),
         const SizedBox(height: 2),

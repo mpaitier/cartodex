@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
+
 /// Le "Σ" qui représente toutes les raretés à la fois, à côté des
 /// images officielles du losange et de l'étoile (`RaritySymbol`).
 ///
@@ -16,7 +18,7 @@ class RarityTotalSymbol extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'toutes les raretés',
+      label: context.l10n.rarityAll,
       excludeSemantics: true,
       child: SizedBox(
         height: size,

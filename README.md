@@ -41,6 +41,10 @@ TCGdex avait été essayé en premier. Son modèle ne décrit pas la répartitio
 - Chaque progression se lit « X (+Y) / Z » : X pour le compte principal, Y pour ce que les secondaires ajoutent, Z pour le total.
 - Un bouton cycle entre trois périmètres de raretés : toutes, losange, étoile. C'est le même filtre que sur l'accueil.
 
+**Langue**
+- Interface en français et en anglais. Par défaut, l'application suit la langue du téléphone (l'anglais pour toute autre langue).
+- Un menu de l'accueil permet d'imposer le français ou l'anglais. Le choix est mémorisé sur l'appareil.
+
 **Synchronisation cloud**
 - Connexion par email et mot de passe, ou par Google.
 - Fusion des comptes et de la possession avec Firestore, avec un bilan affiché à la fin (« 2 compte(s) récupéré(s), 14 carte(s) envoyée(s) »).
@@ -57,6 +61,7 @@ TCGdex avait été essayé en premier. Son modèle ne décrit pas la répartitio
 | Réseau | `http`, `connectivity_plus` |
 | Compte et cloud | `firebase_core`, `firebase_auth`, `google_sign_in` (v7), `cloud_firestore` |
 | Images | `cached_network_image` |
+| Localisation | `flutter_localizations`, `intl`, fichiers ARB compilés par `flutter gen-l10n` |
 | Identifiants | `uuid` |
 | Qualité | `flutter_lints`, `strict-casts` et `strict-inference` activés dans `analysis_options.yaml` |
 
@@ -89,16 +94,17 @@ Quelques règles appliquées partout :
 
 - **Erreurs.** Les datasources lèvent des exceptions (`ServerException`, `CacheException`). Les repositories les convertissent en `Failure`, renvoyées sous forme de `Either` : aucune exception technique ne remonte au domaine ni à l'interface.
 - **Use cases.** Un fichier par action, avec un contrat commun (`UseCase<Type, Params>`). Les calculs de complétion (`GetCollectionStats`, `GetSetsProgress`, `GetSecondaryAccountsExtras`) sont des use cases et non des méthodes de repository, car ce sont des règles métier. `WatchAuthState` fait exception : c'est un flux continu, donc il n'utilise pas le contrat basé sur `Future`.
-- **Injection.** Services, datasources, repositories et use cases sont des singletons paresseux. Les Blocs sont enregistrés en factory, une instance par écran, sauf `AuthBloc` : il n'y a qu'un seul état de connexion pour toute l'application, fourni une fois à la racine.
+- **Injection.** Services, datasources, repositories et use cases sont des singletons paresseux. Les Blocs sont enregistrés en factory, une instance par écran, sauf `AuthBloc`, `RarityScopeCubit` et `LanguageCubit` : la connexion, le périmètre de raretés et la langue sont des états de toute l'application, fournis une fois à la racine.
 - **Mises à jour optimistes.** La bascule de possession change l'état immédiatement, puis revient en arrière avec un message si l'écriture locale échoue. L'ajout en masse est tout ou rien.
 - **Composants.** Chaque écran est découpé en petits widgets sans connaissance du Bloc parent : ils reçoivent leurs données et remontent les interactions par callbacks.
+- **Textes.** Aucun texte d'interface n'est écrit en dur dans les widgets. Ils passent tous par `context.l10n` (voir `lib/l10n/l10n.dart`), généré à partir de `lib/l10n/arb/app_fr.arb` (langue de référence, avec la description de chaque clé) et `app_en.arb`. Les pluriels, le séparateur décimal et la place du signe % suivent la langue. Les énumérations du domaine ne portent aucun libellé : des extensions de présentation s'en chargent (`CardKindStyle`, `AccountsSortOptionLabel`, `AppLanguageLabel`). Les messages de log restent en français, ils ne s'adressent qu'au développeur.
 
 ## Structure du projet
 
 ```
 lib/
 ├── main.dart                  # Initialisation Firebase et injection, puis runApp
-├── app.dart                   # MaterialApp, thèmes, AuthBloc et RarityScopeCubit fournis à la racine
+├── app.dart                   # MaterialApp, thèmes, langue, AuthBloc, RarityScopeCubit et LanguageCubit fournis à la racine
 ├── core/
 │   ├── constants/             # AppConstants (URLs, nom de la base), CardRarity
 │   ├── di/                    # injection_container.dart (get_it)
@@ -107,6 +113,10 @@ lib/
 │   ├── theme/                 # AppColors, AppTheme
 │   ├── utils/                 # AppLogger, PocketCardsImageSlug
 │   └── widgets/               # AppScaffold, AppLoadingIndicator, AppErrorView
+├── l10n/
+│   ├── arb/                   # app_fr.arb (référence) et app_en.arb
+│   ├── gen/                   # AppLocalizations, généré par flutter gen-l10n (non versionné)
+│   └── l10n.dart              # Extension context.l10n et langues proposées
 ├── domain/
 │   ├── entities/              # PokemonCard, CardSet, Account, AccountExtras, CollectionStats,
 │   │                          # ProgressCount, SetProgress, RarityScope, AppUser, CloudAccount, SyncResult
@@ -125,6 +135,7 @@ lib/
     ├── account_extras/        # Cartes qu'un secondaire possède en plus du principal
     ├── stats/                 # Statistiques de complétion
     ├── rarity_scope/          # Filtre de raretés Σ / ◆ / ★ commun à toute l'app
+    ├── language/              # Choix de la langue d'affichage, mémorisé
     ├── auth/                  # Connexion au compte applicatif
     └── sync/                  # Synchronisation cloud
 ```
@@ -194,7 +205,7 @@ Le traitement s'arrête à la première erreur sans revenir en arrière. La fusi
 
 Prérequis : un SDK Flutter compatible avec `pubspec.lock` (Dart 3.13 et Flutter 3.47 au minimum) et un projet Firebase.
 
-1. Récupérer les dépendances :
+1. Récupérer les dépendances. La commande génère aussi les textes traduits dans `lib/l10n/gen/` (non versionné) ; après une modification des fichiers ARB, `flutter gen-l10n` les régénère seuls :
    ```
    flutter pub get
    ```

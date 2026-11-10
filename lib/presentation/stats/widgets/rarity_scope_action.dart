@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/rarity_scope.dart';
+import '../../../l10n/l10n.dart';
 import 'rarity_scope_icon.dart';
 
 /// Action d'AppBar qui indique le périmètre de raretés des
@@ -23,7 +24,7 @@ class RarityScopeAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      tooltip: 'Raretés : ${RarityScopeIcon.labelFor(scope)}',
+      tooltip: RarityScopeIcon.tooltipFor(context.l10n, scope),
       icon: RarityScopeIcon(scope: scope, totalColor: Colors.white),
     );
   }

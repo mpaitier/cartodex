@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Étoile d'une ligne de compte.
 ///
 /// Pleine et jaune pour le compte principal, non interactive ; en
@@ -20,10 +22,12 @@ class PrimaryAccountStarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return IconButton(
       onPressed: isPrimary ? null : onPressed,
-      tooltip:
-          isPrimary ? 'Compte principal' : 'Définir comme compte principal',
+      tooltip: isPrimary
+          ? l10n.primaryAccountTooltip
+          : l10n.setPrimaryAccountTooltip,
       visualDensity: VisualDensity.compact,
       icon: Icon(
         isPrimary ? Icons.star : Icons.star_border,

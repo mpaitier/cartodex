@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/rarity_symbol.dart';
 import '../../../core/widgets/rarity_total_symbol.dart';
 import '../../../domain/entities/rarity_scope.dart';
+import '../../../l10n/l10n.dart';
 
 /// Le symbole d'un périmètre de raretés : Σ pour toutes les raretés,
 /// puis les images officielles du losange et de l'étoile.
@@ -24,16 +25,23 @@ class RarityScopeIcon extends StatelessWidget {
   final double size;
   final Color? totalColor;
 
-  /// Nom du périmètre, pour les tooltips.
-  static String labelFor(RarityScope scope) {
+  /// Nom du périmètre dans la langue de l'app ("toutes les raretés",
+  /// "losanges", "étoiles").
+  static String labelFor(AppLocalizations l10n, RarityScope scope) {
     switch (scope) {
       case RarityScope.all:
-        return 'toutes les raretés';
+        return l10n.rarityAll;
       case RarityScope.diamond:
-        return 'losanges';
+        return l10n.rarityDiamonds;
       case RarityScope.star:
-        return 'étoiles';
+        return l10n.rarityStars;
     }
+  }
+
+  /// Tooltip des boutons qui font tourner le périmètre (ex: "Raretés :
+  /// losanges").
+  static String tooltipFor(AppLocalizations l10n, RarityScope scope) {
+    return l10n.rarityScopeTooltip(labelFor(l10n, scope));
   }
 
   @override

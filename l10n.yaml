@@ -1,0 +1,17 @@
+# Configuration de `flutter gen-l10n` (lancé aussi par `flutter pub get`
+# et `flutter run`, grâce à `generate: true` dans pubspec.yaml).
+#
+# Le français est la langue de référence : toute nouvelle clé est
+# d'abord ajoutée à app_fr.arb (avec sa description), puis traduite
+# dans app_en.arb.
+arb-dir: lib/l10n/arb
+template-arb-file: app_fr.arb
+output-dir: lib/l10n/gen
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# `AppLocalizations.of(context)` renvoie une valeur non nulle : les
+# délégués sont toujours enregistrés dans CartodexApp.
+nullable-getter: false
+# Liste les clés présentes dans app_fr.arb mais absentes d'une autre
+# langue, pour ne pas oublier de traduction.
+untranslated-messages-file: build/untranslated_messages.txt

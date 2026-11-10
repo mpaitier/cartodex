@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Bouton de la barre du haut du détail d'un set qui ouvre le panneau
 /// de filtres ([SetDetailFilterSheet][set_detail_filter_sheet.dart]).
 ///
@@ -21,7 +23,7 @@ class SetDetailFilterAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      tooltip: 'Filtres',
+      tooltip: context.l10n.commonFilters,
       icon: Badge(
         isLabelVisible: activeFilterCount > 0,
         label: Text('$activeFilterCount'),

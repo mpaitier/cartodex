@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
 import 'account_form_dialog.dart';
 
 /// Popup de création d'un compte, champs vides au départ (voir
@@ -11,9 +12,10 @@ class AddAccountDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AccountFormDialog(
-      title: 'Ajouter un compte',
-      submitLabel: 'Ajouter',
+      title: l10n.addAccountTitle,
+      submitLabel: l10n.commonAdd,
       onSubmit: onSubmit,
     );
   }

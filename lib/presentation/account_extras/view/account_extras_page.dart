@@ -8,6 +8,7 @@ import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/account.dart';
 import '../../../domain/entities/account_extras.dart';
 import '../../../domain/entities/card_set.dart';
+import '../../../l10n/l10n.dart';
 import '../../accounts/widgets/account_edit_button.dart';
 import '../../accounts/widgets/edit_account_dialog.dart';
 import '../../set_detail/view/set_detail_page.dart';
@@ -81,14 +82,15 @@ class _AccountExtrasView extends StatelessWidget {
     AccountExtrasState state,
     Account account,
   ) {
+    final l10n = context.l10n;
     if (state.status == AccountExtrasStatus.initial ||
         state.status == AccountExtrasStatus.loading) {
-      return const AppLoadingIndicator(message: 'Calcul en cours…');
+      return AppLoadingIndicator(message: l10n.accountExtrasLoading);
     }
 
     if (state.status == AccountExtrasStatus.error) {
       return AppErrorView(
-        message: state.errorMessage ?? 'Une erreur est survenue.',
+        message: state.errorMessage ?? l10n.genericError,
         onRetry: () => context
             .read<AccountExtrasBloc>()
             .add(AccountExtrasStarted(account)),
@@ -97,12 +99,11 @@ class _AccountExtrasView extends StatelessWidget {
 
     final extras = state.extras;
     if (extras == null || extras.bySet.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
-            'Ce compte ne possède aucune carte que le compte principal '
-            "n'a pas.",
+            l10n.accountExtrasEmpty,
             textAlign: TextAlign.center,
           ),
         ),

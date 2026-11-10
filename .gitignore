@@ -3,6 +3,8 @@
 # ==========================================
 *.g.dart
 *.freezed.dart
+# Localisation générée par `flutter gen-l10n` (voir l10n.yaml)
+lib/l10n/gen/
 
 # ==========================================
 # 2. Flutter / Dart

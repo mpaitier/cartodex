@@ -4,9 +4,11 @@ import '../../../domain/entities/card_set.dart';
 import '../../../domain/entities/progress_count.dart';
 import '../../../domain/entities/rarity_scope.dart';
 import '../../../domain/entities/set_progress.dart';
+import '../../../l10n/l10n.dart';
 import '../bloc/series_tab.dart';
 import 'card_set_grid.dart';
 import 'series_progress_banner.dart';
+import 'series_tab_title.dart';
 
 /// Grilles de sets, une page par série, navigables au swipe : vers
 /// la gauche pour les séries plus anciennes, "Promo" en dernière
@@ -140,7 +142,7 @@ class _SeriesSetsPagerState extends State<SeriesSetsPager> {
           children: [
             if (progress != null)
               SeriesProgressBanner(
-                title: tab.title,
+                title: tab.title(context.l10n),
                 progress: progress,
                 scope: widget.rarityScope,
                 onScopePressed: widget.onRarityScopePressed,

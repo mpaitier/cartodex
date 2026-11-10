@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/collection_stats.dart';
+import '../../../l10n/l10n.dart';
 import 'progress_count_label.dart';
 import 'stacked_progress_bar.dart';
 
@@ -16,7 +17,7 @@ class SeriesProgressList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (seriesStats.isEmpty) {
-      return const Text('Aucune série synchronisée pour l’instant.');
+      return Text(context.l10n.statsNoSeries);
     }
     return Column(
       children: [

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/pack_display_name.dart';
+import '../../../l10n/l10n.dart';
 import 'filter_chip_wrap.dart';
 import 'pack_avatar.dart';
 
@@ -40,7 +41,7 @@ class PackFilterBar extends StatelessWidget {
       itemBuilder: (context, index) {
         if (index == 0) {
           return ChoiceChip(
-            label: const Text('Tous'),
+            label: Text(context.l10n.commonAll),
             selected: selectedPack == null,
             showCheckmark: false,
             labelPadding: const EdgeInsets.symmetric(horizontal: 4),
