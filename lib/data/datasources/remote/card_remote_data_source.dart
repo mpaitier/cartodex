@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/error/exceptions.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../models/card_model.dart';
 import '../../models/card_set_model.dart';
 import '../../models/set_pull_rates_model.dart';
@@ -62,15 +63,14 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
   @override
   Future<List<CardModel>> fetchAllCards() async {
     final cardsUri = Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/cards.json');
-    final extraUri =
-        Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/cards.extra.json');
     final cardsBody = jsonDecode((await _get(cardsUri)).body) as List<dynamic>;
-    final extraBody = jsonDecode((await _get(extraUri)).body) as List<dynamic>;
+    final extraBody = await _fetchCardsExtra();
 
-    // cards.json ne porte ni la catégorie (Pokémon / Dresseur / Énergie)
-    // ni l'élément (Plante, Feu...) ; seul cards.extra.json les a, sous
-    // les champs `type` et `element`. On construit un index set-numéro ->
-    // carte enrichie pour croiser les deux sans jointure O(n²).
+    // cards.json ne porte ni le type de carte (Pokémon, Supporter, Objet,
+    // Outil, Stade, Fossile), ni l'élément (Plante, Feu...), ni les PV ;
+    // seul cards.extra.json les a, sous les champs `type`, `element` et
+    // `health`. On construit un index set-numéro -> carte enrichie pour
+    // croiser les deux sans jointure O(n²).
     final extraByKey = <String, Map<String, dynamic>>{
       for (final raw in extraBody.cast<Map<String, dynamic>>())
         '${raw['set']}-${raw['number']}': raw,
@@ -82,8 +82,35 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
         raw,
         category: extra?['type'] as String?,
         element: extra?['element'] as String?,
+        hp: (extra?['health'] as num?)?.toInt(),
       );
     }).toList();
+  }
+
+  /// `cards.extra.json`, lu d'abord sur le dépôt GitHub du référentiel
+  /// (à jour pour toutes les extensions), puis sur la version npm en
+  /// cas d'échec (voir [AppConstants.pocketDatabaseGithubBaseUrl]).
+  /// Seul un échec des deux sources fait échouer la synchronisation.
+  Future<List<dynamic>> _fetchCardsExtra() async {
+    final githubUri = Uri.parse(
+      '${AppConstants.pocketDatabaseGithubBaseUrl}/cards.extra.json',
+    );
+    try {
+      final decoded = jsonDecode((await _get(githubUri)).body);
+      if (decoded is List<dynamic>) return decoded;
+      AppLogger.log(
+        'WARNING',
+        'cards.extra.json inattendu sur GitHub, repli sur npm.',
+      );
+    } on Exception catch (e) {
+      AppLogger.log(
+        'WARNING',
+        'cards.extra.json indisponible sur GitHub, repli sur npm : $e',
+      );
+    }
+    final npmUri =
+        Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/cards.extra.json');
+    return jsonDecode((await _get(npmUri)).body) as List<dynamic>;
   }
 
   @override
