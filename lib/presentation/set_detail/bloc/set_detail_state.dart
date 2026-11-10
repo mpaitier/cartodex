@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../core/constants/card_rarities.dart';
 import '../../../domain/entities/account.dart';
+import '../../../domain/entities/card_element.dart';
 import '../../../domain/entities/pokemon_card.dart';
 import 'ownership_filter.dart';
 
@@ -38,6 +39,7 @@ class SetDetailState extends Equatable {
     this.ownershipByAccountId = const {},
     this.selectedPack,
     this.selectedRarities = const {},
+    this.selectedElements = const {},
     this.ownershipFilter = OwnershipFilter.all,
     this.secondaryFilterAccountId,
     this.ownerFilterAccountId,
@@ -65,6 +67,10 @@ class SetDetailState extends Equatable {
   /// sentinelle ici : un ensemble vide est déjà la valeur "aucun
   /// filtre", jamais une valeur "ne pas toucher".
   final Set<CardRarity> selectedRarities;
+
+  /// Éléments cochés dans le filtre par type (multi-sélection). Vide
+  /// signifie "tous les types", comme [selectedRarities].
+  final Set<CardElement> selectedElements;
 
   /// Filtre de possession courant (voir [OwnershipFilter]).
   final OwnershipFilter ownershipFilter;
@@ -234,8 +240,34 @@ class SetDetailState extends Equatable {
     return CardRarity.allTiers.where(present.contains).toList();
   }
 
+  /// Éléments effectivement présents parmi les cartes concernées par
+  /// la restriction à un compte et le filtre de possession, dans
+  /// l'ordre du jeu ([CardElement.values]), pour peupler
+  /// `ElementFilterBar`. Comme pour les raretés, une puce qui ne
+  /// montrerait rien n'est pas proposée.
+  List<CardElement> get availableElements {
+    final present = {
+      for (final card in _ownershipScopedCards) CardElement.of(card),
+    };
+    return CardElement.values.where(present.contains).toList();
+  }
+
+  /// Nombre de filtres actifs (booster, rareté, possession, type),
+  /// pour la pastille du bouton de filtre de la barre du haut. Chaque
+  /// filtre compte pour un, quel que soit le nombre de puces cochées ;
+  /// le sous-filtre par compte secondaire fait partie de la
+  /// possession.
+  int get activeFilterCount {
+    var count = 0;
+    if (selectedPack != null) count++;
+    if (selectedRarities.isNotEmpty) count++;
+    if (ownershipFilter != OwnershipFilter.all) count++;
+    if (selectedElements.isNotEmpty) count++;
+    return count;
+  }
+
   /// Cartes à afficher compte tenu des filtres courants (restriction
-  /// à un compte, possession, booster et rareté, cumulatifs).
+  /// à un compte, possession, booster, rareté et type, cumulatifs).
   List<PokemonCard> get visibleCards {
     var result = _ownershipScopedCards;
     final pack = selectedPack;
@@ -247,6 +279,11 @@ class SetDetailState extends Equatable {
         final rarity = CardRarity.fromCode(card.rarity);
         return rarity != null && selectedRarities.contains(rarity);
       }).toList();
+    }
+    if (selectedElements.isNotEmpty) {
+      result = result
+          .where((card) => selectedElements.contains(CardElement.of(card)))
+          .toList();
     }
     return result;
   }
@@ -326,6 +363,7 @@ class SetDetailState extends Equatable {
     Map<String, Set<String>>? ownershipByAccountId,
     Object? selectedPack = _unset,
     Set<CardRarity>? selectedRarities,
+    Set<CardElement>? selectedElements,
     OwnershipFilter? ownershipFilter,
     Object? secondaryFilterAccountId = _unset,
     Object? ownerFilterAccountId = _unset,
@@ -340,6 +378,7 @@ class SetDetailState extends Equatable {
           ? this.selectedPack
           : selectedPack as String?,
       selectedRarities: selectedRarities ?? this.selectedRarities,
+      selectedElements: selectedElements ?? this.selectedElements,
       ownershipFilter: ownershipFilter ?? this.ownershipFilter,
       secondaryFilterAccountId: identical(secondaryFilterAccountId, _unset)
           ? this.secondaryFilterAccountId
@@ -359,6 +398,7 @@ class SetDetailState extends Equatable {
         ownershipByAccountId,
         selectedPack,
         selectedRarities,
+        selectedElements,
         ownershipFilter,
         secondaryFilterAccountId,
         ownerFilterAccountId,

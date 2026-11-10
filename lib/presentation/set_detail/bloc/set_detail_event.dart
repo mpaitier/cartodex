@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/constants/card_rarities.dart';
+import '../../../domain/entities/card_element.dart';
 import 'ownership_filter.dart';
 
 /// Événements gérés par [SetDetailBloc][set_detail_bloc.dart].
@@ -89,6 +90,25 @@ class RarityFilterChanged extends SetDetailEvent {
 
   @override
   List<Object?> get props => [rarities];
+}
+
+/// Déclenché par un changement dans le filtre par type (multi-
+/// sélection d'éléments). Un ensemble vide signifie "tous les types".
+class ElementFilterChanged extends SetDetailEvent {
+  const ElementFilterChanged(this.elements);
+
+  final Set<CardElement> elements;
+
+  @override
+  List<Object?> get props => [elements];
+}
+
+/// Déclenché par le bouton "Réinitialiser" du panneau de filtres :
+/// remet booster, rareté, possession (sous-filtre compris) et type à
+/// leur valeur par défaut. Ne touche pas à la restriction à un compte
+/// fixée à l'ouverture de l'écran.
+class FiltersCleared extends SetDetailEvent {
+  const FiltersCleared();
 }
 
 /// Déclenché par la sélection d'une puce dans
