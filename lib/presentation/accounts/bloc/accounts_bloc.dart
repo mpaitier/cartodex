@@ -25,6 +25,9 @@ import 'accounts_state.dart';
 /// ce calcul ne fait jamais tomber l'écran : les comptes s'affichent,
 /// simplement sans compteurs.
 ///
+/// Le filtre par extension ([AccountsSetFilterChanged]) vit seulement
+/// dans l'état, le temps de l'écran.
+///
 /// Le critère de tri ([AccountsSortChanged]) est stocké dans l'état ;
 /// l'ordre effectif est calculé par `AccountsState.sortedAccounts`. Il
 /// est relu à l'ouverture de l'écran ([GetAccountsSortOption]) et
@@ -52,6 +55,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     on<AccountsStarted>(_onStarted);
     on<AccountsRefreshRequested>(_onRefreshRequested);
     on<AccountsSortChanged>(_onSortChanged);
+    on<AccountsSetFilterChanged>(_onSetFilterChanged);
     on<AccountAdded>(_onAccountAdded);
     on<AccountEdited>(_onAccountEdited);
     on<PrimaryAccountChanged>(_onPrimaryAccountChanged);
@@ -103,6 +107,13 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       ),
       (_) {},
     );
+  }
+
+  void _onSetFilterChanged(
+    AccountsSetFilterChanged event,
+    Emitter<AccountsState> emit,
+  ) {
+    emit(state.copyWith(setFilterId: event.setId));
   }
 
   Future<void> _onAccountAdded(

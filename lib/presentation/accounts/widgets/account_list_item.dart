@@ -20,12 +20,17 @@ import 'top_extra_sets_preview.dart';
 /// du nom et de ces totaux, les logos des trois sets où il en a le
 /// plus ([TopExtraSetsPreview]). [onTap] ouvre le détail par set. Le
 /// compte principal n'a rien de tout cela.
+///
+/// Avec un filtre par extension actif, [focusedSetExtras] remplace les
+/// totaux sous le nom par les cartes en plus de cette seule extension
+/// (encadrées de vert quand elles complètent le principal).
 class AccountListItem extends StatelessWidget {
   const AccountListItem({
     required this.account,
     required this.onCrownTap,
     required this.onEditTap,
     this.extras,
+    this.focusedSetExtras,
     this.onTap,
     super.key,
   });
@@ -36,6 +41,9 @@ class AccountListItem extends StatelessWidget {
 
   /// `null` pour le compte principal.
   final AccountExtras? extras;
+
+  /// Cartes en plus dans l'extension du filtre, `null` sans filtre.
+  final SetExtras? focusedSetExtras;
 
   /// `null` pour le compte principal : la ligne n'est alors pas
   /// cliquable.
@@ -49,7 +57,11 @@ class AccountListItem extends StatelessWidget {
       title: Row(
         children: [
           Expanded(
-            child: _NameAndTotals(name: account.name, extras: extras),
+            child: _NameAndTotals(
+              name: account.name,
+              extras: extras,
+              focusedSetExtras: focusedSetExtras,
+            ),
           ),
           if (extras != null) ...[
             const SizedBox(width: 8),
@@ -72,13 +84,19 @@ class AccountListItem extends StatelessWidget {
   }
 }
 
-/// Nom du compte, et pour un secondaire ses totaux de cartes en plus
-/// juste en dessous.
+/// Nom du compte, et pour un secondaire ses cartes en plus juste en
+/// dessous : au total, ou dans l'extension du filtre si
+/// [focusedSetExtras] est fourni.
 class _NameAndTotals extends StatelessWidget {
-  const _NameAndTotals({required this.name, required this.extras});
+  const _NameAndTotals({
+    required this.name,
+    required this.extras,
+    required this.focusedSetExtras,
+  });
 
   final String name;
   final AccountExtras? extras;
+  final SetExtras? focusedSetExtras;
 
   @override
   Widget build(BuildContext context) {
@@ -96,10 +114,20 @@ class _NameAndTotals extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: ExtraCountsLabel(counts: extras.totals),
+            child: _countsLabel(extras),
           ),
         ],
       ],
+    );
+  }
+
+  Widget _countsLabel(AccountExtras extras) {
+    final focused = focusedSetExtras;
+    if (focused == null) return ExtraCountsLabel(counts: extras.totals);
+    return ExtraCountsLabel(
+      counts: focused.counts,
+      completesBase: focused.completesBase,
+      completesAlternative: focused.completesAlternative,
     );
   }
 }

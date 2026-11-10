@@ -14,6 +14,7 @@ import '../bloc/accounts_state.dart';
 import '../widgets/account_list_item.dart';
 import '../widgets/accounts_filter_action.dart';
 import '../widgets/accounts_filter_sheet.dart';
+import '../widgets/active_set_filter_banner.dart';
 import '../widgets/add_account_dialog.dart';
 import '../widgets/edit_account_dialog.dart';
 
@@ -23,9 +24,11 @@ import '../widgets/edit_account_dialog.dart';
 /// appui dessus ouvre [AccountExtrasPage], le détail par set. Le
 /// crayon de chaque ligne ouvre [EditAccountDialog] pour changer le
 /// nom ou le code ami. Le bouton de la barre du haut ouvre le panneau
-/// de tri ([AccountsFilterSheet]) : le tri réordonne les secondaires
-/// (le principal reste en tête) et il est mémorisé d'un lancement à
-/// l'autre.
+/// de tri et de filtre ([AccountsFilterSheet]) : le tri réordonne les
+/// secondaires (le principal reste en tête) et il est mémorisé d'un
+/// lancement à l'autre ; le filtre par extension ne garde que les
+/// secondaires qui y ont des cartes en plus, rappelé par un bandeau
+/// ([ActiveSetFilterBanner]).
 class AccountsPage extends StatelessWidget {
   const AccountsPage({super.key});
 
@@ -62,6 +65,7 @@ class _AccountsView extends StatelessWidget {
             if (state.status == AccountsStatus.loaded &&
                 state.accounts.isNotEmpty)
               AccountsFilterAction(
+                isFiltered: state.activeFilterSet != null,
                 onPressed: () => _openFilterSheet(context),
               ),
           ],
@@ -94,31 +98,47 @@ class _AccountsView extends StatelessWidget {
       return const Center(child: Text('Aucun compte pour l’instant.'));
     }
 
-    // Principal en tête, secondaires triés selon le critère choisi.
+    // Principal en tête, secondaires triés selon le critère choisi ;
+    // avec un filtre d'extension, seulement les secondaires concernés.
     final accounts = state.sortedAccounts;
-    return ListView.builder(
-      itemCount: accounts.length,
-      itemBuilder: (context, index) {
-        final account = accounts[index];
-        return AccountListItem(
-          account: account,
-          extras: account.isPrimary
-              ? null
-              : state.extrasByAccountId[account.id] ??
-                  AccountExtras(accountId: account.id),
-          onTap: account.isPrimary
-              ? null
-              : () => _openExtras(context, account),
-          onCrownTap: () => context
-              .read<AccountsBloc>()
-              .add(PrimaryAccountChanged(account.id)),
-          onEditTap: () => _openEditDialog(context, account),
-        );
-      },
+    final filterSet = state.activeFilterSet;
+    return Column(
+      children: [
+        if (filterSet != null)
+          ActiveSetFilterBanner(
+            set: filterSet,
+            onClear: () => context
+                .read<AccountsBloc>()
+                .add(const AccountsSetFilterChanged(null)),
+          ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: accounts.length,
+            itemBuilder: (context, index) {
+              final account = accounts[index];
+              return AccountListItem(
+                account: account,
+                extras: account.isPrimary
+                    ? null
+                    : state.extrasByAccountId[account.id] ??
+                        AccountExtras(accountId: account.id),
+                focusedSetExtras: state.filteredSetExtrasFor(account),
+                onTap: account.isPrimary
+                    ? null
+                    : () => _openExtras(context, account),
+                onCrownTap: () => context
+                    .read<AccountsBloc>()
+                    .add(PrimaryAccountChanged(account.id)),
+                onEditTap: () => _openEditDialog(context, account),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  /// Ouvre le panneau de tri. Le Bloc de l'écran lui est
+  /// Ouvre le panneau de tri et de filtre. Le Bloc de l'écran lui est
   /// transmis explicitement : une feuille modale ne voit pas les
   /// providers de la page.
   void _openFilterSheet(BuildContext context) {

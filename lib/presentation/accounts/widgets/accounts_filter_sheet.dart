@@ -8,14 +8,18 @@ import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import 'accounts_sort_option_label.dart';
+import 'set_filter_tile.dart';
 
-/// Panneau de tri de l'onglet des comptes, ouvert depuis le bouton de
-/// la barre du haut (`AccountsFilterAction`).
+/// Panneau de tri et de filtre de l'onglet des comptes, ouvert depuis
+/// le bouton de la barre du haut (`AccountsFilterAction`).
 ///
 /// Même présentation que le panneau de filtres du détail d'un set
 /// (rubriques [FilterSheetSection], puces qui passent à la ligne
-/// [FilterChipWrap]) : "Trier par" propose l'ordre de création, l'ordre
-/// alphabétique ou les cartes en plus.
+/// [FilterChipWrap]) :
+/// - "Trier par" : ordre de création, alphabétique ou cartes en plus ;
+/// - "Extension" : "Toutes", puis le logo de chaque extension où au
+///   moins un secondaire a des cartes en plus ([SetFilterTile]). Un
+///   nouvel appui sur l'extension choisie retire le filtre.
 ///
 /// Suit l'état de [AccountsBloc] en direct : la liste derrière le
 /// panneau se met à jour à chaque choix. L'appelant doit fournir le
@@ -29,6 +33,8 @@ class AccountsFilterSheet extends StatelessWidget {
     return BlocBuilder<AccountsBloc, AccountsState>(
       builder: (context, state) {
         final bloc = context.read<AccountsBloc>();
+        final sets = state.availableFilterSets;
+        final activeSetId = state.activeFilterSet?.id;
 
         return SafeArea(
           child: Column(
@@ -38,7 +44,7 @@ class AccountsFilterSheet extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                 child: Text(
-                  'Trier',
+                  'Trier et filtrer',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -64,6 +70,38 @@ class AccountsFilterSheet extends StatelessWidget {
                               visualDensity: VisualDensity.compact,
                               onSelected: (_) =>
                                   bloc.add(AccountsSortChanged(option)),
+                            );
+                          },
+                        ),
+                      ),
+                      FilterSheetSection(
+                        title: 'Extension',
+                        visible: sets.isNotEmpty,
+                        child: FilterChipWrap(
+                          itemCount: sets.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              return ChoiceChip(
+                                label: const Text('Toutes'),
+                                selected: activeSetId == null,
+                                showCheckmark: false,
+                                labelPadding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                visualDensity: VisualDensity.compact,
+                                onSelected: (_) => bloc
+                                    .add(const AccountsSetFilterChanged(null)),
+                              );
+                            }
+                            final set = sets[index - 1];
+                            final selected = set.id == activeSetId;
+                            return SetFilterTile(
+                              set: set,
+                              selected: selected,
+                              onTap: () => bloc.add(
+                                AccountsSetFilterChanged(
+                                  selected ? null : set.id,
+                                ),
+                              ),
                             );
                           },
                         ),

@@ -35,6 +35,18 @@ class AccountsSortChanged extends AccountsEvent {
   List<Object?> get props => [option];
 }
 
+/// Déclenché par le choix d'une extension dans le panneau de tri et
+/// de filtre : n'affiche que les comptes qui y ont des cartes en plus.
+/// `null` retire le filtre.
+class AccountsSetFilterChanged extends AccountsEvent {
+  const AccountsSetFilterChanged(this.setId);
+
+  final String? setId;
+
+  @override
+  List<Object?> get props => [setId];
+}
+
 /// Déclenché par la validation du formulaire d'ajout de compte.
 class AccountAdded extends AccountsEvent {
   const AccountAdded({required this.name, required this.gameAccountId});
