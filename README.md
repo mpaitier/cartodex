@@ -1,77 +1,54 @@
 # Cartodex
 
 [![CI](https://github.com/mpaitier/cartodex/actions/workflows/ci.yml/badge.svg)](https://github.com/mpaitier/cartodex/actions/workflows/ci.yml)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
-Application mobile Flutter pour suivre sa collection de cartes Pokémon TCG Pocket, sur un ou plusieurs comptes de jeu, avec synchronisation optionnelle entre appareils.
+Je joue à Pokémon TCG Pocket sur plusieurs comptes, et le jeu ne permet pas de savoir facilement quelles cartes il me manque, ni sur quel compte se trouve telle ou telle carte. Cartodex est l'application Flutter que j'ai écrite pour ça : on coche ses cartes compte par compte, et l'app calcule ce qui manque, set par set et booster par booster.
 
-## Contexte
+L'APK Android de la dernière version est sur la page [Releases](https://github.com/mpaitier/cartodex/releases). L'interface existe en français et en anglais.
 
-Pokémon TCG Pocket n'expose aucune API publique qui permette de récupérer la collection d'un joueur. Cartodex combine donc trois sources, chacune avec un rôle précis :
+## D'où viennent les données
 
-- **Catalogue des cartes** : [pokemon-tcg-pocket-database](https://github.com/flibustier/pokemon-tcg-pocket-database), des fichiers JSON statiques servis par jsDelivr (`sets.json`, `cards.json`, `cards.extra.json`, `cards.fr.json` pour les noms français, `pullRates.json`). Il est téléchargé à la demande, puis stocké en local.
-- **Possession des cartes** : saisie à la main par l'utilisateur, stockée uniquement dans une base SQLite locale (Drift). Elle ne dépend jamais du catalogue : une resynchronisation complète du référentiel n'y touche pas.
-- **Compte applicatif** (facultatif) : Firebase Auth et Firestore, pour retrouver ses comptes et sa possession sur un autre appareil.
+Le jeu n'a pas d'API publique pour lire la collection d'un joueur, donc la possession se saisit à la main. Elle est stockée dans une base SQLite locale (Drift) et ne dépend pas du catalogue : resynchroniser le référentiel ne touche jamais aux cartes cochées.
 
-L'application fonctionne entièrement hors ligne une fois le catalogue téléchargé, et sans compte applicatif.
+Le catalogue vient de [pokemon-tcg-pocket-database](https://github.com/flibustier/pokemon-tcg-pocket-database), un jeu de fichiers JSON servis par jsDelivr. L'app télécharge `sets.json`, `cards.extra.json`, `cards.fr.json` (noms français) et `pullRates.json` (taux de tirage) quand on le lui demande, puis tout fonctionne hors ligne. J'avais commencé avec TCGdex, mais son modèle ne sait pas dans quel booster d'un set se trouve chaque carte, alors que c'est justement l'information dont j'avais besoin.
 
-TCGdex avait été essayé en premier. Son modèle ne décrit pas la répartition des cartes par booster à l'intérieur d'un set, alors que chaque set de TCG Pocket se décline en plusieurs boosters au contenu différent. `pokemon-tcg-pocket-database` fournit cette information, et la synchronisation passe de une requête par carte à trois requêtes au total.
+Un compte Firebase reste facultatif. Il sert à retrouver ses comptes et sa possession sur un autre téléphone.
 
-## Fonctionnalités
+## Ce que fait l'app
 
-**Catalogue et sets**
-- Synchronisation manuelle du référentiel depuis l'AppBar, avec indicateur de chargement. L'ouverture de l'écran ne dépend jamais du réseau.
-- Grille des sets, du plus récent au plus ancien, avec filtre par série (A, B, …) et un onglet « Promo » qui regroupe les sets promotionnels.
-- Chaque tuile affiche le logo du set, son nombre de cartes et de boosters, et une bordure de progression coupée en deux : la moitié gauche suit les cartes losange (◆), la moitié droite les cartes alternatives (★). Les pourcentages sont écrits sous la tuile.
-- Un seul filtre de raretés (Σ toutes, ◆ losange, ★ étoile) vaut pour toute l'application. On le change depuis le bandeau d'une série, la top bar des statistiques ou un swipe dans le détail d'un set, et tous les écrans suivent : bandeau, tuiles (la moitié exclue s'estompe), liste « Toutes les séries », statistiques.
+L'accueil range les sets par série : les séries lettrées (A, B…), puis une section Deluxe et une section Promo. On passe d'une série à l'autre au swipe, par la barre du bas ou par la feuille « Toutes les séries ». En haut de chaque série, un bandeau donne les pourcentages, une barre de progression et le nombre de cartes que personne n'a encore. Sur chaque tuile de set, la bordure est coupée en deux : la moitié gauche suit les cartes losange (◆), la moitié droite les cartes alternatives (★).
 
-**Détail d'un set**
-- Trois volets au swipe : cartes losange à gauche, toutes les cartes au milieu, cartes alternatives à droite. L'écran s'ouvre sur le volet du filtre de raretés courant, et changer de volet change ce filtre pour toute l'app.
-- Filtre par booster, et filtre de rareté en multi-sélection dont les puces s'adaptent au volet actif.
-- Filtre de possession : tout, compte principal, comptes secondaires, cartes manquantes. Quand « secondaires » est choisi et que plusieurs comptes ont des cartes dans le set, un sous-filtre permet de cibler un compte.
-- Pincement à deux doigts : rapprocher les doigts passe la grille de 3 à 5 colonnes (illustration et badge seuls, sans nom ni rareté), les écarter revient à 3.
-- Tap simple : bascule la possession pour le compte principal. Double-tap : ouvre un choix de compte secondaire.
-- Nom de chaque carte en français quand l'application est en français et que le référentiel fournit une traduction (`cards.fr.json`), en anglais sinon.
-- Bouton « + » : marque d'un coup, après confirmation, les cartes affichées à l'écran pour le compte principal.
-- Titre de l'AppBar avec les compteurs ◆ / ★ / Σ. Un tap bascule entre « compte principal seul » et « principal + secondaires ».
+Les couleurs veulent dire la même chose partout. Le violet correspond au compte principal, le jaune à ce que les comptes secondaires ajoutent, le rouge pâle aux cartes manquantes, et le vert apparaît quand le principal a tout. La plupart des compteurs se lisent « X (+Y) / Z » : X cartes au principal, Y de plus chez les secondaires, Z au total.
 
-**Comptes**
-- Plusieurs comptes de jeu suivis dans la même application, dont un seul est principal (étoile pleine). Les autres sont secondaires et le principal peut être changé en un tap.
-- Tri de la liste (ordre de création, alphabétique, cartes en plus), le principal restant toujours en tête.
-- Pour chaque secondaire, un écran liste les sets où il possède des cartes que le principal n'a pas. Un tap sur un set ouvre son détail restreint à ces cartes.
+Dans le détail d'un set, un tap coche une carte pour le compte principal et un double-tap ouvre le choix d'un compte secondaire. L'illustration change selon la possession : en couleur pour le principal, moitié haute grisée quand seul un secondaire l'a, grisée quand personne ne l'a. Trois volets se suivent au swipe (losanges, tout, alternatives), et un panneau de filtres permet de trier par booster, rareté, possession ou type. On peut aussi pincer pour passer de 3 à 5 colonnes, ou tout cocher d'un coup avec le bouton « + ».
 
-**Statistiques**
-- Progression globale, par série, et boosters à ouvrir en priorité (du moins avancé au plus avancé).
-- Chaque progression se lit « X (+Y) / Z » : X pour le compte principal, Y pour ce que les secondaires ajoutent, Z pour le total.
-- Un bouton cycle entre trois périmètres de raretés : toutes, losange, étoile. C'est le même filtre que sur l'accueil.
+L'écran des comptes gère un compte principal et autant de secondaires qu'on veut. Pour chaque secondaire, on voit les cartes qu'il a et que le principal n'a pas, et un écran les détaille set par set. La liste se trie et se filtre par extension.
 
-**Langue**
-- Interface en français et en anglais. Par défaut, l'application suit la langue du téléphone (l'anglais pour toute autre langue).
-- Un menu de l'accueil permet d'imposer le français ou l'anglais. Le choix est mémorisé sur l'appareil.
+Les statistiques donnent la progression globale et par série, et surtout une liste de boosters à ouvrir en priorité. Le classement se fait sur le nombre moyen de cartes manquantes qu'une ouverture rapporte, calculé avec les taux de tirage du jeu.
 
-**Synchronisation cloud**
-- Connexion par email et mot de passe, ou par Google.
-- Fusion des comptes et de la possession avec Firestore, avec un bilan affiché à la fin (« 2 comptes récupérés, 14 cartes envoyées »).
-- Au plus 4 synchronisations sur 24 heures glissantes par compte. Le menu indique combien il en reste, puis l'heure de la prochaine possible une fois la limite atteinte.
+Le filtre de raretés (Σ, ◆ ou ★) est partagé par tous les écrans : le changer sur l'accueil le change aussi dans les statistiques. La langue suit celle du téléphone par défaut, et un menu permet d'imposer le français ou l'anglais.
 
-## Stack technique
+Côté cloud, on se connecte par email ou avec Google, et la synchronisation fusionne les comptes et les cartes avec Firestore. Elle est limitée à 4 par compte sur 24 heures glissantes, ce qui suffit largement et évite de vider le quota gratuit de Firestore.
+
+## Stack
 
 | Domaine | Choix |
 |---|---|
-| Framework | Flutter (Dart 3.13+, voir `pubspec.lock`), Material 3, thème clair et sombre |
-| État | `flutter_bloc` (Bloc), `equatable` |
-| Injection de dépendances | `get_it` |
-| Gestion des erreurs | `dartz` (`Either<Failure, T>`) |
-| Persistance locale | `drift` + `sqlite3_flutter_libs` |
+| Framework | Flutter (Dart 3.13+), Material 3, thème clair et sombre |
+| État | `flutter_bloc`, `equatable` |
+| Injection | `get_it` |
+| Erreurs | `dartz` (`Either<Failure, T>`) |
+| Stockage | `drift` et `sqlite3_flutter_libs` pour les données, `shared_preferences` pour les réglages |
 | Réseau | `http`, `connectivity_plus` |
-| Compte et cloud | `firebase_core`, `firebase_auth`, `google_sign_in` (v7), `cloud_firestore` |
+| Cloud | `firebase_core`, `firebase_auth`, `google_sign_in` (v7), `cloud_firestore` |
 | Images | `cached_network_image` |
-| Localisation | `flutter_localizations`, `intl`, fichiers ARB compilés par `flutter gen-l10n` |
-| Identifiants | `uuid` |
-| Qualité | `flutter_lints`, `strict-casts` et `strict-inference` activés dans `analysis_options.yaml` |
+| Langues | `flutter_localizations`, `intl`, fichiers ARB |
+| Qualité | `flutter_lints` avec `strict-casts` et `strict-inference`, CI GitHub Actions |
 
 ## Architecture
 
-Clean Architecture en trois couches, avec MVVM côté présentation : chaque écran est piloté par un Bloc qui joue le rôle de ViewModel, et les widgets ne contiennent aucune logique métier.
+Le code suit une Clean Architecture en trois couches, avec du MVVM dans la présentation : chaque écran a son Bloc, qui sert de ViewModel, et les widgets se contentent d'afficher ce qu'on leur donne.
 
 ```
 presentation  ──►  domain  ◄──  data
@@ -81,9 +58,7 @@ presentation  ──►  domain  ◄──  data
                    de repository) de repository)
 ```
 
-Le domaine ne dépend ni de Flutter, ni de Drift, ni de Firebase. Il ne connaît que ses propres interfaces. La couche data est la seule à savoir que le catalogue vient de jsDelivr ou que le cloud est Firestore.
-
-Le trajet d'une action, par exemple le tap sur une carte :
+Le domaine ne connaît ni Flutter, ni Drift, ni Firebase. Seule la couche data sait que le catalogue vient de jsDelivr et que le cloud est Firestore. Voici par exemple le chemin d'un tap sur une carte :
 
 ```
 CardGridItem (onTap)
@@ -94,79 +69,54 @@ CardGridItem (onTap)
           → CardLocalDataSource → Drift
 ```
 
-Quelques règles appliquées partout :
+Les datasources lèvent des exceptions, que les repositories transforment en `Failure` renvoyées dans un `Either`. Aucune exception technique ne remonte jusqu'à l'interface. Chaque action a son use case, avec le même contrat (`UseCase<Result, Params>`). Les calculs de progression et la limite de synchronisations en font partie, parce que ce sont des règles métier et non des accès aux données.
 
-- **Erreurs.** Les datasources lèvent des exceptions (`ServerException`, `CacheException`). Les repositories les convertissent en `Failure`, renvoyées sous forme de `Either` : aucune exception technique ne remonte au domaine ni à l'interface.
-- **Use cases.** Un fichier par action, avec un contrat commun (`UseCase<Result, Params>`). Les calculs de complétion (`GetCollectionStats`, `GetSetsProgress`, `GetSecondaryAccountsExtras`) sont des use cases et non des méthodes de repository, car ce sont des règles métier. `WatchAuthState` fait exception : c'est un flux continu, donc il n'utilise pas le contrat basé sur `Future`.
-- **Injection.** Services, datasources, repositories et use cases sont des singletons paresseux. Les Blocs sont enregistrés en factory, une instance par écran, sauf `AuthBloc`, `RarityScopeCubit` et `LanguageCubit` : la connexion, le périmètre de raretés et la langue sont des états de toute l'application, fournis une fois à la racine.
-- **Mises à jour optimistes.** La bascule de possession change l'état immédiatement, puis revient en arrière avec un message si l'écriture locale échoue. L'ajout en masse est tout ou rien.
-- **Composants.** Chaque écran est découpé en petits widgets sans connaissance du Bloc parent : ils reçoivent leurs données et remontent les interactions par callbacks.
-- **Textes.** Aucun texte d'interface n'est écrit en dur dans les widgets. Ils passent tous par `context.l10n` (voir `lib/l10n/l10n.dart`), généré à partir de `lib/l10n/arb/app_fr.arb` (langue de référence, avec la description de chaque clé) et `app_en.arb`. Les pluriels, le séparateur décimal et la place du signe % suivent la langue. Les énumérations du domaine ne portent aucun libellé : des extensions de présentation s'en chargent (`CardKindStyle`, `AccountsSortOptionLabel`, `AppLanguageLabel`). Les messages de log restent en français, ils ne s'adressent qu'au développeur.
+Les Blocs sont créés écran par écran, sauf trois qui vivent à la racine de l'app parce qu'ils concernent tout le monde : la connexion (`AuthBloc`), le filtre de raretés (`RarityScopeCubit`) et la langue (`LanguageCubit`). La possession est mise à jour de façon optimiste. L'écran change tout de suite, et revient en arrière avec un message si l'écriture en base échoue.
 
-## Structure du projet
+Aucun texte d'interface n'est écrit en dur. Tout passe par `context.l10n`, généré depuis `lib/l10n/arb/app_fr.arb` (le fichier de référence, où chaque clé est décrite) et `app_en.arb`. Les pluriels, le séparateur décimal et la place du % suivent la langue. Les logs, eux, restent en français.
+
+Le dossier `lib/` est organisé comme suit :
 
 ```
 lib/
-├── main.dart                  # Initialisation Firebase et injection, puis runApp
-├── app.dart                   # MaterialApp, thèmes, langue, AuthBloc, RarityScopeCubit et LanguageCubit fournis à la racine
-├── core/
-│   ├── constants/             # AppConstants (URLs, nom de la base), CardRarity
-│   ├── di/                    # injection_container.dart (get_it)
-│   ├── error/                 # Exceptions et Failures
-│   ├── network/               # NetworkInfo (abstraction de la connectivité)
-│   ├── theme/                 # AppColors, AppTheme
-│   ├── utils/                 # AppLogger, PocketCardsImageSlug
-│   └── widgets/               # AppScaffold, AppLoadingIndicator, AppErrorView
-├── l10n/
-│   ├── arb/                   # app_fr.arb (référence) et app_en.arb
-│   ├── gen/                   # AppLocalizations, généré par flutter gen-l10n (non versionné)
-│   └── l10n.dart              # Extension context.l10n et langues proposées
+├── main.dart                  # Firebase, injection et langue, puis runApp
+├── app.dart                   # MaterialApp, thèmes, langue et Blocs globaux
+├── firebase_options.dart      # Config Firebase (Android, iOS, web), générée par flutterfire
+├── core/                      # Config de build, constantes, injection, erreurs, thème, utilitaires, widgets communs
+├── l10n/                      # Fichiers ARB, extension context.l10n (gen/ n'est pas versionné)
 ├── domain/
-│   ├── entities/              # PokemonCard, CardSet, Account, AccountExtras, CollectionStats,
-│   │                          # ProgressCount, SetProgress, RarityScope, AppUser, CloudAccount, SyncResult
-│   ├── repositories/          # CardRepository, AccountRepository, AuthRepository, CloudSyncRepository
-│   └── usecases/              # Un fichier par action (catalogue, comptes, statistiques, auth, synchro)
+│   ├── entities/              # PokemonCard, CardSet, Account, CollectionStats, SyncQuota…
+│   ├── repositories/          # Les cinq interfaces : cartes, comptes, auth, cloud, réglages
+│   ├── services/              # Règles pures : espérance par booster, taux de tirage, limite de synchro
+│   └── usecases/              # Un fichier par action
 ├── data/
-│   ├── datasources/
-│   │   ├── local/             # AppDatabase (Drift), tables, datasources cartes et comptes
-│   │   └── remote/            # Client HTTP du catalogue
-│   ├── models/                # CardModel, CardSetModel, AccountModel, AppUserModel, CloudAccountModel
-│   └── repositories/          # Implémentations des quatre repositories
-└── presentation/
-    ├── card_sets/             # Accueil : liste des sets, filtre par série, synchronisations
-    ├── set_detail/            # Détail d'un set : cartes, filtres, possession
-    ├── accounts/              # Gestion des comptes de jeu
-    ├── account_extras/        # Cartes qu'un secondaire possède en plus du principal
-    ├── stats/                 # Statistiques de complétion
-    ├── rarity_scope/          # Filtre de raretés Σ / ◆ / ★ commun à toute l'app
-    ├── language/              # Choix de la langue d'affichage, mémorisé
-    ├── auth/                  # Connexion au compte applicatif
-    └── sync/                  # Synchronisation cloud et quota de synchronisations
+│   ├── datasources/           # Drift et réglages en local, client HTTP du catalogue
+│   ├── models/                # Conversion JSON et lignes de base
+│   └── repositories/          # Implémentations
+└── presentation/              # Une feature par dossier : bloc/, view/, widgets/
 ```
 
-Chaque feature de `presentation/` suit le même découpage : `bloc/` (événements, état, Bloc), `view/` (la page) et `widgets/` (les composants).
+## Stockage
 
-## Modèle de données
+La base locale (Drift, schéma v4) contient cinq tables :
 
-### Base locale (Drift, schéma v4)
-
-| Table | Rôle |
+| Table | Contenu |
 |---|---|
-| `card_sets` | Sets du référentiel : id, nom, nombre de cartes, série, logo, boosters |
-| `cards` | Cartes du référentiel : id (`A1-001`), nom anglais, nom français (facultatif), catégorie, set, image, rareté, boosters |
-| `pull_rates` | Probabilités de tirage : set, variante de booster, emplacement, rareté, taux |
-| `owned_cards` | Possession, clé composite (`card_id`, `account_id`) |
-| `accounts` | Comptes de jeu suivis : id (UUID), nom, identifiant de jeu, principal ou non, date de création |
+| `card_sets` | Sets : id, nom, nombre de cartes, série, logo, boosters |
+| `cards` | Cartes : id (`A1-1`, set puis numéro), nom anglais, nom français, catégorie, élément, PV, rareté, image, boosters |
+| `pull_rates` | Taux de tirage par set, variante de booster, emplacement et rareté |
+| `owned_cards` | Possession, une ligne par couple (carte, compte) |
+| `accounts` | Comptes de jeu : UUID, nom, code ami, principal ou non, date de création |
 
-Les listes (boosters, types) sont stockées en une chaîne séparée par des virgules : une carte n'a jamais que quelques valeurs, une table relationnelle serait disproportionnée.
+Les boosters et les éléments d'une carte tiennent dans une chaîne séparée par des virgules. Une carte n'en a jamais plus de trois ou quatre, une table de liaison aurait été disproportionnée.
 
-**Nom français (v4).** La colonne `name_fr` de `cards` reste vide tant que le référentiel n'a pas été resynchronisé après la mise à jour. Elle est remplie par rapprochement sur le set et le numéro avec `cards.fr.json`, et seulement quand le nom diffère du nom anglais. Le nom anglais reste la seule base des URL d'illustrations.
+Le nom français, ajouté en v4, est rempli à la synchronisation en croisant set et numéro avec `cards.fr.json`, et seulement s'il diffère du nom anglais. Les URL d'images partent toujours du nom anglais.
 
-**Migration v1 → v2.** Les identifiants de compte passent d'entiers auto-incrémentés à des UUID, pour qu'un compte créé hors ligne sur deux appareils ne puisse pas entrer en collision au moment de la synchronisation. SQLite ne sait pas changer le type d'une colonne en place : les deux tables concernées sont renommées, recréées au schéma courant, remplies par copie (l'id `1` devient `"1"`) puis supprimées, dans une transaction. Les anciens comptes sont remplacés par de vrais UUID au premier passage dans `SyncWithCloud`.
+En v2, les identifiants de compte sont passés d'entiers à des UUID, pour éviter les collisions entre deux téléphones qui créent un compte hors ligne. SQLite ne sait pas changer le type d'une colonne, donc la migration renomme les tables, les recrée, recopie les lignes (l'id `1` devient `"1"`) puis supprime les anciennes, le tout dans une transaction. Les vrais UUID arrivent à la première synchronisation.
 
-### Firestore
+Le tri des comptes, la langue choisie et l'historique des synchronisations sont gardés avec `shared_preferences` et ne quittent pas le téléphone.
 
-Un document par compte de jeu, avec les cartes possédées dans un champ tableau : une synchronisation coûte une lecture par compte, pas une par carte.
+Dans Firestore, chaque compte de jeu est un document, avec ses cartes dans un tableau. Une synchronisation coûte donc une lecture par compte, pas une par carte.
 
 ```
 users/{userId}/accounts/{accountId}
@@ -177,103 +127,68 @@ users/{userId}/accounts/{accountId}
   ownedCardIds: string[]
 ```
 
-Les règles de sécurité sont versionnées dans `firestore.rules`. Chaque utilisateur connecté ne lit et ne modifie que ses propres comptes, et une écriture n'est acceptée que si le document garde la forme ci-dessus (champs connus, types attendus). Tout le reste de la base est refusé. Elles se déploient avec la CLI Firebase, le projet par défaut étant déclaré dans `.firebaserc` :
+Les règles de sécurité sont dans `firestore.rules` : un utilisateur connecté ne lit et n'écrit que ses propres comptes, et une écriture qui ne respecte pas ce format est refusée. On les déploie avec `firebase deploy --only firestore:rules`.
+
+## Quelques règles métier
+
+Une carte est « de base » si sa rareté est un losange. Tout le reste compte comme alternatif, y compris les promos sans rareté connue. Tous les écrans passent par `CardRarity.isBase` pour afficher les mêmes chiffres.
+
+Dans « X (+Y) / Z », une carte que plusieurs secondaires possèdent ne compte qu'une fois dans Y, et pas du tout si le principal l'a déjà. X + Y ne dépasse donc jamais Z. Le vert ne s'affiche que quand le principal a tout à lui seul.
+
+Pour les boosters prioritaires, `BoosterExpectedValue` estime combien de cartes manquantes une ouverture rapporte en moyenne. Seul le compte principal compte dans ce calcul, puisque les cartes des secondaires ne le rendent pas moins utile pour lui. La progression d'un set côté boosters est l'union de ses boosters, pour qu'une carte présente dans deux boosters ne soit pas comptée deux fois. Les sets promo ne sont jamais recommandés. Si les taux de tirage manquent, les boosters passent en fin de liste, du moins avancé au plus avancé.
+
+À la synchronisation du catalogue, le nombre de cartes d'un set est recalculé à partir des cartes reçues, parce que la source l'oublie parfois (c'est le cas de « Promo B »). Les cartes sont lues sur la branche `main` du référentiel, avec un repli sur la version npm figée en 2.x si GitHub ne répond pas ou si le format du fichier change.
+
+La synchronisation cloud ne retire jamais une carte : une carte cochée d'un côté l'est des deux côtés après la fusion, et l'envoi passe par `arrayUnion` pour que Firestore applique la même règle. `SyncWithCloud` remplace d'abord les anciens identifiants par des UUID, compare ensuite chaque compte avec le cloud, et importe pour finir les comptes qui n'existent qu'en ligne. Une erreur arrête tout sans rien annuler, mais la fusion donne le même résultat si on la rejoue, donc la synchronisation suivante rattrape ce qui manque.
+
+La limite de 4 synchronisations sur 24 heures est vérifiée par `SyncRateLimit` avant toute lecture du cloud. Une synchronisation qui échoue ne compte pas. L'historique reste sur le téléphone : réinstaller l'app ou changer l'heure permet de la contourner, mais ce n'est pas son but, elle sert à éviter qu'un bug ou un doigt trop pressé lance des synchros en boucle.
+
+Le référentiel ne donne pas d'URL d'images. `PocketCardsImageSlug` les reconstruit à partir des noms, sur le modèle de [pocketcards.net](https://pocketcards.net), en se basant sur des exemples observés puisque le site n'a pas d'API. Il gère les noms collés (« Teal MaskOgerpon »), les formes régionales (« Galarianzigzagoon »), les chiffres en fin de nom (« Porygon2 »), et garde une table de correctifs pour le reste. En debug, chaque image introuvable est signalée dans la console.
+
+## Lancer le projet
+
+Il faut un SDK Flutter récent (Flutter 3.47 et Dart 3.13 au minimum) et, pour la partie cloud, un projet Firebase.
 
 ```
-firebase deploy --only firestore:rules
+flutter pub get
+dart run build_runner build
+flutter run
 ```
 
-## Règles métier
+`flutter pub get` génère aussi les textes traduits dans `lib/l10n/gen/`. `build_runner` génère le code Drift (les `*.g.dart`). Aucun des deux n'est versionné.
 
-**Possession.** Elle est propre à chaque compte. Le tap simple agit sur le compte principal, le double-tap sur un secondaire choisi dans une liste. Il y a toujours exactement un compte principal dès qu'au moins un compte existe, et le premier compte créé le devient automatiquement.
+Le dépôt contient la configuration Firebase de mon projet. Pour utiliser le vôtre, créez un projet sur la [console Firebase](https://console.firebase.google.com), activez la connexion par email et par Google dans *Authentication*, puis générez la configuration avec la [CLI FlutterFire](https://firebase.google.com/docs/flutter/setup) :
 
-**Losange et alternatif.** Une carte est « de base » si sa rareté est de groupe losange. Tout le reste (étoile, couronne, chromatique, et cartes sans rareté connue comme certaines promos) est « alternatif ». Toute l'application passe par `CardRarity.isBase`, pour que les écrans affichent les mêmes chiffres.
+```
+dart pub global activate flutterfire_cli
+flutterfire configure --project=<id-du-projet> --platforms=android,ios,web --android-package-name=com.mpaitier.cartodex --ios-bundle-id=com.mpaitier.cartodex
+```
 
-**Progression « X (+Y) / Z ».** Y compte les cartes possédées par au moins un secondaire et pas par le principal, sans doublon même si plusieurs secondaires la possèdent. X + Y ne dépasse donc jamais Z. La barre ou la bordure passe au vert seulement quand le principal possède, à lui seul, tout le groupe.
+Elle écrit `lib/firebase_options.dart` et `android/app/google-services.json`. Il reste ensuite à déclarer les empreintes SHA-1 et SHA-256 de vos clés dans les paramètres de l'app Android (`cd android && ./gradlew signingReport` pour celle de debug), sans quoi la connexion Google échoue. Créez enfin la base Firestore et déployez les règles avec `firebase deploy --only firestore:rules` (la CLI s'installe avec `npm install -g firebase-tools`).
 
-**Boosters prioritaires.** La progression d'un set côté boosters est l'union de ses boosters, pas la somme : une carte présente dans plusieurs boosters ne compte qu'une fois. Les sets promotionnels et les sets sans booster connu sont exclus. Le tri ne regarde que le compte principal, puisque les cartes des secondaires ne rendent pas un booster moins utile pour lui.
+### Release Android
 
-**Synchronisation du catalogue.** Le total de cartes d'un set est recalculé à partir des cartes réellement récupérées, car la source l'omet pour certains sets (« Promo B ») ou peut diverger.
-
-**Synchronisation cloud.** La règle de fusion est que « possédée » l'emporte toujours : une carte marquée possédée d'un côté l'est des deux après synchronisation, et aucune carte n'est jamais démarquée. L'envoi utilise `arrayUnion` côté Firestore, pour que la règle tienne même côté serveur. Déroulé de `SyncWithCloud` :
-
-1. Remplacement des identifiants hérités (simples nombres) par des UUID.
-2. Comparaison compte par compte : envoi de ce qui manque au cloud, récupération de ce qui manque en local.
-3. Import des comptes qui n'existent que dans le cloud.
-
-Le traitement s'arrête à la première erreur sans revenir en arrière. La fusion étant idempotente, une nouvelle synchronisation rattrape le reste.
-
-**Limite de synchronisations.** `SyncRateLimit` autorise 4 synchronisations réussies sur une fenêtre glissante de 24 heures, par compte applicatif. `SyncWithCloud` vérifie le quota avant toute lecture du cloud et renvoie une `SyncQuotaExceededFailure` au-delà. Une synchronisation en échec n'est pas comptée. Les comptes listés dans `SYNC_QUOTA_EXEMPT_UIDS` (voir « Réglages de build ») échappent à la limite. L'historique est gardé sur l'appareil (`shared_preferences`, une clé par compte) : la limite protège le quota Firestore d'un usage en boucle, sans prétendre résister à une réinstallation ou à un changement d'heure volontaire.
-
-**Images.** La source ne fournit aucune URL exploitable. Les illustrations de cartes, logos de sets et icônes de boosters sont reconstruits à partir des noms du référentiel via `PocketCardsImageSlug`, sur le modèle de [pocketcards.net](https://pocketcards.net). Le site n'a pas d'API documentée : la conversion est déduite d'exemples observés. Elle gère les noms collés (« Teal MaskOgerpon »), les préfixes de forme régionale (« Galarianzigzagoon »), les chiffres en fin de nom (« Porygon2 ») et dispose d'une table de correctifs manuels. En debug, `AppLogger` signale chaque image introuvable.
-
-## Installation
-
-Prérequis : un SDK Flutter compatible avec `pubspec.lock` (Dart 3.13 et Flutter 3.47 au minimum) et un projet Firebase.
-
-1. Récupérer les dépendances. La commande génère aussi les textes traduits dans `lib/l10n/gen/` (non versionné) ; après une modification des fichiers ARB, `flutter gen-l10n` les régénère seuls :
-   ```
-   flutter pub get
-   ```
-2. Générer le code Drift (les fichiers `*.g.dart` ne sont pas versionnés) :
-   ```
-   dart run build_runner build
-   ```
-3. Configurer Firebase (l'application ne démarre pas sans) :
-   1. Créer un projet sur la [console Firebase](https://console.firebase.google.com).
-   2. Dans *Authentication → Sign-in method*, activer **Email/Password** et **Google**.
-   3. Ajouter une app Android avec le package `com.mpaitier.cartodex`.
-   4. Ajouter dans les paramètres de l'app Android, sur la console, les empreintes SHA-1 et SHA-256 de la clé de debug (`cd android && ./gradlew signingReport`, variant `debug`) et de la clé de release (voir plus bas). Google Sign-In refuse la connexion depuis un APK dont l'empreinte n'est pas déclarée.
-   5. Générer la configuration Firebase de l'app avec la [CLI FlutterFire](https://firebase.google.com/docs/flutter/setup) : elle écrit `lib/firebase_options.dart` (lu par `main.dart`), `android/app/google-services.json` et met à jour `firebase.json`.
-      ```
-      dart pub global activate flutterfire_cli
-      flutterfire configure --project=<id-du-projet> --platforms=android,ios,web --android-package-name=com.mpaitier.cartodex --ios-bundle-id=com.mpaitier.cartodex
-      ```
-   6. Créer la base Firestore, puis déployer les règles de sécurité avec `firebase deploy --only firestore:rules` (CLI installée par `npm install -g firebase-tools`, connexion par `firebase login`).
-4. Générer les icônes de lancement (facultatif) :
-   ```
-   dart run flutter_launcher_icons
-   ```
-5. Lancer l'application :
-   ```
-   flutter run
-   ```
-
-### Réglages de build (facultatif)
-
-Certains réglages sont passés au build plutôt qu'écrits dans le code, pour ne jamais finir dans le dépôt. Copier `dart_defines.json.example` en `dart_defines.json` (ignoré par Git), le remplir, puis ajouter `--dart-define-from-file=dart_defines.json` à `flutter run` ou `flutter build` :
-
-| Clé | Rôle |
-|---|---|
-| `SYNC_QUOTA_EXEMPT_UIDS` | Identifiants Firebase (uid) exemptés de la limite de synchronisations, séparés par des virgules. Le menu cloud affiche alors « Synchros illimitées ». |
-
-Sans ce fichier, aucun compte n'est exempté.
-
-### Build de release
-
-La release est signée avec une clé propre au projet, jamais versionnée. Pour la créer une fois (la garder hors du dépôt et la sauvegarder : sans elle, impossible de publier une mise à jour) :
+La release est signée avec une clé à part, qui ne doit jamais entrer dans le dépôt. Pour la créer :
 
 ```
 keytool -genkey -v -keystore <chemin>/cartodex-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias cartodex
 ```
 
-Copier ensuite `android/key.properties.example` en `android/key.properties` et y renseigner les mots de passe, l'alias et le chemin de la clé. Les empreintes à déclarer dans Firebase s'affichent avec `keytool -list -v -keystore <chemin>/cartodex-release.jks -alias cartodex`. Puis :
+Copiez ensuite `android/key.properties.example` en `android/key.properties` et remplissez-le. Gardez une sauvegarde de la clé : si elle est perdue, plus aucune mise à jour n'est possible sous le même identifiant. Le build se lance avec :
 
 ```
-flutter build apk --release
+flutter build apk --release --split-per-abi
 ```
 
-Sans `android/key.properties`, le build retombe sur la clé de debug avec un avertissement dans la console Gradle : un tel APK sert aux essais, pas à la diffusion.
+Sans `key.properties`, Gradle signe avec la clé de debug et affiche un avertissement. L'APK marche, mais il n'est pas fait pour être distribué.
 
 ### iOS
 
-Le projet iOS compile (iOS 15 minimum, imposé par Firebase), et la CI le vérifie à chaque pull request avec `flutter build ios --release --no-codesign`. Il n'a encore jamais été lancé sur un iPhone : la connexion Google y demande en plus l'identifiant client OAuth iOS dans `Info.plist`, non configuré à ce jour.
+Le projet iOS compile (iOS 15 minimum, imposé par Firebase), et la CI le vérifie sur macOS à chaque pull request. Je ne l'ai jamais lancé sur un iPhone, faute de Mac. La connexion Google y demandera en plus l'identifiant client OAuth iOS dans `Info.plist`.
 
-## Tests et intégration continue
+## Tests
 
-Les tests portent sur la logique sans interface : règles du domaine (progression, raretés, espérance de cartes par booster, limite de synchronisations), use cases (`GetCollectionStats`, `GetSetsProgress`, `SyncWithCloud`, `GetSyncQuota`), modèles de données, utilitaires (`PocketCardsImageSlug`, `PercentFormatter`) et états des Blocs et Cubits. Les dépôts sont remplacés par des faux en mémoire (`test/helpers/fake_repositories.dart`) : aucun test ne touche à Drift, à Firebase ou au réseau.
-
-Pour tout lancer en local, dans cet ordre (le code généré doit exister avant l'analyse) :
+Les tests couvrent tout ce qui n'est pas de l'interface : les règles du domaine (progression, raretés, espérance par booster, limite de synchro), les use cases (`GetCollectionStats`, `GetSetsProgress`, `SyncWithCloud`, `GetSyncQuota`), les modèles, les utilitaires et les états des Blocs. Les repositories sont remplacés par des faux en mémoire (`test/helpers/fake_repositories.dart`), donc aucun test ne touche à Drift, à Firebase ou au réseau.
 
 ```
 flutter pub get
@@ -283,14 +198,24 @@ flutter analyze
 flutter test
 ```
 
-`flutter gen-l10n` est à relancer après chaque modification des fichiers ARB, sinon l'analyse signale les nouvelles clés comme inconnues.
+Pensez à relancer `flutter gen-l10n` après avoir touché aux fichiers ARB, sinon l'analyse ne trouve pas les nouvelles clés.
 
-La CI GitHub Actions (`.github/workflows/ci.yml`) refait ces étapes à chaque push sur `main` et sur chaque pull request, avec `flutter analyze --fatal-infos` : la moindre remarque du linter fait échouer le run. Si elles passent, deux jobs compilent ensuite l'app : un APK release sur Linux (signé avec la clé de debug, faute de secret) et l'app iOS sans signature sur macOS.
+La CI (`.github/workflows/ci.yml`) refait tout ça à chaque push sur `main` et sur chaque pull request, avec `flutter analyze --fatal-infos` : une seule remarque du linter fait échouer le run. Deux jobs compilent ensuite l'app, un APK sur Linux et l'app iOS sans signature sur macOS.
 
-## Limites connues
+## Limites actuelles
 
-- **Cloud.** La synchronisation porte sur les comptes et la possession. Le champ `isPrimary` n'est pas réconcilié entre appareils : un compte importé ne devient principal que si aucun compte n'existait en local.
-- **Noms français.** Au 10/11/2026, `cards.fr.json` ne traduit qu'une petite partie du catalogue (environ 90 cartes, surtout des promos B) et ne couvre pas les extensions les plus récentes. Les autres cartes s'affichent en anglais, même avec l'application en français. Les noms se complètent d'eux-mêmes à la synchronisation suivante quand le fichier source est enrichi.
-- **Images.** Le slug des images repose sur un site non officiel. Un nom inhabituel peut donner une image introuvable, auquel cas la tuile affiche le numéro de la carte. Les cas repérés se corrigent dans `_cardSlugOverrides`.
-- **Données de carte.** Les colonnes `hp`, `types` et `illustrator` existent en base mais la source actuelle ne les fournit pas.
-- **Tests.** Il n'y a ni tests de widgets ni tests d'intégration : l'interface se vérifie encore à la main.
+Seul Android est testé et distribué. iOS compile sans avoir été essayé, et le web n'est pas encore pris en charge.
+
+Le fichier `cards.fr.json` du référentiel ne traduit pour l'instant qu'une petite partie des cartes (environ 90, surtout des promos, au 10/11/2026), et rien des dernières extensions. Le reste s'affiche en anglais, et les noms se complèteront tout seuls quand la source sera enrichie. Les noms de sets sont encore en anglais.
+
+Certaines images restent introuvables quand un nom ne suit pas la convention du site (le logo de « Special Pack First Partners », par exemple). La tuile affiche alors le numéro de la carte ou une icône, et le cas se corrige dans les tables de `PocketCardsImageSlug`.
+
+Les messages d'erreur qui viennent de la couche data (connexion, stockage, réseau) sont toujours en français, même quand l'app est en anglais. Le champ `isPrimary` n'est pas réconcilié entre appareils, et la colonne `illustrator` reste vide parce que la source ne la fournit pas. Il n'y a pas encore de tests de widgets ni de tests d'intégration.
+
+## Pour la suite
+
+J'aimerais une version web, plus pratique pour cocher des cartes depuis un ordinateur. La configuration Firebase est prête, mais Drift sur le web demande SQLite compilé en WebAssembly, la connexion Google y fonctionne autrement, et il faudra vérifier que pocketcards.net accepte qu'on charge ses images depuis un autre domaine. Viendront aussi des erreurs typées pour traduire les messages restants, et les noms de sets en français, que `sets.json` fournit déjà.
+
+## Licence
+
+Le code est sous licence [MIT](LICENSE). Pokémon et Pokémon TCG Pocket sont des marques de leurs propriétaires respectifs. Ce projet personnel n'est ni affilié à The Pokémon Company, Nintendo, Creatures ou GAME FREAK, ni approuvé par eux. Les données de cartes viennent de [pokemon-tcg-pocket-database](https://github.com/flibustier/pokemon-tcg-pocket-database) et les images de [pocketcards.net](https://pocketcards.net).
