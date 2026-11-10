@@ -269,8 +269,23 @@ class SetDetailState extends Equatable {
 
   /// Cartes à afficher compte tenu des filtres courants (restriction
   /// à un compte, possession, booster, rareté et type, cumulatifs).
-  List<PokemonCard> get visibleCards {
-    var result = _ownershipScopedCards;
+  List<PokemonCard> get visibleCards =>
+      _applyContentFilters(_ownershipScopedCards);
+
+  /// Vrai quand un filtre de booster, de rareté ou de type est actif :
+  /// le compteur de la barre du haut ne porte alors que sur une partie
+  /// du set (voir [_progressCards]).
+  bool get hasContentFilters =>
+      selectedPack != null ||
+      selectedRarities.isNotEmpty ||
+      selectedKinds.isNotEmpty;
+
+  /// [source] restreintes par les filtres qui choisissent *quelles*
+  /// cartes regarder (booster, rareté, type), par opposition à la
+  /// possession et à la restriction à un compte, qui disent *à qui*
+  /// elles sont.
+  List<PokemonCard> _applyContentFilters(List<PokemonCard> source) {
+    var result = source;
     final pack = selectedPack;
     if (pack != null) {
       result = result.where((card) => card.packs.contains(pack)).toList();
@@ -288,6 +303,16 @@ class SetDetailState extends Equatable {
     }
     return result;
   }
+
+  /// Cartes sur lesquelles porte le compteur de la barre du haut
+  /// (`SetProgressSummary`) : tout le set, restreint par les filtres
+  /// de booster, de rareté et de type ([_applyContentFilters]).
+  ///
+  /// Le filtre de possession et la restriction à un compte ne
+  /// s'appliquent pas : ils trient par possession, et le compteur
+  /// mesure justement la possession. Avec "Manquantes", il afficherait
+  /// toujours 0, et avec "Principal", toujours 100 %.
+  List<PokemonCard> get _progressCards => _applyContentFilters(cards);
 
   /// [visibleCards] restreintes au volet [group] de
   /// [CardGridPager][../widgets/card_grid_pager.dart] — le même
@@ -307,22 +332,22 @@ class SetDetailState extends Equatable {
   }
 
   /// Nombre de cartes de la "collection de base" (rareté losange)
-  /// dans ce set, et combien le compte principal en possède — pour
-  /// `SetProgressSummary`. Ignore les filtres de booster/rareté/
-  /// possession : c'est une mesure de progression sur tout le set,
-  /// pas sur ce qui est actuellement affiché.
-  int get baseTotal => cards.where(_isBase).length;
+  /// parmi [_progressCards], et combien le compte principal en
+  /// possède — pour `SetProgressSummary`. Suit les filtres de booster,
+  /// de rareté et de type, mais pas celui de possession.
+  int get baseTotal => _progressCards.where(_isBase).length;
 
-  int get baseOwned =>
-      cards.where((c) => _isBase(c) && primaryOwnedCardIds.contains(c.id)).length;
+  int get baseOwned => _progressCards
+      .where((c) => _isBase(c) && primaryOwnedCardIds.contains(c.id))
+      .length;
 
   /// Symétrique de [baseTotal]/[baseOwned] pour les "cartes
   /// alternatives" (tout ce qui n'est pas losange : étoile, couronne,
   /// chromatique). Les cartes sans rareté connue (rares promos) ne
   /// comptent ni dans l'un ni dans l'autre.
-  int get alternativeTotal => cards.where(_isAlternative).length;
+  int get alternativeTotal => _progressCards.where(_isAlternative).length;
 
-  int get alternativeOwned => cards
+  int get alternativeOwned => _progressCards
       .where((c) => _isAlternative(c) && primaryOwnedCardIds.contains(c.id))
       .length;
 
@@ -333,7 +358,8 @@ class SetDetailState extends Equatable {
   /// possèdent. Ne dépasse donc jamais [baseTotal].
   int get baseOwnedAllAccounts {
     final secondaryOnly = secondaryOwnedCardIds.difference(primaryOwnedCardIds);
-    final extra = cards.where((c) => _isBase(c) && secondaryOnly.contains(c.id));
+    final extra = _progressCards
+        .where((c) => _isBase(c) && secondaryOnly.contains(c.id));
     return baseOwned + extra.length;
   }
 
@@ -341,8 +367,8 @@ class SetDetailState extends Equatable {
   /// alternatives.
   int get alternativeOwnedAllAccounts {
     final secondaryOnly = secondaryOwnedCardIds.difference(primaryOwnedCardIds);
-    final extra =
-        cards.where((c) => _isAlternative(c) && secondaryOnly.contains(c.id));
+    final extra = _progressCards
+        .where((c) => _isAlternative(c) && secondaryOnly.contains(c.id));
     return alternativeOwned + extra.length;
   }
 
