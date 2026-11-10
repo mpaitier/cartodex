@@ -6,14 +6,14 @@ import '../../../core/theme/app_colors.dart';
 ///
 /// Trois losanges — plutôt que des points génériques, pour
 /// reprendre le symbole déjà utilisé pour la rareté ailleurs dans
-/// l'app — celui du volet actif agrandi.
+/// l'app — celui du volet actif agrandi et dans la couleur principale
+/// du thème.
 ///
 /// L'indicateur flotte au-dessus de la grille de cartes : il est posé
 /// sur un fond gris aux bords arrondis
-/// ([AppColors.translucentBadgeBackground], opacité de 80 %), le même
-/// que le badge de rareté des tuiles, pour rester lisible quelle que
-/// soit l'illustration en dessous. Sur ce fond, les losanges sont
-/// blancs : plein pour le volet actif, atténué pour les autres.
+/// ([AppColors.translucentBadgeBackground], opacité de 80 %), pour
+/// rester lisible quelle que soit l'illustration en dessous. Les
+/// losanges des volets inactifs sont blancs atténués.
 class PageDotsIndicator extends StatelessWidget {
   const PageDotsIndicator({required this.currentPage, super.key});
 
@@ -67,7 +67,7 @@ class _PageDiamond extends StatelessWidget {
             style: TextStyle(
               fontSize: isActive ? 16 : 11,
               color: isActive
-                  ? Colors.white
+                  ? Theme.of(context).colorScheme.primary
                   : Colors.white.withValues(
                       alpha: PageDotsIndicator._inactiveOpacity,
                     ),
