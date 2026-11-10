@@ -29,9 +29,16 @@ abstract class AppColors {
   /// cartes non possédées.
   static const Color missingCards = Color(0xFFE57373);
 
-  /// Fond du badge de rareté des tuiles de carte (voir
-  /// `CardRarityBadge`), appliqué avec une opacité de 80 % : les
-  /// symboles officiels sont blancs cerclés de noir et se perdent
-  /// sur le fond clair d'une tuile.
-  static const Color rarityBadgeBackground = Color(0xFF757575);
+  /// Fond gris des petits repères posés par-dessus du contenu, à
+  /// appliquer avec [translucentBadgeOpacity] :
+  /// - badge de rareté des tuiles de carte (`CardRarityBadge`) : les
+  ///   symboles officiels sont blancs cerclés de noir et se perdent
+  ///   sur le fond clair d'une tuile ;
+  /// - indicateur de volet du détail d'un set (`PageDotsIndicator`),
+  ///   qui flotte au-dessus de la grille de cartes.
+  static const Color translucentBadgeBackground = Color(0xFF757575);
+
+  /// Opacité de [translucentBadgeBackground] : le contenu en dessous
+  /// reste un peu visible, sans gêner la lecture du repère.
+  static const double translucentBadgeOpacity = 0.8;
 }
