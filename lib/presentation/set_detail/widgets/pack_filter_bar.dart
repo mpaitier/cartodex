@@ -4,7 +4,9 @@ import '../../../core/utils/pack_display_name.dart';
 import 'pack_avatar.dart';
 
 /// Barre horizontale de filtre par booster, avec un choix "Tous"
-/// systématique en tête.
+/// systématique en tête. Comme les autres barres du panneau de
+/// filtres, les puces n'affichent pas de coche : la puce choisie se
+/// reconnaît à sa couleur.
 ///
 /// [setName] est nécessaire pour retrouver l'icône de chaque booster
 /// (voir [PackAvatar]), et pour retirer le nom de l'extension quand le
@@ -44,6 +46,9 @@ class PackFilterBar extends StatelessWidget {
             return ChoiceChip(
               label: const Text('Tous'),
               selected: selectedPack == null,
+              showCheckmark: false,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+              visualDensity: VisualDensity.compact,
               onSelected: (_) => onPackSelected(null),
             );
           }
@@ -52,6 +57,9 @@ class PackFilterBar extends StatelessWidget {
             avatar: PackAvatar(setName: setName, packName: pack),
             label: Text(PackDisplayName.of(setName, pack)),
             selected: selectedPack == pack,
+            showCheckmark: false,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+            visualDensity: VisualDensity.compact,
             onSelected: (_) => onPackSelected(pack),
           );
         },

@@ -127,7 +127,7 @@ class SetDetailState extends Equatable {
     return candidates.any((account) => account.id == id) ? id : null;
   }
 
-  /// Les puces à proposer dans `OwnershipFilterBar`. Seul "Tout" tant
+  /// Les puces à proposer dans `OwnershipFilterBar`. Seul "Tous" tant
   /// qu'aucun compte principal n'existe (le filtre n'aurait rien à
   /// départager), et aussi quand l'écran est déjà restreint aux cartes
   /// d'un compte ([ownerFilterAccountId]) : la possession y est déjà

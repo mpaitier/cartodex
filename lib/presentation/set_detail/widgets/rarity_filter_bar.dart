@@ -5,7 +5,7 @@ import '../../../core/widgets/card_rarity_icon.dart';
 
 /// Barre horizontale de filtre par rareté, multi-sélection : chaque
 /// palier se coche indépendamment (`FilterChip`), plus un choix
-/// "Tout" (`ChoiceChip`) qui vide la sélection — un ensemble vide
+/// "Tous" (`ChoiceChip`) qui vide la sélection — un ensemble vide
 /// signifie "aucun filtre actif", pas "rien à afficher".
 ///
 /// Chaque puce montre la rareté avec les images officielles du jeu
@@ -23,7 +23,7 @@ class RarityFilterBar extends StatelessWidget {
 
   final List<CardRarity> availableRarities;
 
-  /// Vide = "Tout" (aucun filtre actif).
+  /// Vide = "Tous" (aucun filtre actif).
   final Set<CardRarity> selectedRarities;
 
   final ValueChanged<Set<CardRarity>> onSelectionChanged;
@@ -44,7 +44,7 @@ class RarityFilterBar extends StatelessWidget {
         itemBuilder: (context, index) {
           if (index == 0) {
             return ChoiceChip(
-              label: const Text('Tout'),
+              label: const Text('Tous'),
               selected: allSelected,
               showCheckmark: false,
               labelPadding: const EdgeInsets.symmetric(horizontal: 4),

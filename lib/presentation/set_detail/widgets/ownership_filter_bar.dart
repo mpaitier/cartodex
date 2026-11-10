@@ -60,7 +60,7 @@ class OwnershipFilterBar extends StatelessWidget {
   static String _labelFor(OwnershipFilter filter) {
     switch (filter) {
       case OwnershipFilter.all:
-        return 'Tout';
+        return 'Tous';
       case OwnershipFilter.primary:
         return 'Principal';
       case OwnershipFilter.secondary:
@@ -70,7 +70,7 @@ class OwnershipFilterBar extends StatelessWidget {
     }
   }
 
-  /// `null` pour "Tout" : pas de pastille, il ne représente aucun
+  /// `null` pour "Tous" : pas de pastille, il ne représente aucun
   /// état de possession en particulier.
   static Widget? _dotFor(OwnershipFilter filter) {
     switch (filter) {

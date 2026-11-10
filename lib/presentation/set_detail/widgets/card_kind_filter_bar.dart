@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/card_kind.dart';
 import 'card_kind_style.dart';
 
-/// Barre de puces du filtre par type : "Tout", puis une puce par type
+/// Barre de puces du filtre par type : "Tous", puis une puce par type
 /// présent dans le set, les éléments de Pokémon d'abord (pastille de
 /// couleur), les types de Dresseur ensuite (icône) — voir
 /// [CardKindStyle]. Multi-sélection, comme le filtre de rareté :
@@ -42,7 +42,7 @@ class CardKindFilterBar extends StatelessWidget {
         itemBuilder: (context, index) {
           if (index == 0) {
             return ChoiceChip(
-              label: const Text('Tout'),
+              label: const Text('Tous'),
               selected: selectedKinds.isEmpty,
               showCheckmark: false,
               labelPadding: const EdgeInsets.symmetric(horizontal: 4),
