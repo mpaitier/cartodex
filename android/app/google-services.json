@@ -47,10 +47,10 @@
               "client_type": 3
             },
             {
-              "client_id": "739770944620-ug1pafjj92kcqb8mbstctmb28liv2ge5.apps.googleusercontent.com",
+              "client_id": "739770944620-bbjs7vb4a45cdg8s9d5fgfo0m3c8u8mh.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.cartodex"
+                "bundle_id": "com.mpaitier.cartodex"
               }
             }
           ]
