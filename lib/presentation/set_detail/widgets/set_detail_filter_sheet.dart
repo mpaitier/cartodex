@@ -7,7 +7,7 @@ import '../bloc/ownership_filter.dart';
 import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
 import '../bloc/set_detail_state.dart';
-import 'element_filter_bar.dart';
+import 'card_kind_filter_bar.dart';
 import 'filter_sheet_section.dart';
 import 'ownership_filter_bar.dart';
 import 'pack_filter_bar.dart';
@@ -19,7 +19,7 @@ import 'secondary_account_filter_bar.dart';
 ///
 /// Regroupe tous les filtres de la grille, rubrique par rubrique
 /// ([FilterSheetSection]) : booster, rareté, possession (avec le
-/// sous-filtre par compte secondaire) et type ([ElementFilterBar]).
+/// sous-filtre par compte secondaire) et type ([CardKindFilterBar]).
 /// Une rubrique sans choix à proposer est masquée. "Réinitialiser"
 /// remet tout à zéro ([FiltersCleared]).
 ///
@@ -50,9 +50,9 @@ class SetDetailFilterSheet extends StatelessWidget {
         final rarities = state.availableRaritiesForGroup(activeGroup);
         final hasRarities = rarities.length > 1;
         final hasOwnership = state.availableOwnershipFilters.length > 1;
-        final hasElements = state.availableElements.length > 1;
+        final hasKinds = state.availableKinds.length > 1;
         final hasAnyFilter =
-            hasPacks || hasRarities || hasOwnership || hasElements;
+            hasPacks || hasRarities || hasOwnership || hasKinds;
 
         return SafeArea(
           child: Column(
@@ -124,12 +124,12 @@ class SetDetailFilterSheet extends StatelessWidget {
                       ),
                       FilterSheetSection(
                         title: 'Type',
-                        visible: hasElements,
-                        child: ElementFilterBar(
-                          availableElements: state.availableElements,
-                          selectedElements: state.selectedElements,
+                        visible: hasKinds,
+                        child: CardKindFilterBar(
+                          availableKinds: state.availableKinds,
+                          selectedKinds: state.selectedKinds,
                           onSelectionChanged: (selection) =>
-                              bloc.add(ElementFilterChanged(selection)),
+                              bloc.add(KindFilterChanged(selection)),
                         ),
                       ),
                     ],
