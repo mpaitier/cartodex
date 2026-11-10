@@ -174,13 +174,10 @@ users/{userId}/accounts/{accountId}
   ownedCardIds: string[]
 ```
 
-Règles de sécurité à déployer côté console :
+Les règles de sécurité sont versionnées dans `firestore.rules`. Chaque utilisateur connecté ne lit et ne modifie que ses propres comptes, et une écriture n'est acceptée que si le document garde la forme ci-dessus (champs connus, types attendus). Tout le reste de la base est refusé. Elles se déploient avec la CLI Firebase, le projet par défaut étant déclaré dans `.firebaserc` :
 
 ```
-match /users/{userId}/accounts/{accountId} {
-  allow read, write: if request.auth != null
-    && request.auth.uid == userId;
-}
+firebase deploy --only firestore:rules
 ```
 
 ## Règles métier
@@ -223,7 +220,7 @@ Prérequis : un SDK Flutter compatible avec `pubspec.lock` (Dart 3.13 et Flutter
    3. Ajouter une app Android avec le package `com.example.cartodex`.
    4. Récupérer l'empreinte SHA-1 de debug (`cd android && ./gradlew signingReport`, variant `debug`) et l'ajouter dans les paramètres de l'app Android sur la console. Google Sign-In en a besoin.
    5. Télécharger `google-services.json` et le placer dans `android/app/`.
-   6. Créer la base Firestore et déployer les règles de sécurité données plus haut.
+   6. Créer la base Firestore, puis déployer les règles de sécurité avec `firebase deploy --only firestore:rules` (CLI installée par `npm install -g firebase-tools`, connexion par `firebase login`).
 4. Générer les icônes de lancement (facultatif) :
    ```
    dart run flutter_launcher_icons
@@ -243,4 +240,3 @@ Firebase n'est configuré que pour Android.
 - **Données de carte.** Les colonnes `hp`, `types` et `illustrator` existent en base mais la source actuelle ne les fournit pas.
 - **Tests.** Il n'y a pas encore de suite de tests automatisés. Les premiers candidats sont les use cases de calcul (`GetCollectionStats`, `GetSetsProgress`), `SyncWithCloud` et `PocketCardsImageSlug`, qui sont de la logique pure.
 - **Livraison.** L'identifiant d'application est encore `com.example.cartodex` et le build release est signé avec la clé de debug.
-- **Règles Firestore.** Elles ne sont documentées qu'ici, pas versionnées dans un fichier `firestore.rules`.
