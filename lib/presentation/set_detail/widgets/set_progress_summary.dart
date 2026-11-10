@@ -16,6 +16,11 @@ import '../../../core/widgets/rarity_total_symbol.dart';
 /// violet) et principal + secondaires (contour jaune) — mêmes
 /// couleurs que le badge de possession des cartes, pour rester
 /// cohérent avec ce que chacune signifie déjà ailleurs dans l'app.
+///
+/// Les compteurs suivent les filtres de booster, de rareté et de type
+/// du détail d'un set. Quand l'un d'eux est actif ([isFiltered]), une
+/// petite icône de filtre précède les compteurs, pour ne pas les
+/// confondre avec la progression du set entier.
 class SetProgressSummary extends StatefulWidget {
   const SetProgressSummary({
     required this.setName,
@@ -25,6 +30,7 @@ class SetProgressSummary extends StatefulWidget {
     required this.alternativeOwnedPrimary,
     required this.alternativeOwnedAllAccounts,
     required this.alternativeTotal,
+    this.isFiltered = false,
     super.key,
   });
 
@@ -42,6 +48,10 @@ class SetProgressSummary extends StatefulWidget {
   final int alternativeOwnedPrimary;
   final int alternativeOwnedAllAccounts;
   final int alternativeTotal;
+
+  /// Vrai quand les compteurs ne portent que sur une partie du set
+  /// (filtre de booster, de rareté ou de type actif).
+  final bool isFiltered;
 
   @override
   State<SetProgressSummary> createState() => _SetProgressSummaryState();
@@ -92,6 +102,14 @@ class _SetProgressSummaryState extends State<SetProgressSummary> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (widget.isFiltered) ...[
+                    Icon(
+                      Icons.filter_list,
+                      size: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                   _RarityGroupCount(
                     symbol: const RaritySymbol.diamond(),
                     owned: baseOwned,

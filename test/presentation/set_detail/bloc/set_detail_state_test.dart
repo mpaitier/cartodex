@@ -1,3 +1,4 @@
+import 'package:cartodex/domain/entities/account.dart';
 import 'package:cartodex/domain/entities/card_category.dart';
 import 'package:cartodex/domain/entities/card_kind.dart';
 import 'package:cartodex/domain/entities/pokemon_card.dart';
@@ -85,6 +86,61 @@ void main() {
         ownershipFilter: OwnershipFilter.notOwned,
       );
       expect(state.activeFilterCount, 3);
+    });
+  });
+
+  group('SetDetailState : compteurs de progression filtrés', () {
+    final progressCards = [
+      _pokemon('1', 'grass'),
+      _pokemon('2', 'grass'),
+      _pokemon('3', 'fire'),
+      _trainer('4', CardCategory.item),
+    ];
+    // Toutes les cartes de test sont de rareté "C" : collection de base.
+    const ownedByPrimary = {'1', '3'};
+
+    SetDetailState stateWith({
+      Set<CardKind> kinds = const {},
+      OwnershipFilter ownership = OwnershipFilter.all,
+    }) {
+      return SetDetailState(
+        cards: progressCards,
+        accounts: [
+          Account(
+            id: 'main',
+            name: 'Principal',
+            gameAccountId: '0000',
+            isPrimary: true,
+            createdAt: DateTime(2026),
+          ),
+        ],
+        ownershipByAccountId: {
+          'main': {for (final n in ownedByPrimary) 'A1-$n'},
+        },
+        selectedKinds: kinds,
+        ownershipFilter: ownership,
+      );
+    }
+
+    test('sans filtre, portent sur tout le set', () {
+      final state = stateWith();
+      expect(state.baseTotal, 4);
+      expect(state.baseOwned, 2);
+      expect(state.hasContentFilters, isFalse);
+    });
+
+    test('suivent le filtre par type', () {
+      final state = stateWith(kinds: const {CardKind.grass});
+      expect(state.baseTotal, 2);
+      expect(state.baseOwned, 1);
+      expect(state.hasContentFilters, isTrue);
+    });
+
+    test('ignorent le filtre de possession', () {
+      final state = stateWith(ownership: OwnershipFilter.notOwned);
+      expect(state.baseTotal, 4);
+      expect(state.baseOwned, 2);
+      expect(state.hasContentFilters, isFalse);
     });
   });
 }
