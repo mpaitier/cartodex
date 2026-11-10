@@ -11,10 +11,23 @@ import '../../../domain/entities/account_extras.dart';
 ///
 /// Une boîte à zéro reste affichée mais grisée, pour que la ligne
 /// garde la même forme d'un compte à l'autre.
+///
+/// Le cadre d'une boîte passe au vert ([AppColors.complete]) quand
+/// [completesBase] ou [completesAlternative] est vrai : les cartes en
+/// plus de ce compte complètent alors le principal de ce côté (voir
+/// `SetExtras.completesBase`). Sinon, il est jaune s'il y a des cartes
+/// en plus, neutre sinon.
 class ExtraCountsLabel extends StatelessWidget {
-  const ExtraCountsLabel({required this.counts, super.key});
+  const ExtraCountsLabel({
+    required this.counts,
+    this.completesBase = false,
+    this.completesAlternative = false,
+    super.key,
+  });
 
   final ExtraCounts counts;
+  final bool completesBase;
+  final bool completesAlternative;
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +37,13 @@ class ExtraCountsLabel extends StatelessWidget {
         _ExtraCountBox(
           symbol: const RaritySymbol.diamond(),
           count: counts.base,
+          completes: completesBase,
         ),
         const SizedBox(width: 6),
         _ExtraCountBox(
           symbol: const RaritySymbol.star(),
           count: counts.alternative,
+          completes: completesAlternative,
         ),
       ],
     );
@@ -36,10 +51,15 @@ class ExtraCountsLabel extends StatelessWidget {
 }
 
 class _ExtraCountBox extends StatelessWidget {
-  const _ExtraCountBox({required this.symbol, required this.count});
+  const _ExtraCountBox({
+    required this.symbol,
+    required this.count,
+    required this.completes,
+  });
 
   final Widget symbol;
   final int count;
+  final bool completes;
 
   /// Opacité du symbole d'une boîte à zéro : une image ne se grise pas
   /// comme un texte, on l'estompe à la place.
@@ -53,9 +73,11 @@ class _ExtraCountBox extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         border: Border.all(
-          color: hasExtra
-              ? AppColors.ownedBySecondaryAccount
-              : theme.colorScheme.outlineVariant,
+          color: completes
+              ? AppColors.complete
+              : hasExtra
+                  ? AppColors.ownedBySecondaryAccount
+                  : theme.colorScheme.outlineVariant,
           width: 1.5,
         ),
         borderRadius: BorderRadius.circular(6),
