@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/account.dart';
+import '../../../l10n/l10n.dart';
 import 'filter_chip_wrap.dart';
 
 /// Barre de choix d'un compte secondaire précis, affichée
@@ -39,7 +40,7 @@ class SecondaryAccountFilterBar extends StatelessWidget {
       itemBuilder: (context, index) {
         if (index == 0) {
           return ChoiceChip(
-            label: const Text('Tous'),
+            label: Text(context.l10n.commonAll),
             selected: selectedAccountId == null,
             showCheckmark: false,
             labelPadding: const EdgeInsets.symmetric(horizontal: 4),

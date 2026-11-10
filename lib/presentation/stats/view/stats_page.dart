@@ -7,6 +7,7 @@ import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
 import '../../../domain/entities/rarity_scope.dart';
+import '../../../l10n/l10n.dart';
 import '../../rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../../set_detail/view/set_detail_page.dart';
 import '../bloc/stats_bloc.dart';
@@ -62,7 +63,7 @@ class _StatsView extends StatelessWidget {
       child: BlocBuilder<StatsBloc, StatsState>(
         builder: (context, state) {
           return AppScaffold(
-            title: 'Statistiques',
+            title: context.l10n.statsTitle,
             actions: [
               BlocBuilder<RarityScopeCubit, RarityScope>(
                 builder: (context, scope) => RarityScopeAction(
@@ -79,17 +80,18 @@ class _StatsView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, StatsState state) {
+    final l10n = context.l10n;
     if (state.status == StatsStatus.initial ||
         state.status == StatsStatus.loading) {
-      return const AppLoadingIndicator(message: 'Calcul des statistiques…');
+      return AppLoadingIndicator(message: l10n.statsLoading);
     }
 
     if (state.status == StatsStatus.noAccount) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
-            'Crée un compte pour voir tes statistiques.',
+            l10n.statsNoAccount,
             textAlign: TextAlign.center,
           ),
         ),
@@ -98,7 +100,7 @@ class _StatsView extends StatelessWidget {
 
     if (state.status == StatsStatus.error) {
       return AppErrorView(
-        message: state.errorMessage ?? 'Une erreur est survenue.',
+        message: state.errorMessage ?? l10n.genericError,
         onRetry: () => context.read<StatsBloc>().add(
               StatsStarted(
                 rarityScope: context.read<RarityScopeCubit>().state,
@@ -117,7 +119,10 @@ class _StatsView extends StatelessWidget {
       children: [
         OverallProgressCard(progress: stats.overall),
         const SizedBox(height: 24),
-        Text('Par série', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          l10n.statsBySeries,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         SeriesProgressList(seriesStats: stats.seriesStats),
         const SizedBox(height: 24),

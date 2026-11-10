@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/card_kind.dart';
+import '../../../l10n/l10n.dart';
 
 /// Libellé et repère visuel de chaque type de carte dans le filtre par
 /// type. Gardés côté présentation : l'énumération du domaine ne porte
@@ -12,40 +13,41 @@ import '../../../domain/entities/card_kind.dart';
 /// est introuvable. Les types de Dresseur et [CardKind.unknown] ont
 /// une icône ([icon]).
 extension CardKindStyle on CardKind {
-  String get label {
+  /// Nom du type dans la langue de l'app (noms officiels du jeu).
+  String label(AppLocalizations l10n) {
     switch (this) {
       case CardKind.grass:
-        return 'Plante';
+        return l10n.cardKindGrass;
       case CardKind.fire:
-        return 'Feu';
+        return l10n.cardKindFire;
       case CardKind.water:
-        return 'Eau';
+        return l10n.cardKindWater;
       case CardKind.lightning:
-        return 'Électrique';
+        return l10n.cardKindLightning;
       case CardKind.psychic:
-        return 'Psy';
+        return l10n.cardKindPsychic;
       case CardKind.fighting:
-        return 'Combat';
+        return l10n.cardKindFighting;
       case CardKind.darkness:
-        return 'Obscurité';
+        return l10n.cardKindDarkness;
       case CardKind.metal:
-        return 'Métal';
+        return l10n.cardKindMetal;
       case CardKind.dragon:
-        return 'Dragon';
+        return l10n.cardKindDragon;
       case CardKind.colorless:
-        return 'Incolore';
+        return l10n.cardKindColorless;
       case CardKind.supporter:
-        return 'Supporter';
+        return l10n.cardKindSupporter;
       case CardKind.item:
-        return 'Objet';
+        return l10n.cardKindItem;
       case CardKind.tool:
-        return 'Outil';
+        return l10n.cardKindTool;
       case CardKind.stadium:
-        return 'Stade';
+        return l10n.cardKindStadium;
       case CardKind.fossil:
-        return 'Fossile';
+        return l10n.cardKindFossil;
       case CardKind.unknown:
-        return 'Inconnu';
+        return l10n.cardKindUnknown;
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/set_progress.dart';
+import '../../../l10n/l10n.dart';
 
 /// Libellé d'une moitié de bordure : symbole officiel du groupe
 /// ([symbol], voir `RaritySymbol`) et pourcentage du compte principal
@@ -58,7 +59,7 @@ class SetProgressHalfLabel extends StatelessWidget {
         children: [
           symbolSpan,
           TextSpan(
-            text: '$primaryPercent %',
+            text: context.l10n.percentValue('$primaryPercent'),
             style: TextStyle(
               color: complete ? AppColors.complete : AppColors.progressPrimary,
               fontWeight: complete ? FontWeight.bold : FontWeight.normal,

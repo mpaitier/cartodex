@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/l10n.dart';
 
 /// Nombre de cartes qui manquent encore à la collection, en rouge
 /// pâle ([AppColors.missingCards]) (ex: "12 manquantes").
@@ -19,15 +20,13 @@ class MissingCardsLabel extends StatelessWidget {
   /// Style de base ; le thème `bodySmall` par défaut.
   final TextStyle? style;
 
-  /// Singulier pour une seule carte, comme le veut l'usage.
-  String get _text => missing == 1 ? '1 manquante' : '$missing manquantes';
-
   @override
   Widget build(BuildContext context) {
     if (missing <= 0) return const SizedBox.shrink();
     final baseStyle = style ?? Theme.of(context).textTheme.bodySmall;
+    // Pluriel géré par la clé `missingCount` des fichiers ARB.
     return Text(
-      _text,
+      context.l10n.missingCount(missing),
       maxLines: 1,
       style: baseStyle?.copyWith(
         color: AppColors.missingCards,

@@ -9,6 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Localisation (fichiers ARB de lib/l10n/arb, voir l10n.yaml).
+  # `intl` reste en `any` : sa version est imposée par
+  # flutter_localizations.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   cupertino_icons: ^1.0.8
 
   # State management
@@ -59,6 +65,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Génère AppLocalizations à partir des fichiers ARB (voir l10n.yaml).
+  generate: true
 
   # Symboles officiels de rareté (losange, étoile, couronne, étoile
   # chromatique), repris de pokemon-tcg-pocket-database.

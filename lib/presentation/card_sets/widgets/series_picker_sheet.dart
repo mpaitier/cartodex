@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
 import '../bloc/series_overview.dart';
 import 'series_picker_tile.dart';
 
@@ -44,7 +45,7 @@ class SeriesPickerSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Toutes les séries',
+              context.l10n.allSeries,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),

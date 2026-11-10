@@ -31,12 +31,10 @@ class SeriesTab extends Equatable {
   /// opposition à une série lettrée. Les sections spéciales sont
   /// toujours visibles dans la barre du bas et ont un libellé plus
   /// long qu'une simple lettre.
+  ///
+  /// Le titre complet du bandeau ("Série A") dépend de la langue : il
+  /// est construit dans la présentation (voir `SeriesTabTitle`).
   bool get isSpecial => isDeluxe || isPromo;
-
-  /// Titre complet, pour le bandeau de progression en haut de la
-  /// série : "Série A" pour une série lettrée, le libellé seul pour
-  /// une section spéciale ("Deluxe", "Promo").
-  String get title => isSpecial ? label : 'Série $label';
 
   @override
   List<Object?> get props => [key, label];

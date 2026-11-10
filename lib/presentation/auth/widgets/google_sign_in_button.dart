@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Bouton de connexion Google, extrait en composant dédié pour
 /// rester réutilisable si [LoginPage][../view/login_page.dart]
 /// évolue vers plusieurs mises en page.
@@ -18,7 +20,7 @@ class GoogleSignInButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: enabled ? onPressed : null,
       icon: const Icon(Icons.login),
-      label: const Text('Continuer avec Google'),
+      label: Text(context.l10n.loginContinueWithGoogle),
     );
   }
 }

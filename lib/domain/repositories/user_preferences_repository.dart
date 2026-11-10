@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 
 import '../../core/error/failures.dart';
 import '../entities/accounts_sort_option.dart';
+import '../entities/app_language.dart';
 
 /// Frontière entre le domaine et le stockage des réglages
 /// d'affichage choisis par l'utilisateur, conservés d'un lancement à
@@ -19,4 +20,11 @@ abstract class UserPreferencesRepository {
   Future<Either<Failure, void>> saveAccountsSortOption(
     AccountsSortOption option,
   );
+
+  /// Langue d'affichage enregistrée, ou `null` si aucun choix n'a
+  /// encore été fait (ou si la valeur stockée n'est plus reconnue).
+  Future<Either<Failure, AppLanguage?>> getAppLanguage();
+
+  /// Enregistre [language] comme langue d'affichage.
+  Future<Either<Failure, void>> saveAppLanguage(AppLanguage language);
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Action d'AppBar déclenchant la synchronisation du référentiel.
 ///
 /// Se transforme en indicateur de chargement pendant la
@@ -33,7 +35,7 @@ class SyncCatalogAction extends StatelessWidget {
     return IconButton(
       onPressed: onPressed,
       icon: const Icon(Icons.sync),
-      tooltip: 'Synchroniser le référentiel',
+      tooltip: context.l10n.syncCatalog,
     );
   }
 }

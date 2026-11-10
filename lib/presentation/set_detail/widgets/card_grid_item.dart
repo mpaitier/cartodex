@@ -12,6 +12,10 @@ import '../../../domain/entities/pokemon_card.dart';
 /// Une tuile de la grille de cartes : illustration centrée, nom,
 /// numéro et rareté, et un badge de possession.
 ///
+/// Le nom suit la langue de l'app : le nom français quand le
+/// référentiel en fournit un et que l'app est en français, le nom
+/// anglais sinon (voir `PokemonCard.localizedName`).
+///
 /// L'illustration reflète la possession d'un coup d'œil, même sans
 /// regarder le badge :
 /// - possédée par le compte principal : en couleur ;
@@ -82,7 +86,9 @@ class CardGridItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          card.name,
+                          card.localizedName(
+                            Localizations.localeOf(context).languageCode,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.labelMedium,

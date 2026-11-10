@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Le nombre moyen de cartes manquantes qu'une ouverture rapporte,
 /// sous le nom d'un booster prioritaire (ex: "≈ 0,42 carte nouvelle
 /// par ouverture").
@@ -12,22 +14,23 @@ class ExpectedNewCardsLabel extends StatelessWidget {
 
   final double expectedNewCards;
 
-  /// Deux décimales, virgule à la française. Les valeurs vont de
-  /// quelques centièmes (set presque complet) au nombre de cartes du
-  /// booster (tout manque).
-  String get _formatted =>
-      expectedNewCards.toStringAsFixed(2).replaceAll('.', ',');
-
-  /// Singulier en dessous de 2, comme le veut l'usage en français
-  /// ("0,5 carte", "1,5 carte", "2 cartes").
-  String get _noun =>
-      expectedNewCards < 2 ? 'carte nouvelle' : 'cartes nouvelles';
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
+    // Deux décimales, avec le séparateur de la langue. Les valeurs vont
+    // de quelques centièmes (set presque complet) au nombre de cartes
+    // du booster (tout manque).
+    final formatted = expectedNewCards
+        .toStringAsFixed(2)
+        .replaceAll('.', l10n.decimalSeparator);
+    // Le pluriel se décide sur la partie entière : en français, le
+    // singulier vaut pour tout ce qui est sous 2 ("0,5 carte", "1,5
+    // carte", "2 cartes"), ce qui correspond à la catégorie "one" des
+    // entiers 0 et 1. L'anglais garde toujours le pluriel avec des
+    // décimales (voir la clé `expectedNewCards` des fichiers ARB).
     return Text(
-      '≈ $_formatted $_noun par ouverture',
+      l10n.expectedNewCards(expectedNewCards.floor(), formatted),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: theme.textTheme.labelSmall?.copyWith(

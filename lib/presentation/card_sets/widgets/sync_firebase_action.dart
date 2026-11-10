@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/sync_result.dart';
+import '../../../l10n/l10n.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
@@ -26,7 +27,9 @@ class SyncFirebaseAction extends StatelessWidget {
       listener: (context, state) {
         if (state.status == SyncStatus.success && state.result != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(_successMessage(state.result!))),
+            SnackBar(
+              content: Text(_successMessage(context.l10n, state.result!)),
+            ),
           );
         }
         if (state.status == SyncStatus.error && state.errorMessage != null) {
@@ -37,13 +40,14 @@ class SyncFirebaseAction extends StatelessWidget {
       },
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, authState) {
+          final l10n = context.l10n;
           if (authState.status != AuthStatus.authenticated) {
             return IconButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const LoginPage()),
               ),
               icon: const Icon(Icons.cloud_upload_outlined),
-              tooltip: 'Se connecter pour synchroniser',
+              tooltip: l10n.signInToSyncTooltip,
             );
           }
           return BlocBuilder<SyncBloc, SyncState>(
@@ -60,17 +64,17 @@ class SyncFirebaseAction extends StatelessWidget {
               }
               return PopupMenuButton<_SyncMenuAction>(
                 icon: const Icon(Icons.cloud_done_outlined),
-                tooltip: 'Synchronisation',
+                tooltip: l10n.syncMenuTooltip,
                 onSelected: (action) =>
                     _onMenuAction(context, action, authState),
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: _SyncMenuAction.sync,
-                    child: Text('Synchroniser maintenant'),
+                    child: Text(l10n.syncNow),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: _SyncMenuAction.signOut,
-                    child: Text('Se déconnecter'),
+                    child: Text(l10n.signOut),
                   ),
                 ],
               );
@@ -81,17 +85,17 @@ class SyncFirebaseAction extends StatelessWidget {
     );
   }
 
-  String _successMessage(SyncResult result) {
-    if (result.isEmpty) return 'Déjà à jour.';
+  /// Bilan de la synchronisation (ex: "2 comptes récupérés, 14 cartes
+  /// envoyées"), avec un pluriel propre à chaque langue.
+  String _successMessage(AppLocalizations l10n, SyncResult result) {
+    if (result.isEmpty) return l10n.syncUpToDate;
     final parts = <String>[
       if (result.accountsPulled > 0)
-        '${result.accountsPulled} compte(s) récupéré(s)',
+        l10n.syncAccountsPulled(result.accountsPulled),
       if (result.accountsPushed > 0)
-        '${result.accountsPushed} compte(s) envoyé(s)',
-      if (result.cardsPulled > 0)
-        '${result.cardsPulled} carte(s) récupérée(s)',
-      if (result.cardsPushed > 0)
-        '${result.cardsPushed} carte(s) envoyée(s)',
+        l10n.syncAccountsPushed(result.accountsPushed),
+      if (result.cardsPulled > 0) l10n.syncCardsPulled(result.cardsPulled),
+      if (result.cardsPushed > 0) l10n.syncCardsPushed(result.cardsPushed),
     ];
     return parts.join(', ');
   }

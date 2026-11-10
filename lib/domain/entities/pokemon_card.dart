@@ -16,6 +16,7 @@ class PokemonCard extends Equatable {
     required this.category,
     required this.setId,
     required this.setName,
+    this.nameFr,
     this.imageUrl,
     this.rarity,
     this.hp,
@@ -30,7 +31,15 @@ class PokemonCard extends Equatable {
   /// Numéro de la carte au sein de son set (ex: "1").
   final String localId;
 
+  /// Nom anglais, tel que publié par le référentiel. Toujours renseigné,
+  /// et seul utilisé pour retrouver l'illustration de la carte (les
+  /// noms de fichier de pocketcards.net partent du nom anglais).
   final String name;
+
+  /// Nom français, ou `null` quand le référentiel n'en fournit pas (ou
+  /// qu'il est identique au nom anglais). Pour l'affichage, passer par
+  /// [localizedName], qui retombe sur [name].
+  final String? nameFr;
 
   final CardCategory category;
 
@@ -62,11 +71,23 @@ class PokemonCard extends Equatable {
   /// rares).
   final List<String> packs;
 
+  /// Nom à afficher pour la langue [languageCode] (code ISO 639-1, ex:
+  /// "fr") : le nom français quand il existe et que l'app est en
+  /// français, le nom anglais dans tous les autres cas.
+  String localizedName(String languageCode) {
+    final french = nameFr;
+    if (languageCode == 'fr' && french != null && french.isNotEmpty) {
+      return french;
+    }
+    return name;
+  }
+
   @override
   List<Object?> get props => [
         id,
         localId,
         name,
+        nameFr,
         category,
         setId,
         setName,

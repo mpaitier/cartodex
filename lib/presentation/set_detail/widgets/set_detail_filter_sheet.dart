@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/card_rarities.dart';
 import '../../../domain/entities/card_set.dart';
+import '../../../l10n/l10n.dart';
 import '../bloc/ownership_filter.dart';
 import '../bloc/set_detail_bloc.dart';
 import '../bloc/set_detail_event.dart';
@@ -45,6 +46,7 @@ class SetDetailFilterSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SetDetailBloc, SetDetailState>(
       builder: (context, state) {
+        final l10n = context.l10n;
         final bloc = context.read<SetDetailBloc>();
         final hasPacks = set.packs.length > 1;
         final rarities = state.availableRaritiesForGroup(activeGroup);
@@ -71,12 +73,12 @@ class SetDetailFilterSheet extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (!hasAnyFilter)
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text('Aucun filtre disponible pour ce set.'),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(l10n.noFilterAvailable),
                         ),
                       FilterSheetSection(
-                        title: 'Booster',
+                        title: l10n.filterSectionBooster,
                         visible: hasPacks,
                         child: PackFilterBar(
                           setName: set.name,
@@ -87,7 +89,7 @@ class SetDetailFilterSheet extends StatelessWidget {
                         ),
                       ),
                       FilterSheetSection(
-                        title: 'Rareté',
+                        title: l10n.filterSectionRarity,
                         visible: hasRarities,
                         child: RarityFilterBar(
                           availableRarities: rarities,
@@ -97,7 +99,7 @@ class SetDetailFilterSheet extends StatelessWidget {
                         ),
                       ),
                       FilterSheetSection(
-                        title: 'Possession',
+                        title: l10n.filterSectionOwnership,
                         visible: hasOwnership,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,7 +125,7 @@ class SetDetailFilterSheet extends StatelessWidget {
                         ),
                       ),
                       FilterSheetSection(
-                        title: 'Type',
+                        title: l10n.filterSectionType,
                         visible: hasKinds,
                         child: CardKindFilterBar(
                           availableKinds: state.availableKinds,
@@ -154,19 +156,20 @@ class _SheetHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              'Filtres',
+              l10n.commonFilters,
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
           TextButton(
             onPressed: canReset ? onReset : null,
-            child: const Text('Réinitialiser'),
+            child: Text(l10n.filtersReset),
           ),
         ],
       ),

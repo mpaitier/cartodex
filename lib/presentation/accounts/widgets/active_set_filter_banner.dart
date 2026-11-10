@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/card_set.dart';
+import '../../../l10n/l10n.dart';
 import '../../card_sets/widgets/card_set_logo.dart';
 
 /// Bandeau en haut de la liste des comptes quand un filtre par
@@ -20,13 +21,14 @@ class ActiveSetFilterBanner extends StatelessWidget {
 
   static const int _maxLogos = 3;
 
-  String get _text => sets.length == 1
-      ? 'Cartes en plus dans ${sets.single.name}'
-      : 'Cartes en plus dans ${sets.length} extensions';
+  String _text(AppLocalizations l10n) => sets.length == 1
+      ? l10n.accountsSetFilterSingle(sets.single.name)
+      : l10n.accountsSetFilterMultiple(sets.length);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final logos = sets.take(_maxLogos).toList();
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
@@ -45,7 +47,7 @@ class ActiveSetFilterBanner extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                _text,
+                _text(l10n),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium,
@@ -53,7 +55,7 @@ class ActiveSetFilterBanner extends StatelessWidget {
             ),
             IconButton(
               onPressed: onClear,
-              tooltip: 'Retirer le filtre',
+              tooltip: l10n.accountsClearFilterTooltip,
               icon: const Icon(Icons.close),
             ),
           ],

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/split_outline_box.dart';
 import '../../../domain/entities/account_extras.dart';
+import '../../../l10n/l10n.dart';
 import '../../card_sets/widgets/card_set_logo.dart';
 
 /// Aperçu, sur une ligne de compte secondaire, des sets où il possède
@@ -69,8 +70,11 @@ class _SetLogoBox extends StatelessWidget {
     final counts = setExtras.counts;
     final neutral = Theme.of(context).colorScheme.outlineVariant;
     return Tooltip(
-      message: '${setExtras.set.name} : '
-          '+${counts.base} ◆, +${counts.alternative} ★',
+      message: context.l10n.setExtrasTooltip(
+        setExtras.set.name,
+        counts.base,
+        counts.alternative,
+      ),
       child: SplitOutlineBox(
         leftColor: setExtras.completesBase ? AppColors.complete : neutral,
         rightColor:

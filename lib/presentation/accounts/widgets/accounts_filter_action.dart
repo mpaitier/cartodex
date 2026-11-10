@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Bouton de la barre du haut de l'onglet des comptes : ouvre le
 /// panneau de tri et de filtre
 /// ([AccountsFilterSheet][accounts_filter_sheet.dart]).
@@ -22,7 +24,7 @@ class AccountsFilterAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      tooltip: 'Trier et filtrer',
+      tooltip: context.l10n.accountsSortAndFilter,
       icon: Badge(
         isLabelVisible: isFiltered,
         child: const Icon(Icons.tune),

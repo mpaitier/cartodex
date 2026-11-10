@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/card_kind.dart';
+import '../../../l10n/l10n.dart';
 import 'card_element_logo.dart';
 import 'card_kind_style.dart';
 import 'filter_chip_wrap.dart';
@@ -37,12 +38,13 @@ class CardKindFilterBar extends StatelessWidget {
     if (availableKinds.length <= 1) {
       return const SizedBox.shrink();
     }
+    final l10n = context.l10n;
     return FilterChipWrap(
       itemCount: availableKinds.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
           return ChoiceChip(
-            label: const Text('Tous'),
+            label: Text(l10n.commonAll),
             selected: selectedKinds.isEmpty,
             showCheckmark: false,
             labelPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -58,8 +60,8 @@ class CardKindFilterBar extends StatelessWidget {
                   kind: kind,
                   errorBuilder: (_) => _ElementFallback(kind: kind),
                 )
-              : Text(kind.label),
-          tooltip: kind.label,
+              : Text(kind.label(l10n)),
+          tooltip: kind.label(l10n),
           selected: selectedKinds.contains(kind),
           showCheckmark: false,
           labelPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -116,7 +118,7 @@ class _ElementFallback extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(kind.label),
+        Text(kind.label(context.l10n)),
       ],
     );
   }

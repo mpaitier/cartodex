@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Bouton "Toutes les séries" en bout de
 /// [SeriesFilterBar][series_filter_bar.dart] : ouvre
 /// [SeriesPickerSheet][series_picker_sheet.dart]. Largeur fixe, pour
@@ -13,7 +15,7 @@ class SeriesMoreButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Tooltip(
-      message: 'Toutes les séries',
+      message: context.l10n.allSeries,
       child: InkWell(
         onTap: onPressed,
         child: Container(

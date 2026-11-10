@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/rarity_scope.dart';
+import '../../../l10n/l10n.dart';
 import '../../stats/widgets/rarity_scope_icon.dart';
 
 /// Bouton du bandeau de série : affiche le périmètre de raretés actif
@@ -25,7 +26,7 @@ class SeriesRarityScopeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      tooltip: 'Raretés : ${RarityScopeIcon.labelFor(scope)}',
+      tooltip: RarityScopeIcon.tooltipFor(context.l10n, scope),
       visualDensity: VisualDensity.compact,
       icon: RarityScopeIcon(
         scope: scope,

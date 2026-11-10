@@ -7,7 +7,9 @@ import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
 import '../../../domain/entities/rarity_scope.dart';
+import '../../../l10n/l10n.dart';
 import '../../accounts/view/accounts_page.dart';
+import '../../language/widgets/language_menu_action.dart';
 import '../../rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../../set_detail/view/set_detail_page.dart';
 import '../../stats/view/stats_page.dart';
@@ -27,11 +29,11 @@ import '../widgets/sync_firebase_action.dart';
 ///
 /// Point d'entrée de la feature catalogue, de la gestion de comptes
 /// et des statistiques. AppBar : à gauche, statistiques et comptes
-/// Pokémon ; à droite, synchronisation du référentiel de cartes et
+/// Pokémon ; à droite, synchronisation du référentiel de cartes,
 /// synchronisation avec le compte applicatif (Firebase — voir
 /// `SyncFirebaseAction`, `SyncBloc`, fourni ici avec le même cycle
-/// de vie que l'écran). Un appui sur une tuile ouvre [SetDetailPage]
-/// pour ce set.
+/// de vie que l'écran) et choix de la langue ([LanguageMenuAction]).
+/// Un appui sur une tuile ouvre [SetDetailPage] pour ce set.
 ///
 /// Les sets sont rangés par série, une page par série
 /// ([SeriesSetsPager]) : on passe de l'une à l'autre au swipe, par la
@@ -82,20 +84,21 @@ class _CardSetsView extends StatelessWidget {
           .add(const CardSetsProgressRefreshRequested()),
       child: BlocBuilder<CardSetsBloc, CardSetsState>(
         builder: (context, state) {
+          final l10n = context.l10n;
           return AppScaffold(
-            title: 'Cartodex',
+            title: l10n.appTitle,
             leadingActions: [
               IconButton(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(builder: (_) => const StatsPage()),
                 ),
                 icon: const Icon(Icons.bar_chart),
-                tooltip: 'Statistiques',
+                tooltip: l10n.statsTitle,
               ),
               IconButton(
                 onPressed: () => _openAndRefresh(context, const AccountsPage()),
                 icon: const Icon(Icons.people_alt_outlined),
-                tooltip: 'Comptes',
+                tooltip: l10n.accountsTitle,
               ),
             ],
             actions: [
@@ -106,6 +109,7 @@ class _CardSetsView extends StatelessWidget {
                     .add(const CardSetsSyncRequested()),
               ),
               const SyncFirebaseAction(),
+              const LanguageMenuAction(),
             ],
             body: Stack(
               children: [
@@ -132,19 +136,18 @@ class _CardSetsView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, CardSetsState state) {
+    final l10n = context.l10n;
     final isFirstLoad = state.status == CardSetsStatus.initial ||
         state.status == CardSetsStatus.loading;
     final isFirstSync =
         state.status == CardSetsStatus.syncing && state.sets.isEmpty;
     if (isFirstLoad || isFirstSync) {
-      return const AppLoadingIndicator(
-        message: 'Chargement du référentiel…',
-      );
+      return AppLoadingIndicator(message: l10n.cardSetsLoading);
     }
 
     if (state.status == CardSetsStatus.error) {
       return AppErrorView(
-        message: state.errorMessage ?? 'Une erreur est survenue.',
+        message: state.errorMessage ?? l10n.genericError,
         onRetry: () =>
             context.read<CardSetsBloc>().add(const CardSetsStarted()),
       );

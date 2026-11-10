@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/l10n.dart';
 import '../bloc/ownership_filter.dart';
 import 'filter_chip_wrap.dart';
 
@@ -35,13 +36,14 @@ class OwnershipFilterBar extends StatelessWidget {
     if (availableFilters.length <= 1) {
       return const SizedBox.shrink();
     }
+    final l10n = context.l10n;
     return FilterChipWrap(
       itemCount: availableFilters.length,
       itemBuilder: (context, index) {
         final filter = availableFilters[index];
         return ChoiceChip(
           avatar: _dotFor(filter),
-          label: Text(_labelFor(filter)),
+          label: Text(_labelFor(l10n, filter)),
           selected: filter == selectedFilter,
           showCheckmark: false,
           labelPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -52,16 +54,16 @@ class OwnershipFilterBar extends StatelessWidget {
     );
   }
 
-  static String _labelFor(OwnershipFilter filter) {
+  static String _labelFor(AppLocalizations l10n, OwnershipFilter filter) {
     switch (filter) {
       case OwnershipFilter.all:
-        return 'Tous';
+        return l10n.commonAll;
       case OwnershipFilter.primary:
-        return 'Principal';
+        return l10n.ownershipFilterPrimary;
       case OwnershipFilter.secondary:
-        return 'Secondaires';
+        return l10n.ownershipFilterSecondary;
       case OwnershipFilter.notOwned:
-        return 'Manquantes';
+        return l10n.ownershipFilterMissing;
     }
   }
 

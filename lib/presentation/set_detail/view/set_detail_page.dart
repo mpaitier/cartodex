@@ -7,6 +7,7 @@ import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../domain/entities/card_set.dart';
+import '../../../l10n/l10n.dart';
 import '../../rarity_scope/bloc/rarity_scope_card_group.dart';
 import '../../rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../bloc/set_detail_bloc.dart';
@@ -206,14 +207,15 @@ class _SetDetailViewState extends State<_SetDetailView> {
   }
 
   Widget _buildBody(BuildContext context, SetDetailState state) {
+    final l10n = context.l10n;
     if (state.status == SetDetailStatus.initial ||
         state.status == SetDetailStatus.loading) {
-      return const AppLoadingIndicator(message: 'Chargement des cartes…');
+      return AppLoadingIndicator(message: l10n.cardsLoading);
     }
 
     if (state.status == SetDetailStatus.error && state.cards.isEmpty) {
       return AppErrorView(
-        message: state.errorMessage ?? 'Une erreur est survenue.',
+        message: state.errorMessage ?? l10n.genericError,
         onRetry: () => context.read<SetDetailBloc>().add(
               SetDetailStarted(
                 widget.set.id,

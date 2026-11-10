@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
 import '../bloc/series_overview.dart';
 import 'series_completion_indicator.dart';
 
@@ -17,12 +18,6 @@ class SeriesPickerTile extends StatelessWidget {
   final SeriesOverview overview;
   final bool selected;
   final VoidCallback onTap;
-
-  /// Pluriel français : "1 set", "2 sets".
-  String get _setCountLabel {
-    final count = overview.setCount;
-    return count > 1 ? '$count sets' : '$count set';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +47,10 @@ class SeriesPickerTile extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(_setCountLabel, style: theme.textTheme.bodySmall),
+              Text(
+                context.l10n.setCount(overview.setCount),
+                style: theme.textTheme.bodySmall,
+              ),
               if (overview.hasProgress) ...[
                 const SizedBox(height: 4),
                 SeriesCompletionIndicator(overview: overview),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
+
 /// Affichage générique d'une erreur, avec un bouton optionnel de
 /// nouvelle tentative. Utilisé par toutes les features en état
 /// d'erreur pour rester cohérent visuellement.
@@ -32,7 +34,7 @@ class AppErrorView extends StatelessWidget {
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: onRetry,
-                child: const Text('Réessayer'),
+                child: Text(context.l10n.commonRetry),
               ),
             ],
           ],

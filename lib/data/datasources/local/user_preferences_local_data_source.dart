@@ -16,6 +16,12 @@ abstract class UserPreferencesLocalDataSource {
   Future<String?> getAccountsSortOption();
 
   Future<void> saveAccountsSortOption(String value);
+
+  /// Nom de la langue d'affichage, ou `null` si elle n'a jamais été
+  /// enregistrée.
+  Future<String?> getAppLanguage();
+
+  Future<void> saveAppLanguage(String value);
 }
 
 class UserPreferencesLocalDataSourceImpl
@@ -27,6 +33,9 @@ class UserPreferencesLocalDataSourceImpl
   /// Clé du critère de tri des comptes. Ne jamais la renommer : les
   /// choix déjà enregistrés seraient perdus.
   static const String _accountsSortOptionKey = 'accounts_sort_option';
+
+  /// Clé de la langue d'affichage. Même règle : ne jamais la renommer.
+  static const String _appLanguageKey = 'app_language';
 
   @override
   Future<String?> getAccountsSortOption() async {
@@ -45,6 +54,24 @@ class UserPreferencesLocalDataSourceImpl
       throw CacheException(
         "Échec de l'enregistrement du tri des comptes : $e",
       );
+    }
+  }
+
+  @override
+  Future<String?> getAppLanguage() async {
+    try {
+      return await _preferences.getString(_appLanguageKey);
+    } on Exception catch (e) {
+      throw CacheException('Échec de la lecture de la langue : $e');
+    }
+  }
+
+  @override
+  Future<void> saveAppLanguage(String value) async {
+    try {
+      await _preferences.setString(_appLanguageKey, value);
+    } on Exception catch (e) {
+      throw CacheException("Échec de l'enregistrement de la langue : $e");
     }
   }
 }

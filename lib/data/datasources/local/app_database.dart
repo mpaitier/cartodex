@@ -34,6 +34,10 @@ part 'app_database.g.dart';
 /// - v3 : ajout de [PullRates] (probabilités de tirage des boosters).
 ///   Table nouvelle, vide jusqu'à la prochaine synchronisation du
 ///   référentiel : rien à recopier.
+/// - v4 : ajout de la colonne `name_fr` à [Cards] (nom français des
+///   cartes). Colonne nullable, vide jusqu'à la prochaine
+///   synchronisation du référentiel : les cartes gardent leur nom
+///   anglais d'ici là.
 @DriftDatabase(tables: [CardSets, Cards, OwnedCards, Accounts, PullRates])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -43,7 +47,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withExecutor(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -55,6 +59,9 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 3) {
           await migrator.createTable(pullRates);
+        }
+        if (from < 4) {
+          await migrator.addColumn(cards, cards.nameFr);
         }
       },
     );

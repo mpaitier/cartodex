@@ -20,9 +20,10 @@ import '../../models/set_pull_rates_model.dart';
 /// TCGdex : ce dernier ne modélisait pas la répartition des cartes
 /// par booster à l'intérieur d'un set, une donnée que ce jeu-ci
 /// fournit nativement (`sets.json.packs`, `packs` de chaque carte).
-/// Trois requêtes suffisent à tout récupérer : `sets.json`,
-/// `cards.extra.json` (toutes les cartes, avec type, élément et PV)
-/// et `pullRates.json` (probabilités de tirage des boosters).
+/// Quatre requêtes suffisent à tout récupérer : `sets.json`,
+/// `cards.extra.json` (toutes les cartes, avec type, élément et PV),
+/// `cards.fr.json` (noms français) et `pullRates.json` (probabilités
+/// de tirage des boosters).
 abstract class CardRemoteDataSource {
   /// Récupère tous les sets TCG Pocket, tous groupes de série
   /// confondus.
@@ -34,6 +35,12 @@ abstract class CardRemoteDataSource {
   /// listes de toute façon pour associer chaque carte au nom de
   /// son set.
   Future<List<CardModel>> fetchAllCards();
+
+  /// Récupère les noms français des cartes depuis `cards.fr.json`,
+  /// indexés comme les identifiants de carte : `"set-numéro"` (ex:
+  /// `"A1-1"`). Seul le nom est lu, le reste du fichier doublonne
+  /// `cards.json`. Une carte absente du fichier n'a pas d'entrée.
+  Future<Map<String, String>> fetchFrenchCardNames();
 
   /// Récupère les probabilités de tirage des boosters, un élément par
   /// set présent dans `pullRates.json`.
@@ -158,6 +165,52 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
       element: extra?['element'] as String?,
       hp: (extra?['health'] as num?)?.toInt(),
     );
+  }
+
+  /// Même stratégie que [fetchAllCards] : la branche `main` du dépôt
+  /// GitHub d'abord, la version npm (figée en 2.x) en repli, y compris
+  /// quand le fichier GitHub n'a plus le format plat attendu (voir
+  /// [_isFlatCardList]). Lève une [ServerException] si aucune des deux
+  /// ne répond, ou une `FormatException` si le fichier npm n'a pas le
+  /// format attendu : à l'appelant de décider si c'est bloquant (ça ne
+  /// l'est pas, voir `CardRepositoryImpl`).
+  @override
+  Future<Map<String, String>> fetchFrenchCardNames() async {
+    final githubUri = Uri.parse(
+      '${AppConstants.pocketDatabaseGithubBaseUrl}/cards.fr.json',
+    );
+    try {
+      return _frenchNamesFrom(jsonDecode((await _get(githubUri)).body));
+    } on Exception catch (e) {
+      AppLogger.log(
+        'WARNING',
+        'cards.fr.json indisponible ou au format inattendu sur GitHub, '
+            'repli sur npm : $e',
+      );
+    }
+    final npmUri =
+        Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/cards.fr.json');
+    return _frenchNamesFrom(jsonDecode((await _get(npmUri)).body));
+  }
+
+  /// Table `"set-numéro"` → nom, à partir du contenu décodé de
+  /// `cards.fr.json`. Même contrôle de format que pour
+  /// `cards.extra.json` ([_isFlatCardList]) : un fichier au format
+  /// d'une autre version majeure lève une `FormatException` plutôt que
+  /// de renvoyer une table vide sans le signaler. Les entrées sans nom
+  /// sont ignorées.
+  static Map<String, String> _frenchNamesFrom(Object? decoded) {
+    if (decoded is! List<dynamic> || !_isFlatCardList(decoded)) {
+      throw const FormatException('cards.fr.json au format inattendu.');
+    }
+    final names = <String, String>{};
+    for (final raw in decoded.cast<Map<String, dynamic>>()) {
+      final name = raw['name'];
+      if (name is String) {
+        names['${raw['set']}-${raw['number']}'] = name;
+      }
+    }
+    return names;
   }
 
   @override

@@ -1,0 +1,582 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Cartodex",
+  "@appTitle": {
+    "description": "Nom de l'application (titre de la tâche et de l'accueil)."
+  },
+  "commonRetry": "Réessayer",
+  "@commonRetry": {
+    "description": "Bouton de nouvelle tentative sous un message d'erreur."
+  },
+  "commonCancel": "Annuler",
+  "@commonCancel": {
+    "description": "Bouton d'annulation d'une popup."
+  },
+  "commonAdd": "Ajouter",
+  "@commonAdd": {
+    "description": "Bouton de validation d'un ajout."
+  },
+  "commonSave": "Enregistrer",
+  "@commonSave": {
+    "description": "Bouton de validation d'une modification."
+  },
+  "commonClose": "Fermer",
+  "@commonClose": {
+    "description": "Bouton de fermeture d'une popup."
+  },
+  "commonAll": "Tous",
+  "@commonAll": {
+    "description": "Puce « aucun filtre » (masculin en français : boosters, types, comptes, raretés)."
+  },
+  "commonAllFeminine": "Toutes",
+  "@commonAllFeminine": {
+    "description": "Puce « aucun filtre » (féminin en français : extensions, séries)."
+  },
+  "commonRequired": "Requis",
+  "@commonRequired": {
+    "description": "Erreur d'un champ de formulaire obligatoire laissé vide."
+  },
+  "commonFilters": "Filtres",
+  "@commonFilters": {
+    "description": "Titre du panneau de filtres et tooltip de son bouton."
+  },
+  "genericError": "Une erreur est survenue.",
+  "@genericError": {
+    "description": "Message d'erreur par défaut, quand aucun détail n'est disponible."
+  },
+  "percentValue": "{value} %",
+  "@percentValue": {
+    "description": "Pourcentage déjà formaté. Le français met une espace insécable avant le signe %.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "decimalSeparator": ",",
+  "@decimalSeparator": {
+    "description": "Séparateur décimal des nombres affichés (pourcentages, cartes par ouverture)."
+  },
+  "languageMenuTooltip": "Langue",
+  "@languageMenuTooltip": {
+    "description": "Tooltip du menu de choix de la langue."
+  },
+  "languageSystem": "Langue du téléphone",
+  "@languageSystem": {
+    "description": "Choix qui laisse le téléphone décider de la langue."
+  },
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "Toujours écrit en français, quelle que soit la langue de l'app."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Toujours écrit en anglais, quelle que soit la langue de l'app."
+  },
+  "rarityAll": "toutes les raretés",
+  "@rarityAll": {
+    "description": "Périmètre Σ (lecteur d'écran et tooltips)."
+  },
+  "rarityDiamonds": "losanges",
+  "@rarityDiamonds": {
+    "description": "Périmètre et symbole losange (lecteur d'écran et tooltips)."
+  },
+  "rarityStars": "étoiles",
+  "@rarityStars": {
+    "description": "Périmètre et symbole étoile (lecteur d'écran et tooltips)."
+  },
+  "rarityScopeTooltip": "Raretés : {scope}",
+  "@rarityScopeTooltip": {
+    "description": "Tooltip des boutons qui font tourner le périmètre de raretés.",
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      }
+    }
+  },
+  "loginTitleSignIn": "Connexion",
+  "@loginTitleSignIn": {
+    "description": "Titre de l'écran de connexion."
+  },
+  "loginTitleSignUp": "Créer un compte",
+  "@loginTitleSignUp": {
+    "description": "Titre de l'écran en mode création de compte."
+  },
+  "loginEmailLabel": "Email",
+  "@loginEmailLabel": {
+    "description": "Champ email."
+  },
+  "loginPasswordLabel": "Mot de passe",
+  "@loginPasswordLabel": {
+    "description": "Champ mot de passe."
+  },
+  "loginSubmitSignIn": "Se connecter",
+  "@loginSubmitSignIn": {
+    "description": "Bouton de connexion."
+  },
+  "loginSubmitSignUp": "Créer un compte",
+  "@loginSubmitSignUp": {
+    "description": "Bouton de création de compte."
+  },
+  "loginSwitchToSignIn": "J'ai déjà un compte",
+  "@loginSwitchToSignIn": {
+    "description": "Lien pour repasser au formulaire de connexion."
+  },
+  "loginSwitchToSignUp": "Créer un compte",
+  "@loginSwitchToSignUp": {
+    "description": "Lien pour passer au formulaire de création de compte."
+  },
+  "loginOr": "ou",
+  "@loginOr": {
+    "description": "Séparateur entre le formulaire et la connexion Google."
+  },
+  "loginEmailInvalid": "Email invalide",
+  "@loginEmailInvalid": {
+    "description": "Erreur d'un email mal formé."
+  },
+  "loginPasswordTooShort": "{min} caractères minimum",
+  "@loginPasswordTooShort": {
+    "description": "Erreur d'un mot de passe trop court.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "loginContinueWithGoogle": "Continuer avec Google",
+  "@loginContinueWithGoogle": {
+    "description": "Bouton de connexion Google."
+  },
+  "accountsTitle": "Comptes",
+  "@accountsTitle": {
+    "description": "Titre de l'écran des comptes et tooltip de son bouton sur l'accueil."
+  },
+  "accountsAddTooltip": "Ajouter un compte",
+  "@accountsAddTooltip": {
+    "description": "Tooltip du bouton flottant d'ajout de compte."
+  },
+  "accountsLoading": "Chargement des comptes…",
+  "@accountsLoading": {
+    "description": "Chargement de la liste des comptes."
+  },
+  "accountsEmpty": "Aucun compte pour l’instant.",
+  "@accountsEmpty": {
+    "description": "Liste des comptes vide."
+  },
+  "accountEditTooltip": "Modifier le compte",
+  "@accountEditTooltip": {
+    "description": "Tooltip du bouton crayon d'un compte."
+  },
+  "accountFormNameLabel": "Nom",
+  "@accountFormNameLabel": {
+    "description": "Champ nom du formulaire de compte."
+  },
+  "accountFormFriendCodeLabel": "Code ami",
+  "@accountFormFriendCodeLabel": {
+    "description": "Champ code ami du formulaire de compte."
+  },
+  "accountFormFriendCodeHelper": "Ne sera pas affiché ailleurs dans l'app",
+  "@accountFormFriendCodeHelper": {
+    "description": "Aide sous le champ code ami."
+  },
+  "accountsSortAndFilter": "Trier et filtrer",
+  "@accountsSortAndFilter": {
+    "description": "Titre du panneau de tri des comptes et tooltip de son bouton."
+  },
+  "accountsSortBy": "Trier par",
+  "@accountsSortBy": {
+    "description": "Rubrique de tri du panneau des comptes."
+  },
+  "accountsSetFilterSection": "Extension",
+  "@accountsSetFilterSection": {
+    "description": "Rubrique de filtre par extension du panneau des comptes."
+  },
+  "accountsSortCreationOrder": "Ordre de création",
+  "@accountsSortCreationOrder": {
+    "description": "Tri des comptes par ordre de création."
+  },
+  "accountsSortAlphabetical": "Alphabétique",
+  "@accountsSortAlphabetical": {
+    "description": "Tri des comptes par nom."
+  },
+  "accountsSortExtraCards": "Cartes en plus",
+  "@accountsSortExtraCards": {
+    "description": "Tri des comptes par nombre de cartes en plus du principal."
+  },
+  "accountsSetFilterSingle": "Cartes en plus dans {setName}",
+  "@accountsSetFilterSingle": {
+    "description": "Bandeau du filtre par extension, une seule extension choisie.",
+    "placeholders": {
+      "setName": {
+        "type": "String"
+      }
+    }
+  },
+  "accountsSetFilterMultiple": "Cartes en plus dans {count} extensions",
+  "@accountsSetFilterMultiple": {
+    "description": "Bandeau du filtre par extension, plusieurs extensions choisies (toujours au moins 2).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accountsClearFilterTooltip": "Retirer le filtre",
+  "@accountsClearFilterTooltip": {
+    "description": "Tooltip du bouton qui retire le filtre par extension."
+  },
+  "addAccountTitle": "Ajouter un compte",
+  "@addAccountTitle": {
+    "description": "Titre de la popup d'ajout de compte."
+  },
+  "editAccountTitle": "Modifier le compte",
+  "@editAccountTitle": {
+    "description": "Titre de la popup de modification de compte."
+  },
+  "primaryAccountTooltip": "Compte principal",
+  "@primaryAccountTooltip": {
+    "description": "Tooltip de l'étoile pleine du compte principal."
+  },
+  "setPrimaryAccountTooltip": "Définir comme compte principal",
+  "@setPrimaryAccountTooltip": {
+    "description": "Tooltip de l'étoile vide d'un compte secondaire."
+  },
+  "setExtrasTooltip": "{setName} : +{base} ◆, +{alternative} ★",
+  "@setExtrasTooltip": {
+    "description": "Appui long sur un logo de set d'une ligne de compte : cartes en plus, losanges et étoiles.",
+    "placeholders": {
+      "setName": {
+        "type": "String"
+      },
+      "base": {
+        "type": "int"
+      },
+      "alternative": {
+        "type": "int"
+      }
+    }
+  },
+  "accountExtrasLoading": "Calcul en cours…",
+  "@accountExtrasLoading": {
+    "description": "Chargement de l'écran des cartes en plus d'un compte."
+  },
+  "accountExtrasEmpty": "Ce compte ne possède aucune carte que le compte principal n'a pas.",
+  "@accountExtrasEmpty": {
+    "description": "Écran des cartes en plus, rien à afficher."
+  },
+  "accountExtrasHeader": "Cartes en plus du compte principal",
+  "@accountExtrasHeader": {
+    "description": "En-tête de l'écran des cartes en plus d'un compte."
+  },
+  "cardSetsLoading": "Chargement du référentiel…",
+  "@cardSetsLoading": {
+    "description": "Premier chargement de l'accueil."
+  },
+  "cardSetsEmpty": "Aucun set synchronisé pour l'instant.",
+  "@cardSetsEmpty": {
+    "description": "Accueil vide, avant la première synchronisation."
+  },
+  "syncCatalog": "Synchroniser le référentiel",
+  "@syncCatalog": {
+    "description": "Bouton et tooltip de synchronisation du référentiel de cartes."
+  },
+  "allSeries": "Toutes les séries",
+  "@allSeries": {
+    "description": "Bouton et titre de la feuille listant toutes les séries."
+  },
+  "seriesTitle": "Série {label}",
+  "@seriesTitle": {
+    "description": "Titre du bandeau d'une série lettrée (ex : « Série A »).",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "cardCount": "{count, plural, one{{count} carte} other{{count} cartes}}",
+  "@cardCount": {
+    "description": "Nombre de cartes d'un set (tuile de l'accueil).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "boosterCount": "{count, plural, one{{count} booster} other{{count} boosters}}",
+  "@boosterCount": {
+    "description": "Nombre de boosters d'un set (tuile de l'accueil).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "setCount": "{count, plural, one{{count} set} other{{count} sets}}",
+  "@setCount": {
+    "description": "Nombre de sets d'une série (feuille « Toutes les séries »).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "missingCount": "{count, plural, one{{count} manquante} other{{count} manquantes}}",
+  "@missingCount": {
+    "description": "Cartes que personne ne possède encore (bandeau de série).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "signInToSyncTooltip": "Se connecter pour synchroniser",
+  "@signInToSyncTooltip": {
+    "description": "Tooltip du bouton cloud quand personne n'est connecté."
+  },
+  "syncMenuTooltip": "Synchronisation",
+  "@syncMenuTooltip": {
+    "description": "Tooltip du menu cloud quand un compte est connecté."
+  },
+  "syncNow": "Synchroniser maintenant",
+  "@syncNow": {
+    "description": "Entrée du menu cloud."
+  },
+  "signOut": "Se déconnecter",
+  "@signOut": {
+    "description": "Entrée du menu cloud."
+  },
+  "syncUpToDate": "Déjà à jour.",
+  "@syncUpToDate": {
+    "description": "Bilan d'une synchronisation cloud sans changement."
+  },
+  "syncAccountsPulled": "{count, plural, one{{count} compte récupéré} other{{count} comptes récupérés}}",
+  "@syncAccountsPulled": {
+    "description": "Bilan de synchronisation : comptes récupérés depuis le cloud.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncAccountsPushed": "{count, plural, one{{count} compte envoyé} other{{count} comptes envoyés}}",
+  "@syncAccountsPushed": {
+    "description": "Bilan de synchronisation : comptes envoyés au cloud.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncCardsPulled": "{count, plural, one{{count} carte récupérée} other{{count} cartes récupérées}}",
+  "@syncCardsPulled": {
+    "description": "Bilan de synchronisation : cartes récupérées depuis le cloud.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncCardsPushed": "{count, plural, one{{count} carte envoyée} other{{count} cartes envoyées}}",
+  "@syncCardsPushed": {
+    "description": "Bilan de synchronisation : cartes envoyées au cloud.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cardsLoading": "Chargement des cartes…",
+  "@cardsLoading": {
+    "description": "Chargement du détail d'un set."
+  },
+  "bulkAddTooltip": "Ajouter les cartes affichées au compte principal",
+  "@bulkAddTooltip": {
+    "description": "Tooltip du bouton « + » du détail d'un set."
+  },
+  "bulkAddTitle": "Ajouter ces cartes ?",
+  "@bulkAddTitle": {
+    "description": "Titre de la confirmation d'ajout en masse."
+  },
+  "bulkAddMessage": "{count, plural, one{La carte actuellement affichée sera marquée comme possédée par le compte principal.} other{Les {count} cartes actuellement affichées seront marquées comme possédées par le compte principal.}}",
+  "@bulkAddMessage": {
+    "description": "Texte de la confirmation d'ajout en masse.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noFilterAvailable": "Aucun filtre disponible pour ce set.",
+  "@noFilterAvailable": {
+    "description": "Panneau de filtres sans aucune rubrique à proposer."
+  },
+  "filterSectionBooster": "Booster",
+  "@filterSectionBooster": {
+    "description": "Rubrique du panneau de filtres."
+  },
+  "filterSectionRarity": "Rareté",
+  "@filterSectionRarity": {
+    "description": "Rubrique du panneau de filtres."
+  },
+  "filterSectionOwnership": "Possession",
+  "@filterSectionOwnership": {
+    "description": "Rubrique du panneau de filtres."
+  },
+  "filterSectionType": "Type",
+  "@filterSectionType": {
+    "description": "Rubrique du panneau de filtres."
+  },
+  "filtersReset": "Réinitialiser",
+  "@filtersReset": {
+    "description": "Bouton qui retire tous les filtres."
+  },
+  "ownerFilterBanner": "Cartes possédées par {accountName}",
+  "@ownerFilterBanner": {
+    "description": "Bandeau du détail d'un set restreint à un compte secondaire.",
+    "placeholders": {
+      "accountName": {
+        "type": "String"
+      }
+    }
+  },
+  "ownershipFilterPrimary": "Principal",
+  "@ownershipFilterPrimary": {
+    "description": "Filtre de possession : compte principal."
+  },
+  "ownershipFilterSecondary": "Secondaires",
+  "@ownershipFilterSecondary": {
+    "description": "Filtre de possession : comptes secondaires."
+  },
+  "ownershipFilterMissing": "Manquantes",
+  "@ownershipFilterMissing": {
+    "description": "Filtre de possession : cartes que personne ne possède."
+  },
+  "noSecondaryAccountTitle": "Aucun compte secondaire",
+  "@noSecondaryAccountTitle": {
+    "description": "Double-tap sur une carte sans compte secondaire."
+  },
+  "noSecondaryAccountMessage": "Crée d'abord un compte secondaire depuis l'écran Comptes.",
+  "@noSecondaryAccountMessage": {
+    "description": "Double-tap sur une carte sans compte secondaire."
+  },
+  "secondaryAccountPickerTitle": "Compte secondaire",
+  "@secondaryAccountPickerTitle": {
+    "description": "Titre du choix de compte au double-tap sur une carte."
+  },
+  "cardKindGrass": "Plante",
+  "@cardKindGrass": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindFire": "Feu",
+  "@cardKindFire": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindWater": "Eau",
+  "@cardKindWater": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindLightning": "Électrique",
+  "@cardKindLightning": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindPsychic": "Psy",
+  "@cardKindPsychic": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindFighting": "Combat",
+  "@cardKindFighting": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindDarkness": "Obscurité",
+  "@cardKindDarkness": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindMetal": "Métal",
+  "@cardKindMetal": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindDragon": "Dragon",
+  "@cardKindDragon": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindColorless": "Incolore",
+  "@cardKindColorless": {
+    "description": "Type de carte (nom officiel du jeu)."
+  },
+  "cardKindSupporter": "Supporter",
+  "@cardKindSupporter": {
+    "description": "Type de carte Dresseur."
+  },
+  "cardKindItem": "Objet",
+  "@cardKindItem": {
+    "description": "Type de carte Dresseur."
+  },
+  "cardKindTool": "Outil",
+  "@cardKindTool": {
+    "description": "Type de carte Dresseur."
+  },
+  "cardKindStadium": "Stade",
+  "@cardKindStadium": {
+    "description": "Type de carte Dresseur."
+  },
+  "cardKindFossil": "Fossile",
+  "@cardKindFossil": {
+    "description": "Type de carte Dresseur."
+  },
+  "cardKindUnknown": "Inconnu",
+  "@cardKindUnknown": {
+    "description": "Type absent ou non reconnu dans le référentiel."
+  },
+  "statsTitle": "Statistiques",
+  "@statsTitle": {
+    "description": "Titre de l'écran des statistiques et tooltip de son bouton sur l'accueil."
+  },
+  "statsLoading": "Calcul des statistiques…",
+  "@statsLoading": {
+    "description": "Chargement des statistiques."
+  },
+  "statsNoAccount": "Crée un compte pour voir tes statistiques.",
+  "@statsNoAccount": {
+    "description": "Statistiques sans aucun compte."
+  },
+  "statsOverallTitle": "Collection complète",
+  "@statsOverallTitle": {
+    "description": "Carte de progression globale."
+  },
+  "statsBySeries": "Par série",
+  "@statsBySeries": {
+    "description": "Titre de la progression par série."
+  },
+  "statsNoSeries": "Aucune série synchronisée pour l’instant.",
+  "@statsNoSeries": {
+    "description": "Progression par série vide."
+  },
+  "priorityBoostersTitle": "Boosters à ouvrir en priorité",
+  "@priorityBoostersTitle": {
+    "description": "Titre de la section des boosters prioritaires."
+  },
+  "priorityBoostersSubtitle": "Classés selon le nombre moyen de cartes manquantes obtenues par ouverture, d’après les taux de tirage du jeu.",
+  "@priorityBoostersSubtitle": {
+    "description": "Rappel du critère de tri des boosters prioritaires."
+  },
+  "priorityBoostersAllComplete": "Tous les boosters synchronisés sont complets 🎉",
+  "@priorityBoostersAllComplete": {
+    "description": "Aucun booster prioritaire, toutes séries confondues."
+  },
+  "priorityBoostersSeriesComplete": "Tous les boosters de cette série sont complets 🎉",
+  "@priorityBoostersSeriesComplete": {
+    "description": "Aucun booster prioritaire dans la série choisie."
+  },
+  "expectedNewCards": "{count, plural, one{≈ {value} carte nouvelle par ouverture} other{≈ {value} cartes nouvelles par ouverture}}",
+  "@expectedNewCards": {
+    "description": "Nombre moyen de cartes manquantes par ouverture d'un booster. count est la partie entière (choix du pluriel), value le nombre déjà formaté avec deux décimales.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  }
+}

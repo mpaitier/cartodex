@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/accounts_sort_option.dart';
+import '../../../l10n/l10n.dart';
 import '../../set_detail/widgets/filter_chip_wrap.dart';
 import '../../set_detail/widgets/filter_sheet_section.dart';
 import '../bloc/accounts_bloc.dart';
@@ -33,6 +34,7 @@ class AccountsFilterSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AccountsBloc, AccountsState>(
       builder: (context, state) {
+        final l10n = context.l10n;
         final bloc = context.read<AccountsBloc>();
         final sets = state.availableFilterSets;
         final activeSetIds = {
@@ -47,7 +49,7 @@ class AccountsFilterSheet extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                 child: Text(
-                  'Trier et filtrer',
+                  l10n.accountsSortAndFilter,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -59,13 +61,13 @@ class AccountsFilterSheet extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       FilterSheetSection(
-                        title: 'Trier par',
+                        title: l10n.accountsSortBy,
                         child: FilterChipWrap(
                           itemCount: AccountsSortOption.values.length,
                           itemBuilder: (context, index) {
                             final option = AccountsSortOption.values[index];
                             return ChoiceChip(
-                              label: Text(option.label),
+                              label: Text(option.label(l10n)),
                               selected: option == state.sortOption,
                               showCheckmark: false,
                               labelPadding:
@@ -78,14 +80,14 @@ class AccountsFilterSheet extends StatelessWidget {
                         ),
                       ),
                       FilterSheetSection(
-                        title: 'Extension',
+                        title: l10n.accountsSetFilterSection,
                         visible: sets.isNotEmpty,
                         child: FilterChipWrap(
                           itemCount: sets.length + 1,
                           itemBuilder: (context, index) {
                             if (index == 0) {
                               return ChoiceChip(
-                                label: const Text('Toutes'),
+                                label: Text(l10n.commonAllFeminine),
                                 selected: activeSetIds.isEmpty,
                                 showCheckmark: false,
                                 labelPadding:

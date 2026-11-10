@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/percent_formatter.dart';
 import '../../../domain/entities/progress_count.dart';
+import '../../../l10n/l10n.dart';
 
 /// Pourcentages du bandeau de série (ex: "34,28 % +5,71 % (40,00 %)").
 ///
@@ -24,6 +25,9 @@ import '../../../domain/entities/progress_count.dart';
 ///
 /// Un tiret quand le périmètre ne contient aucune carte (ex: les
 /// losanges d'une série de promos).
+///
+/// Le séparateur décimal et la place du signe % suivent la langue de
+/// l'app ("34,28 %" en français, "34.28%" en anglais).
 class SeriesPercentLabel extends StatelessWidget {
   const SeriesPercentLabel({required this.progress, this.style, super.key});
 
@@ -38,13 +42,22 @@ class SeriesPercentLabel extends StatelessWidget {
     final baseStyle = style ?? theme.textTheme.titleSmall;
     if (progress.total == 0) return Text('–', style: baseStyle);
 
+    final l10n = context.l10n;
+    String percent(int part) => l10n.percentValue(
+          PercentFormatter.twoDecimals(
+            part,
+            progress.total,
+            decimalSeparator: l10n.decimalSeparator,
+          ),
+        );
+
     final hasSecondaryExtra = progress.secondaryExtra > 0;
     return Text.rich(
       TextSpan(
         style: baseStyle,
         children: [
           TextSpan(
-            text: PercentFormatter.twoDecimals(progress.owned, progress.total),
+            text: percent(progress.owned),
             style: TextStyle(
               color: progress.isComplete
                   ? AppColors.complete
@@ -53,17 +66,11 @@ class SeriesPercentLabel extends StatelessWidget {
           ),
           if (hasSecondaryExtra) ...[
             TextSpan(
-              text: ' +${PercentFormatter.twoDecimals(
-                progress.secondaryExtra,
-                progress.total,
-              )}',
+              text: ' +${percent(progress.secondaryExtra)}',
               style: const TextStyle(color: AppColors.ownedBySecondaryAccount),
             ),
             TextSpan(
-              text: ' (${PercentFormatter.twoDecimals(
-                progress.owned + progress.secondaryExtra,
-                progress.total,
-              )})',
+              text: ' (${percent(progress.owned + progress.secondaryExtra)})',
               style: TextStyle(
                 color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.normal,
