@@ -56,7 +56,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<BulkCardsMarkedOwned>(_onBulkCardsMarkedOwned);
     on<PackFilterChanged>(_onPackFilterChanged);
     on<RarityFilterChanged>(_onRarityFilterChanged);
-    on<ElementFilterChanged>(_onElementFilterChanged);
+    on<KindFilterChanged>(_onKindFilterChanged);
     on<FiltersCleared>(_onFiltersCleared);
     on<OwnershipFilterChanged>(_onOwnershipFilterChanged);
     on<SecondaryAccountFilterChanged>(_onSecondaryAccountFilterChanged);
@@ -252,11 +252,11 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     emit(state.copyWith(selectedRarities: event.rarities));
   }
 
-  Future<void> _onElementFilterChanged(
-    ElementFilterChanged event,
+  Future<void> _onKindFilterChanged(
+    KindFilterChanged event,
     Emitter<SetDetailState> emit,
   ) async {
-    emit(state.copyWith(selectedElements: event.elements));
+    emit(state.copyWith(selectedKinds: event.kinds));
   }
 
   Future<void> _onFiltersCleared(
@@ -267,7 +267,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
       state.copyWith(
         selectedPack: null,
         selectedRarities: const {},
-        selectedElements: const {},
+        selectedKinds: const {},
         ownershipFilter: OwnershipFilter.all,
         secondaryFilterAccountId: null,
       ),
@@ -296,7 +296,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     emit(_withValidFilters(next));
   }
 
-  /// Retire de [next] les raretés et les éléments cochés qui ne
+  /// Retire de [next] les raretés et les types cochés qui ne
   /// correspondent plus à aucune carte après un changement de filtre
   /// de possession, sans quoi la grille se viderait sans qu'aucune
   /// puce visible ne l'explique. Pour les raretés, on compare au volet
@@ -308,16 +308,16 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
         next.availableRaritiesForGroup(CardGroupFilter.all).toSet();
     final keptRarities =
         next.selectedRarities.where(availableRarities.contains).toSet();
-    final availableElements = next.availableElements.toSet();
-    final keptElements =
-        next.selectedElements.where(availableElements.contains).toSet();
+    final availableKinds = next.availableKinds.toSet();
+    final keptKinds =
+        next.selectedKinds.where(availableKinds.contains).toSet();
     if (keptRarities.length == next.selectedRarities.length &&
-        keptElements.length == next.selectedElements.length) {
+        keptKinds.length == next.selectedKinds.length) {
       return next;
     }
     return next.copyWith(
       selectedRarities: keptRarities,
-      selectedElements: keptElements,
+      selectedKinds: keptKinds,
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/constants/card_rarities.dart';
-import '../../../domain/entities/card_element.dart';
+import '../../../domain/entities/card_kind.dart';
 import 'ownership_filter.dart';
 
 /// Événements gérés par [SetDetailBloc][set_detail_bloc.dart].
@@ -93,14 +93,15 @@ class RarityFilterChanged extends SetDetailEvent {
 }
 
 /// Déclenché par un changement dans le filtre par type (multi-
-/// sélection d'éléments). Un ensemble vide signifie "tous les types".
-class ElementFilterChanged extends SetDetailEvent {
-  const ElementFilterChanged(this.elements);
+/// sélection d'éléments de Pokémon et de types de Dresseur, voir
+/// [CardKind]). Un ensemble vide signifie "tous les types".
+class KindFilterChanged extends SetDetailEvent {
+  const KindFilterChanged(this.kinds);
 
-  final Set<CardElement> elements;
+  final Set<CardKind> kinds;
 
   @override
-  List<Object?> get props => [elements];
+  List<Object?> get props => [kinds];
 }
 
 /// Déclenché par le bouton "Réinitialiser" du panneau de filtres :
