@@ -92,13 +92,14 @@ class GetSecondaryAccountsExtras
       final secondaryIds = ownedBySecondaryId[account.id] ?? const <String>{};
       final bySet = <SetExtras>[];
       for (final set in sets) {
-        final counts = _countExtras(
+        final setExtras = _setExtras(
+          set: set,
           cards: cardsBySetId[set.id] ?? const <PokemonCard>[],
           primaryIds: primaryIds,
           secondaryIds: secondaryIds,
         );
-        if (counts.isEmpty) continue;
-        bySet.add(SetExtras(set: set, counts: counts));
+        if (setExtras.counts.isEmpty) continue;
+        bySet.add(setExtras);
       }
       extrasByAccountId[account.id] = AccountExtras(
         accountId: account.id,
@@ -108,23 +109,42 @@ class GetSecondaryAccountsExtras
     return Right(extrasByAccountId);
   }
 
-  ExtraCounts _countExtras({
+  /// Cartes en plus du secondaire dans [set], et si elles complètent
+  /// le principal, côté losanges et côté étoiles : le principal et
+  /// ses cartes en plus couvrent alors tout le groupe (voir
+  /// [SetExtras.completesBase]).
+  SetExtras _setExtras({
+    required CardSet set,
     required List<PokemonCard> cards,
     required Set<String> primaryIds,
     required Set<String> secondaryIds,
   }) {
-    var base = 0;
-    var alternative = 0;
+    var baseTotal = 0;
+    var baseOwnedByPrimary = 0;
+    var baseExtra = 0;
+    var alternativeTotal = 0;
+    var alternativeOwnedByPrimary = 0;
+    var alternativeExtra = 0;
     for (final card in cards) {
-      final extra =
-          secondaryIds.contains(card.id) && !primaryIds.contains(card.id);
-      if (!extra) continue;
+      final ownedByPrimary = primaryIds.contains(card.id);
+      final extra = !ownedByPrimary && secondaryIds.contains(card.id);
       if (CardRarity.isBase(card.rarity)) {
-        base++;
+        baseTotal++;
+        if (ownedByPrimary) baseOwnedByPrimary++;
+        if (extra) baseExtra++;
       } else {
-        alternative++;
+        alternativeTotal++;
+        if (ownedByPrimary) alternativeOwnedByPrimary++;
+        if (extra) alternativeExtra++;
       }
     }
-    return ExtraCounts(base: base, alternative: alternative);
+    return SetExtras(
+      set: set,
+      counts: ExtraCounts(base: baseExtra, alternative: alternativeExtra),
+      completesBase:
+          baseExtra > 0 && baseOwnedByPrimary + baseExtra == baseTotal,
+      completesAlternative: alternativeExtra > 0 &&
+          alternativeOwnedByPrimary + alternativeExtra == alternativeTotal,
+    );
   }
 }

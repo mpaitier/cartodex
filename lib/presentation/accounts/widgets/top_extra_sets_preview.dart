@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/split_outline_box.dart';
 import '../../../domain/entities/account_extras.dart';
 import '../../card_sets/widgets/card_set_logo.dart';
 
@@ -17,6 +19,11 @@ import '../../card_sets/widgets/card_set_logo.dart';
 /// première de la zone, ce qui garde l'ordre d'importance lisible d'une
 /// ligne à l'autre, et les noms des comptes restent alignés. Un compte
 /// sans carte en plus garde la zone, vide.
+///
+/// Le cadre de chaque case passe au vert ([AppColors.complete]) côté
+/// gauche quand les cartes en plus de ce compte complètent les
+/// losanges du principal dans ce set, et côté droit quand elles
+/// complètent les étoiles (voir `SetExtras.completesBase`).
 class TopExtraSetsPreview extends StatelessWidget {
   const TopExtraSetsPreview({
     required this.sets,
@@ -46,7 +53,9 @@ class TopExtraSetsPreview extends StatelessWidget {
   }
 }
 
-/// Une case de l'aperçu : le logo du set dans un petit cadre arrondi.
+/// Une case de l'aperçu : le logo du set dans un petit cadre arrondi,
+/// coupé en deux moitiés ([SplitOutlineBox]) qui passent au vert quand
+/// ce compte complète les losanges (gauche) ou les étoiles (droite).
 class _SetLogoBox extends StatelessWidget {
   const _SetLogoBox({required this.setExtras});
 
@@ -58,22 +67,22 @@ class _SetLogoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final counts = setExtras.counts;
+    final neutral = Theme.of(context).colorScheme.outlineVariant;
     return Tooltip(
       message: '${setExtras.set.name} : '
           '+${counts.base} ◆, +${counts.alternative} ★',
-      child: Container(
-        width: width,
-        height: height,
-        padding: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
+      child: SplitOutlineBox(
+        leftColor: setExtras.completesBase ? AppColors.complete : neutral,
+        rightColor:
+            setExtras.completesAlternative ? AppColors.complete : neutral,
+        child: Container(
+          width: width,
+          height: height,
+          padding: const EdgeInsets.all(3),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CardSetLogo(url: setExtras.set.logoUrl),
           ),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: CardSetLogo(url: setExtras.set.logoUrl),
         ),
       ),
     );

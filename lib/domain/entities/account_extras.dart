@@ -32,10 +32,25 @@ class ExtraCounts extends Equatable {
 /// Pour un set donné, ce qu'un compte secondaire possède en plus du
 /// compte principal : les cartes qu'il a et que le principal n'a pas.
 class SetExtras extends Equatable {
-  const SetExtras({required this.set, required this.counts});
+  const SetExtras({
+    required this.set,
+    required this.counts,
+    this.completesBase = false,
+    this.completesAlternative = false,
+  });
 
   final CardSet set;
   final ExtraCounts counts;
+
+  /// Vrai quand les cartes losange en plus de ce compte suffisent à
+  /// compléter les losanges du principal dans ce set : principal et
+  /// secondaire réunis les ont toutes. Faux si ce compte n'apporte
+  /// aucun losange, même si le principal est déjà complet seul : le
+  /// mérite n'en revient pas à ce compte.
+  final bool completesBase;
+
+  /// Même chose que [completesBase] pour les cartes non-losange.
+  final bool completesAlternative;
 
   /// [sets] triés par losanges en plus (du plus grand au plus petit),
   /// puis par étoiles en plus. À égalité, l'ordre d'entrée est
@@ -60,7 +75,8 @@ class SetExtras extends Equatable {
   }
 
   @override
-  List<Object?> get props => [set, counts];
+  List<Object?> get props =>
+      [set, counts, completesBase, completesAlternative];
 }
 
 /// Ce qu'un compte secondaire possède en plus du compte principal,

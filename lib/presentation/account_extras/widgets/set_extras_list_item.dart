@@ -6,8 +6,10 @@ import '../../card_sets/widgets/card_set_logo.dart';
 
 /// Une ligne de la liste des sets d'un compte secondaire : logo, nom
 /// du set, et les cartes que ce compte y possède en plus du principal
-/// (losanges / étoiles). Un appui ouvre le détail du set, restreint
-/// aux cartes de ce compte.
+/// (losanges / étoiles). Un compteur encadré de vert indique que ces
+/// cartes complètent le principal de ce côté (voir [ExtraCountsLabel]).
+/// Un appui ouvre le détail du set, restreint aux cartes de ce
+/// compte.
 class SetExtrasListItem extends StatelessWidget {
   const SetExtrasListItem({
     required this.setExtras,
@@ -28,7 +30,11 @@ class SetExtrasListItem extends StatelessWidget {
         child: CardSetLogo(url: set.logoUrl),
       ),
       title: Text(set.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: ExtraCountsLabel(counts: setExtras.counts),
+      trailing: ExtraCountsLabel(
+        counts: setExtras.counts,
+        completesBase: setExtras.completesBase,
+        completesAlternative: setExtras.completesAlternative,
+      ),
       onTap: onTap,
     );
   }
