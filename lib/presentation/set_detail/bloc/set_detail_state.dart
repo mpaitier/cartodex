@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../core/constants/card_rarities.dart';
 import '../../../domain/entities/account.dart';
-import '../../../domain/entities/card_element.dart';
+import '../../../domain/entities/card_kind.dart';
 import '../../../domain/entities/pokemon_card.dart';
 import 'ownership_filter.dart';
 
@@ -39,7 +39,7 @@ class SetDetailState extends Equatable {
     this.ownershipByAccountId = const {},
     this.selectedPack,
     this.selectedRarities = const {},
-    this.selectedElements = const {},
+    this.selectedKinds = const {},
     this.ownershipFilter = OwnershipFilter.all,
     this.secondaryFilterAccountId,
     this.ownerFilterAccountId,
@@ -68,9 +68,10 @@ class SetDetailState extends Equatable {
   /// filtre", jamais une valeur "ne pas toucher".
   final Set<CardRarity> selectedRarities;
 
-  /// Éléments cochés dans le filtre par type (multi-sélection). Vide
-  /// signifie "tous les types", comme [selectedRarities].
-  final Set<CardElement> selectedElements;
+  /// Types cochés dans le filtre par type (multi-sélection, voir
+  /// [CardKind]). Vide signifie "tous les types", comme
+  /// [selectedRarities].
+  final Set<CardKind> selectedKinds;
 
   /// Filtre de possession courant (voir [OwnershipFilter]).
   final OwnershipFilter ownershipFilter;
@@ -240,16 +241,16 @@ class SetDetailState extends Equatable {
     return CardRarity.allTiers.where(present.contains).toList();
   }
 
-  /// Éléments effectivement présents parmi les cartes concernées par
-  /// la restriction à un compte et le filtre de possession, dans
-  /// l'ordre du jeu ([CardElement.values]), pour peupler
-  /// `ElementFilterBar`. Comme pour les raretés, une puce qui ne
+  /// Types effectivement présents parmi les cartes concernées par la
+  /// restriction à un compte et le filtre de possession, dans l'ordre
+  /// de [CardKind.values] (éléments puis Dresseurs), pour peupler
+  /// `CardKindFilterBar`. Comme pour les raretés, une puce qui ne
   /// montrerait rien n'est pas proposée.
-  List<CardElement> get availableElements {
+  List<CardKind> get availableKinds {
     final present = {
-      for (final card in _ownershipScopedCards) CardElement.of(card),
+      for (final card in _ownershipScopedCards) CardKind.of(card),
     };
-    return CardElement.values.where(present.contains).toList();
+    return CardKind.values.where(present.contains).toList();
   }
 
   /// Nombre de filtres actifs (booster, rareté, possession, type),
@@ -262,14 +263,29 @@ class SetDetailState extends Equatable {
     if (selectedPack != null) count++;
     if (selectedRarities.isNotEmpty) count++;
     if (ownershipFilter != OwnershipFilter.all) count++;
-    if (selectedElements.isNotEmpty) count++;
+    if (selectedKinds.isNotEmpty) count++;
     return count;
   }
 
   /// Cartes à afficher compte tenu des filtres courants (restriction
   /// à un compte, possession, booster, rareté et type, cumulatifs).
-  List<PokemonCard> get visibleCards {
-    var result = _ownershipScopedCards;
+  List<PokemonCard> get visibleCards =>
+      _applyContentFilters(_ownershipScopedCards);
+
+  /// Vrai quand un filtre de booster, de rareté ou de type est actif :
+  /// le compteur de la barre du haut ne porte alors que sur une partie
+  /// du set (voir [_progressCards]).
+  bool get hasContentFilters =>
+      selectedPack != null ||
+      selectedRarities.isNotEmpty ||
+      selectedKinds.isNotEmpty;
+
+  /// [source] restreintes par les filtres qui choisissent *quelles*
+  /// cartes regarder (booster, rareté, type), par opposition à la
+  /// possession et à la restriction à un compte, qui disent *à qui*
+  /// elles sont.
+  List<PokemonCard> _applyContentFilters(List<PokemonCard> source) {
+    var result = source;
     final pack = selectedPack;
     if (pack != null) {
       result = result.where((card) => card.packs.contains(pack)).toList();
@@ -280,13 +296,23 @@ class SetDetailState extends Equatable {
         return rarity != null && selectedRarities.contains(rarity);
       }).toList();
     }
-    if (selectedElements.isNotEmpty) {
+    if (selectedKinds.isNotEmpty) {
       result = result
-          .where((card) => selectedElements.contains(CardElement.of(card)))
+          .where((card) => selectedKinds.contains(CardKind.of(card)))
           .toList();
     }
     return result;
   }
+
+  /// Cartes sur lesquelles porte le compteur de la barre du haut
+  /// (`SetProgressSummary`) : tout le set, restreint par les filtres
+  /// de booster, de rareté et de type ([_applyContentFilters]).
+  ///
+  /// Le filtre de possession et la restriction à un compte ne
+  /// s'appliquent pas : ils trient par possession, et le compteur
+  /// mesure justement la possession. Avec "Manquantes", il afficherait
+  /// toujours 0, et avec "Principal", toujours 100 %.
+  List<PokemonCard> get _progressCards => _applyContentFilters(cards);
 
   /// [visibleCards] restreintes au volet [group] de
   /// [CardGridPager][../widgets/card_grid_pager.dart] — le même
@@ -306,22 +332,22 @@ class SetDetailState extends Equatable {
   }
 
   /// Nombre de cartes de la "collection de base" (rareté losange)
-  /// dans ce set, et combien le compte principal en possède — pour
-  /// `SetProgressSummary`. Ignore les filtres de booster/rareté/
-  /// possession : c'est une mesure de progression sur tout le set,
-  /// pas sur ce qui est actuellement affiché.
-  int get baseTotal => cards.where(_isBase).length;
+  /// parmi [_progressCards], et combien le compte principal en
+  /// possède — pour `SetProgressSummary`. Suit les filtres de booster,
+  /// de rareté et de type, mais pas celui de possession.
+  int get baseTotal => _progressCards.where(_isBase).length;
 
-  int get baseOwned =>
-      cards.where((c) => _isBase(c) && primaryOwnedCardIds.contains(c.id)).length;
+  int get baseOwned => _progressCards
+      .where((c) => _isBase(c) && primaryOwnedCardIds.contains(c.id))
+      .length;
 
   /// Symétrique de [baseTotal]/[baseOwned] pour les "cartes
   /// alternatives" (tout ce qui n'est pas losange : étoile, couronne,
   /// chromatique). Les cartes sans rareté connue (rares promos) ne
   /// comptent ni dans l'un ni dans l'autre.
-  int get alternativeTotal => cards.where(_isAlternative).length;
+  int get alternativeTotal => _progressCards.where(_isAlternative).length;
 
-  int get alternativeOwned => cards
+  int get alternativeOwned => _progressCards
       .where((c) => _isAlternative(c) && primaryOwnedCardIds.contains(c.id))
       .length;
 
@@ -332,7 +358,8 @@ class SetDetailState extends Equatable {
   /// possèdent. Ne dépasse donc jamais [baseTotal].
   int get baseOwnedAllAccounts {
     final secondaryOnly = secondaryOwnedCardIds.difference(primaryOwnedCardIds);
-    final extra = cards.where((c) => _isBase(c) && secondaryOnly.contains(c.id));
+    final extra = _progressCards
+        .where((c) => _isBase(c) && secondaryOnly.contains(c.id));
     return baseOwned + extra.length;
   }
 
@@ -340,8 +367,8 @@ class SetDetailState extends Equatable {
   /// alternatives.
   int get alternativeOwnedAllAccounts {
     final secondaryOnly = secondaryOwnedCardIds.difference(primaryOwnedCardIds);
-    final extra =
-        cards.where((c) => _isAlternative(c) && secondaryOnly.contains(c.id));
+    final extra = _progressCards
+        .where((c) => _isAlternative(c) && secondaryOnly.contains(c.id));
     return alternativeOwned + extra.length;
   }
 
@@ -363,7 +390,7 @@ class SetDetailState extends Equatable {
     Map<String, Set<String>>? ownershipByAccountId,
     Object? selectedPack = _unset,
     Set<CardRarity>? selectedRarities,
-    Set<CardElement>? selectedElements,
+    Set<CardKind>? selectedKinds,
     OwnershipFilter? ownershipFilter,
     Object? secondaryFilterAccountId = _unset,
     Object? ownerFilterAccountId = _unset,
@@ -378,7 +405,7 @@ class SetDetailState extends Equatable {
           ? this.selectedPack
           : selectedPack as String?,
       selectedRarities: selectedRarities ?? this.selectedRarities,
-      selectedElements: selectedElements ?? this.selectedElements,
+      selectedKinds: selectedKinds ?? this.selectedKinds,
       ownershipFilter: ownershipFilter ?? this.ownershipFilter,
       secondaryFilterAccountId: identical(secondaryFilterAccountId, _unset)
           ? this.secondaryFilterAccountId
@@ -398,7 +425,7 @@ class SetDetailState extends Equatable {
         ownershipByAccountId,
         selectedPack,
         selectedRarities,
-        selectedElements,
+        selectedKinds,
         ownershipFilter,
         secondaryFilterAccountId,
         ownerFilterAccountId,

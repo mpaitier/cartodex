@@ -183,6 +183,7 @@ class _SetDetailViewState extends State<_SetDetailView> {
       alternativeOwnedPrimary: state.alternativeOwned,
       alternativeOwnedAllAccounts: state.alternativeOwnedAllAccounts,
       alternativeTotal: state.alternativeTotal,
+      isFiltered: state.hasContentFilters,
     );
   }
 
