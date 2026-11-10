@@ -23,11 +23,14 @@ class CardModel extends PokemonCard {
     super.packs,
   });
 
-  /// `cards.json` ne contient pas le nom du set ni la catégorie de
-  /// la carte (Pokémon / Dresseur / Énergie) : le nom est retrouvé
-  /// après coup via [copyWith] (le repository connaît déjà les
-  /// sets), et [category] est passée séparément ici, croisée avec
-  /// `cards.extra.json` par le datasource distant.
+  /// `cards.json` ne contient pas le nom du set, ni la catégorie de
+  /// la carte (Pokémon / Dresseur / Énergie), ni son élément (Plante,
+  /// Feu...) : le nom est retrouvé après coup via [copyWith] (le
+  /// repository connaît déjà les sets), et [category] et [element]
+  /// sont passés séparément ici, croisés avec `cards.extra.json` par
+  /// le datasource distant. L'élément brut (ex: "grass") devient
+  /// l'unique valeur de `types` ; une carte sans élément (Dresseurs)
+  /// garde une liste vide.
   ///
   /// Exemple d'entrée `cards.json` :
   /// ```json
@@ -40,7 +43,11 @@ class CardModel extends PokemonCard {
   ///   "packs": ["Mewtwo"]
   /// }
   /// ```
-  factory CardModel.fromJson(Map<String, dynamic> json, {String? category}) {
+  factory CardModel.fromJson(
+    Map<String, dynamic> json, {
+    String? category,
+    String? element,
+  }) {
     final setId = json['set'] as String;
     final number = json['number'].toString();
     final name = json['name'] as String;
@@ -72,6 +79,7 @@ class CardModel extends PokemonCard {
           '${PocketCardsImageSlug.fromSetCode(setId)}-'
           '${number.padLeft(3, '0')}.webp',
       rarity: json['rarity'] as String?,
+      types: element == null || element.isEmpty ? const [] : [element],
       packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],
     );
   }

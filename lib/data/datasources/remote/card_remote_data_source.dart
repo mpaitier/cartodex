@@ -67,17 +67,22 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
     final cardsBody = jsonDecode((await _get(cardsUri)).body) as List<dynamic>;
     final extraBody = jsonDecode((await _get(extraUri)).body) as List<dynamic>;
 
-    // cards.json ne porte pas la catégorie (Pokémon / Dresseur / Énergie) ;
-    // seul cards.extra.json l'a, sous le champ `type`. On construit un index
-    // set-numéro -> type pour croiser les deux sans jointure O(n²).
-    final categoryByKey = <String, String?>{
+    // cards.json ne porte ni la catégorie (Pokémon / Dresseur / Énergie)
+    // ni l'élément (Plante, Feu...) ; seul cards.extra.json les a, sous
+    // les champs `type` et `element`. On construit un index set-numéro ->
+    // carte enrichie pour croiser les deux sans jointure O(n²).
+    final extraByKey = <String, Map<String, dynamic>>{
       for (final raw in extraBody.cast<Map<String, dynamic>>())
-        '${raw['set']}-${raw['number']}': raw['type'] as String?,
+        '${raw['set']}-${raw['number']}': raw,
     };
 
     return cardsBody.cast<Map<String, dynamic>>().map((raw) {
-      final key = '${raw['set']}-${raw['number']}';
-      return CardModel.fromJson(raw, category: categoryByKey[key]);
+      final extra = extraByKey['${raw['set']}-${raw['number']}'];
+      return CardModel.fromJson(
+        raw,
+        category: extra?['type'] as String?,
+        element: extra?['element'] as String?,
+      );
     }).toList();
   }
 
