@@ -23,7 +23,7 @@ class AccountsRefreshRequested extends AccountsEvent {
   const AccountsRefreshRequested();
 }
 
-/// Déclenché par le choix d'un critère dans le menu de tri de la
+/// Déclenché par le choix d'un critère dans le panneau de tri de la
 /// liste des comptes. Le choix est mémorisé pour les lancements
 /// suivants.
 class AccountsSortChanged extends AccountsEvent {
@@ -33,6 +33,19 @@ class AccountsSortChanged extends AccountsEvent {
 
   @override
   List<Object?> get props => [option];
+}
+
+/// Déclenché par un changement dans le filtre par extension du
+/// panneau de tri et de filtre (multi-sélection) : n'affiche que les
+/// comptes qui ont des cartes en plus dans au moins l'une des
+/// extensions [setIds]. Un ensemble vide retire le filtre.
+class AccountsSetFilterChanged extends AccountsEvent {
+  const AccountsSetFilterChanged(this.setIds);
+
+  final Set<String> setIds;
+
+  @override
+  List<Object?> get props => [setIds];
 }
 
 /// Déclenché par la validation du formulaire d'ajout de compte.

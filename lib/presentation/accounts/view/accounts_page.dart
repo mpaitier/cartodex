@@ -12,7 +12,9 @@ import '../bloc/accounts_bloc.dart';
 import '../bloc/accounts_event.dart';
 import '../bloc/accounts_state.dart';
 import '../widgets/account_list_item.dart';
-import '../widgets/accounts_sort_action.dart';
+import '../widgets/accounts_filter_action.dart';
+import '../widgets/accounts_filter_sheet.dart';
+import '../widgets/active_set_filter_banner.dart';
 import '../widgets/add_account_dialog.dart';
 import '../widgets/edit_account_dialog.dart';
 
@@ -21,9 +23,13 @@ import '../widgets/edit_account_dialog.dart';
 /// Un compte secondaire affiche ses cartes en plus du principal ; un
 /// appui dessus ouvre [AccountExtrasPage], le détail par set. Le
 /// crayon de chaque ligne ouvre [EditAccountDialog] pour changer le
-/// nom ou le code ami. Un menu de tri dans l'AppBar réordonne les
-/// secondaires (le principal reste toujours en tête) ; le choix est
-/// mémorisé d'un lancement à l'autre.
+/// nom ou le code ami. Le bouton de la barre du haut ouvre le panneau
+/// de tri et de filtre ([AccountsFilterSheet]) : le tri réordonne les
+/// secondaires (le principal reste en tête) et il est mémorisé d'un
+/// lancement à l'autre ; le filtre par extension (plusieurs choix
+/// possibles) ne garde que les secondaires qui ont des cartes en plus
+/// dans au moins l'une d'elles, rappelé par un bandeau
+/// ([ActiveSetFilterBanner]).
 class AccountsPage extends StatelessWidget {
   const AccountsPage({super.key});
 
@@ -59,11 +65,9 @@ class _AccountsView extends StatelessWidget {
           actions: [
             if (state.status == AccountsStatus.loaded &&
                 state.accounts.isNotEmpty)
-              AccountsSortAction(
-                selected: state.sortOption,
-                onSelected: (option) => context
-                    .read<AccountsBloc>()
-                    .add(AccountsSortChanged(option)),
+              AccountsFilterAction(
+                isFiltered: state.isSetFiltered,
+                onPressed: () => _openFilterSheet(context),
               ),
           ],
           floatingActionButton: FloatingActionButton(
@@ -95,27 +99,61 @@ class _AccountsView extends StatelessWidget {
       return const Center(child: Text('Aucun compte pour l’instant.'));
     }
 
-    // Principal en tête, secondaires triés selon le critère choisi.
+    // Principal en tête, secondaires triés selon le critère choisi ;
+    // avec un filtre d'extension, seulement les secondaires concernés.
     final accounts = state.sortedAccounts;
-    return ListView.builder(
-      itemCount: accounts.length,
-      itemBuilder: (context, index) {
-        final account = accounts[index];
-        return AccountListItem(
-          account: account,
-          extras: account.isPrimary
-              ? null
-              : state.extrasByAccountId[account.id] ??
-                  AccountExtras(accountId: account.id),
-          onTap: account.isPrimary
-              ? null
-              : () => _openExtras(context, account),
-          onCrownTap: () => context
-              .read<AccountsBloc>()
-              .add(PrimaryAccountChanged(account.id)),
-          onEditTap: () => _openEditDialog(context, account),
-        );
-      },
+    final filterSets = state.activeFilterSets;
+    return Column(
+      children: [
+        if (filterSets.isNotEmpty)
+          ActiveSetFilterBanner(
+            sets: filterSets,
+            onClear: () => context
+                .read<AccountsBloc>()
+                .add(const AccountsSetFilterChanged({})),
+          ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: accounts.length,
+            itemBuilder: (context, index) {
+              final account = accounts[index];
+              return AccountListItem(
+                account: account,
+                extras: account.isPrimary
+                    ? null
+                    : state.extrasByAccountId[account.id] ??
+                        AccountExtras(accountId: account.id),
+                focusedCounts: state.filteredCountsFor(account),
+                focusedSetExtras: state.singleFilteredSetExtrasFor(account),
+                previewSets: state.previewSetsFor(account),
+                onTap: account.isPrimary
+                    ? null
+                    : () => _openExtras(context, account),
+                onCrownTap: () => context
+                    .read<AccountsBloc>()
+                    .add(PrimaryAccountChanged(account.id)),
+                onEditTap: () => _openEditDialog(context, account),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Ouvre le panneau de tri et de filtre. Le Bloc de l'écran lui est
+  /// transmis explicitement : une feuille modale ne voit pas les
+  /// providers de la page.
+  void _openFilterSheet(BuildContext context) {
+    final bloc = context.read<AccountsBloc>();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: const AccountsFilterSheet(),
+      ),
     );
   }
 
