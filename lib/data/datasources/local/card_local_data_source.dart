@@ -302,7 +302,10 @@ class CardLocalDataSourceImpl implements CardLocalDataSource {
       id: row.id,
       localId: row.localId,
       name: row.name,
-      category: CardCategory.values.byName(row.category),
+      // Pas de byName : une base remplie avant le détail des types de
+      // Dresseur contient encore "trainer" ou "energy", qui ne
+      // doivent pas faire planter la lecture.
+      category: CardCategory.fromName(row.category),
       setId: row.setId,
       setName: row.setName,
       imageUrl: row.imageUrl,

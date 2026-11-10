@@ -23,14 +23,14 @@ class CardModel extends PokemonCard {
     super.packs,
   });
 
-  /// `cards.json` ne contient pas le nom du set, ni la catégorie de
-  /// la carte (Pokémon / Dresseur / Énergie), ni son élément (Plante,
-  /// Feu...) : le nom est retrouvé après coup via [copyWith] (le
-  /// repository connaît déjà les sets), et [category] et [element]
-  /// sont passés séparément ici, croisés avec `cards.extra.json` par
-  /// le datasource distant. L'élément brut (ex: "grass") devient
-  /// l'unique valeur de `types` ; une carte sans élément (Dresseurs)
-  /// garde une liste vide.
+  /// `cards.json` ne contient pas le nom du set, ni le type de la
+  /// carte (Pokémon, Supporter, Objet...), ni son élément (Plante,
+  /// Feu...), ni ses PV : le nom est retrouvé après coup via
+  /// [copyWith] (le repository connaît déjà les sets), et [category],
+  /// [element] et [hp] sont passés séparément ici, croisés avec
+  /// `cards.extra.json` par le datasource distant. L'élément brut (ex:
+  /// "grass") devient l'unique valeur de `types` ; une carte sans
+  /// élément (Dresseurs) garde une liste vide.
   ///
   /// Exemple d'entrée `cards.json` :
   /// ```json
@@ -47,6 +47,7 @@ class CardModel extends PokemonCard {
     Map<String, dynamic> json, {
     String? category,
     String? element,
+    int? hp,
   }) {
     final setId = json['set'] as String;
     final number = json['number'].toString();
@@ -79,6 +80,7 @@ class CardModel extends PokemonCard {
           '${PocketCardsImageSlug.fromSetCode(setId)}-'
           '${number.padLeft(3, '0')}.webp',
       rarity: json['rarity'] as String?,
+      hp: hp,
       types: element == null || element.isEmpty ? const [] : [element],
       packs: (json['packs'] as List<dynamic>?)?.cast<String>() ?? const [],
     );
@@ -112,18 +114,12 @@ class CardModel extends PokemonCard {
   }
 
   /// Convertit le `type` brut de `cards.extra.json` (`"pokemon"`,
-  /// `"trainer"`, `"energy"`) en [CardCategory]. Absent ou inconnu
-  /// retombe sur [CardCategory.trainer] plutôt que de planter la
-  /// synchronisation entière pour une seule carte.
+  /// `"supporter"`, `"item"`, `"tool"`, `"stadium"`, `"Fossil"`) en
+  /// [CardCategory], sans tenir compte de la casse (le référentiel
+  /// écrit "Fossil" avec une majuscule). Absent ou inconnu retombe sur
+  /// [CardCategory.unknown] plutôt que de planter la synchronisation
+  /// entière pour une seule carte.
   static CardCategory _categoryFromApi(String? raw) {
-    switch (raw) {
-      case 'pokemon':
-        return CardCategory.pokemon;
-      case 'energy':
-        return CardCategory.energy;
-      case 'trainer':
-      default:
-        return CardCategory.trainer;
-    }
+    return CardCategory.fromName(raw?.toLowerCase());
   }
 }
