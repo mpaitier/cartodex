@@ -25,9 +25,15 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -56,6 +62,7 @@ class DefaultFirebaseOptions {
     projectId: 'cartodex-f5a25',
     storageBucket: 'cartodex-f5a25.firebasestorage.app',
   );
+
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCKvKgqax4urKBrk0Rz6eaEovE-EJxlEe8',
     appId: '1:739770944620:ios:480c4b12de891f807b5c49',
@@ -65,23 +72,5 @@ class DefaultFirebaseOptions {
     androidClientId: '739770944620-03tgqalsv8nt722mrbqcbuqbaueod01t.apps.googleusercontent.com',
     iosClientId: '739770944620-bbjs7vb4a45cdg8s9d5fgfo0m3c8u8mh.apps.googleusercontent.com',
     iosBundleId: 'com.mpaitier.cartodex',
-  );
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAtoqxn4LAH1CI1ThGprRrPPV9GEPiPRFw',
-    appId: '1:739770944620:ios:ef01c7c689b767fe7b5c49',
-    messagingSenderId: '739770944620',
-    projectId: 'cartodex-f5a25',
-    storageBucket: 'cartodex-f5a25.firebasestorage.app',
-    iosClientId: '739770944620-ug1pafjj92kcqb8mbstctmb28liv2ge5.apps.googleusercontent.com',
-    iosBundleId: 'com.example.cartodex',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDIqF_72qr5XGZfe_MM7yfLF6SJyXnIixM',
-    appId: '1:739770944620:web:5e0ebef86e1683e47b5c49',
-    messagingSenderId: '739770944620',
-    projectId: 'cartodex-f5a25',
-    authDomain: 'cartodex-f5a25.firebaseapp.com',
-    storageBucket: 'cartodex-f5a25.firebasestorage.app',
   );
 }
