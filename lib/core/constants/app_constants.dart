@@ -7,9 +7,11 @@ abstract class AppConstants {
 
   /// Même référentiel, lu directement sur la branche `main` de son
   /// dépôt GitHub (toujours via jsDelivr). Utilisé seulement pour
-  /// `cards.extra.json` : la version publiée sur npm (2.13.1) s'arrête
-  /// à B1a, alors que le dépôt couvre toutes les extensions depuis le
-  /// 02/11/2026. À retirer quand une version npm à jour sera publiée.
+  /// `cards.extra.json`, seule source des cartes : la version publiée
+  /// sur npm (2.13.1) s'arrête à B1a pour ce fichier, alors que le
+  /// dépôt couvre toutes les extensions depuis le 02/11/2026. npm reste
+  /// le repli si GitHub ne répond pas (voir
+  /// `CardRemoteDataSourceImpl.fetchAllCards`).
   static const String pocketDatabaseGithubBaseUrl =
       'https://cdn.jsdelivr.net/gh/flibustier/pokemon-tcg-pocket-database@main/dist';
 
