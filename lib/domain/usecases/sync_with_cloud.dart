@@ -7,6 +7,8 @@ import '../entities/sync_result.dart';
 import '../repositories/account_repository.dart';
 import '../repositories/card_repository.dart';
 import '../repositories/cloud_sync_repository.dart';
+import '../repositories/user_preferences_repository.dart';
+import '../services/sync_rate_limit.dart';
 import '../usecase.dart';
 
 /// Synchronise les comptes Pokémon et leur possession avec le
@@ -32,21 +34,73 @@ import '../usecase.dart';
 /// s'arrête et remonte l'échec, sans revenir en arrière sur ce qui a
 /// déjà été appliqué — la fusion étant idempotente, une
 /// resynchronisation ultérieure rattrape ce qui manque encore.
+///
+/// Limitée par [SyncRateLimit] : au-delà du quota, rien n'est lu ni
+/// écrit et l'appel renvoie une [SyncQuotaExceededFailure]. Seules les
+/// synchronisations réussies sont comptées : un échec (réseau coupé,
+/// par exemple) ne consomme pas le quota. Les comptes de
+/// [exemptUserIds] ne sont pas limités ; leurs synchronisations sont
+/// tout de même enregistrées, pour que l'historique reste juste si
+/// l'exemption est retirée.
 class SyncWithCloud implements UseCase<SyncResult, SyncWithCloudParams> {
-  const SyncWithCloud({
+  SyncWithCloud({
     required AccountRepository accountRepository,
     required CardRepository cardRepository,
     required CloudSyncRepository cloudSyncRepository,
+    required UserPreferencesRepository userPreferencesRepository,
+    Set<String> exemptUserIds = const {},
+    DateTime Function()? now,
   })  : _accountRepository = accountRepository,
         _cardRepository = cardRepository,
-        _cloudSyncRepository = cloudSyncRepository;
+        _cloudSyncRepository = cloudSyncRepository,
+        _userPreferencesRepository = userPreferencesRepository,
+        _exemptUserIds = exemptUserIds,
+        _now = now ?? DateTime.now;
 
   final AccountRepository _accountRepository;
   final CardRepository _cardRepository;
   final CloudSyncRepository _cloudSyncRepository;
+  final UserPreferencesRepository _userPreferencesRepository;
+  final Set<String> _exemptUserIds;
+
+  /// Horloge, remplaçable dans les tests.
+  final DateTime Function() _now;
 
   @override
   Future<Either<Failure, SyncResult>> call(SyncWithCloudParams params) async {
+    // Historique illisible : traité comme vide. Mieux vaut laisser
+    // passer une synchronisation de trop que bloquer l'utilisateur
+    // pour un souci de stockage local.
+    final historyResult =
+        await _userPreferencesRepository.getSyncHistory(params.userId);
+    final history = historyResult.getOrElse(() => const []);
+    if (!_exemptUserIds.contains(params.userId)) {
+      final quota = SyncRateLimit.quotaFor(history, _now());
+      final nextAvailableAt = quota.nextAvailableAt;
+      if (quota.remaining <= 0 && nextAvailableAt != null) {
+        return Left(SyncQuotaExceededFailure(nextAvailableAt));
+      }
+    }
+
+    final result = await _synchronize(params.userId);
+    if (result.isRight()) {
+      await _recordSync(params.userId, history);
+    }
+    return result;
+  }
+
+  /// Ajoute la synchronisation qui vient de réussir à l'historique,
+  /// purgé de ce qui est sorti de la fenêtre. Un échec d'écriture est
+  /// ignoré : la synchronisation, elle, a bien eu lieu.
+  Future<void> _recordSync(String userId, List<DateTime> history) async {
+    final now = _now();
+    await _userPreferencesRepository.saveSyncHistory(
+      userId,
+      [...SyncRateLimit.recent(history, now), now],
+    );
+  }
+
+  Future<Either<Failure, SyncResult>> _synchronize(String userId) async {
     final migrateResult = await _accountRepository.migrateLegacyAccountIds();
     final migrateFailure = migrateResult.fold((f) => f, (_) => null);
     if (migrateFailure != null) return Left(migrateFailure);
@@ -77,7 +131,7 @@ class SyncWithCloud implements UseCase<SyncResult, SyncWithCloudParams> {
     }
 
     final cloudAccountsResult =
-        await _cloudSyncRepository.fetchAccounts(params.userId);
+        await _cloudSyncRepository.fetchAccounts(userId);
     final cloudAccountsFailure =
         cloudAccountsResult.fold((f) => f, (_) => null);
     if (cloudAccountsFailure != null) return Left(cloudAccountsFailure);
@@ -100,7 +154,7 @@ class SyncWithCloud implements UseCase<SyncResult, SyncWithCloudParams> {
 
       if (cloud == null || missingInCloud.isNotEmpty) {
         final pushResult = await _cloudSyncRepository.pushAccount(
-          userId: params.userId,
+          userId: userId,
           account: CloudAccount(
             id: local.id,
             name: local.name,

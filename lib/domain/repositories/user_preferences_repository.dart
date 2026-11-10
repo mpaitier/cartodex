@@ -27,4 +27,16 @@ abstract class UserPreferencesRepository {
 
   /// Enregistre [language] comme langue d'affichage.
   Future<Either<Failure, void>> saveAppLanguage(AppLanguage language);
+
+  /// Dates des synchronisations cloud réussies du compte applicatif
+  /// [userId] sur cet appareil (voir `SyncRateLimit`). Liste vide si
+  /// aucune n'a été enregistrée ; une date illisible est ignorée.
+  Future<Either<Failure, List<DateTime>>> getSyncHistory(String userId);
+
+  /// Remplace l'historique des synchronisations de [userId] par
+  /// [history].
+  Future<Either<Failure, void>> saveSyncHistory(
+    String userId,
+    List<DateTime> history,
+  );
 }

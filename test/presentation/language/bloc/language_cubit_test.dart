@@ -38,6 +38,19 @@ class _FakePreferencesRepository implements UserPreferencesRepository {
     AccountsSortOption option,
   ) async =>
       const Right(null);
+
+  @override
+  Future<Either<Failure, List<DateTime>>> getSyncHistory(
+    String userId,
+  ) async =>
+      const Right([]);
+
+  @override
+  Future<Either<Failure, void>> saveSyncHistory(
+    String userId,
+    List<DateTime> history,
+  ) async =>
+      const Right(null);
 }
 
 LanguageCubit _cubit(_FakePreferencesRepository repository) => LanguageCubit(
