@@ -16,13 +16,13 @@ import '../../models/set_pull_rates_model.dart';
 ///
 /// S'appuie sur `pokemon-tcg-pocket-database`
 /// (https://github.com/flibustier/pokemon-tcg-pocket-database),
-/// trois fichiers JSON statiques servis par jsDelivr, plutôt que
-/// sur TCGdex : ce dernier ne modélisait pas la répartition des
-/// cartes par booster à l'intérieur d'un set, une donnée que ce
-/// jeu-ci fournit nativement (`sets.json.packs`,
-/// `cards.json.packs`). Trois requêtes suffisent à tout récupérer,
-/// contre une par carte auparavant, plus une quatrième pour les
-/// probabilités de tirage des boosters (`pullRates.json`).
+/// des fichiers JSON statiques servis par jsDelivr, plutôt que sur
+/// TCGdex : ce dernier ne modélisait pas la répartition des cartes
+/// par booster à l'intérieur d'un set, une donnée que ce jeu-ci
+/// fournit nativement (`sets.json.packs`, `packs` de chaque carte).
+/// Trois requêtes suffisent à tout récupérer : `sets.json`,
+/// `cards.extra.json` (toutes les cartes, avec type, élément et PV)
+/// et `pullRates.json` (probabilités de tirage des boosters).
 abstract class CardRemoteDataSource {
   /// Récupère tous les sets TCG Pocket, tous groupes de série
   /// confondus.
@@ -60,44 +60,30 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
     }).toList();
   }
 
+  /// Lit les cartes dans `cards.extra.json`, pris sur le dépôt GitHub
+  /// du référentiel (voir [AppConstants.pocketDatabaseGithubBaseUrl]).
+  /// Ce fichier contient tous les champs de `cards.json` (set, numéro,
+  /// nom, rareté, boosters) et en ajoute d'autres : le type de carte,
+  /// l'élément et les PV. Un seul fichier suffit donc.
+  ///
+  /// En cas d'échec sur GitHub, repli sur la version npm : là, le
+  /// `cards.extra.json` publié ne couvre pas toutes les extensions,
+  /// donc la liste des cartes vient de `cards.json`, complétée par
+  /// `cards.extra.json` quand une carte y figure. Seul un échec des
+  /// deux sources fait échouer la synchronisation.
   @override
   Future<List<CardModel>> fetchAllCards() async {
-    final cardsUri = Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/cards.json');
-    final cardsBody = jsonDecode((await _get(cardsUri)).body) as List<dynamic>;
-    final extraBody = await _fetchCardsExtra();
-
-    // cards.json ne porte ni le type de carte (Pokémon, Supporter, Objet,
-    // Outil, Stade, Fossile), ni l'élément (Plante, Feu...), ni les PV ;
-    // seul cards.extra.json les a, sous les champs `type`, `element` et
-    // `health`. On construit un index set-numéro -> carte enrichie pour
-    // croiser les deux sans jointure O(n²).
-    final extraByKey = <String, Map<String, dynamic>>{
-      for (final raw in extraBody.cast<Map<String, dynamic>>())
-        '${raw['set']}-${raw['number']}': raw,
-    };
-
-    return cardsBody.cast<Map<String, dynamic>>().map((raw) {
-      final extra = extraByKey['${raw['set']}-${raw['number']}'];
-      return CardModel.fromJson(
-        raw,
-        category: extra?['type'] as String?,
-        element: extra?['element'] as String?,
-        hp: (extra?['health'] as num?)?.toInt(),
-      );
-    }).toList();
-  }
-
-  /// `cards.extra.json`, lu d'abord sur le dépôt GitHub du référentiel
-  /// (à jour pour toutes les extensions), puis sur la version npm en
-  /// cas d'échec (voir [AppConstants.pocketDatabaseGithubBaseUrl]).
-  /// Seul un échec des deux sources fait échouer la synchronisation.
-  Future<List<dynamic>> _fetchCardsExtra() async {
     final githubUri = Uri.parse(
       '${AppConstants.pocketDatabaseGithubBaseUrl}/cards.extra.json',
     );
     try {
       final decoded = jsonDecode((await _get(githubUri)).body);
-      if (decoded is List<dynamic>) return decoded;
+      if (decoded is List<dynamic>) {
+        return decoded
+            .cast<Map<String, dynamic>>()
+            .map((raw) => _cardFromExtra(raw, raw))
+            .toList();
+      }
       AppLogger.log(
         'WARNING',
         'cards.extra.json inattendu sur GitHub, repli sur npm.',
@@ -108,9 +94,46 @@ class CardRemoteDataSourceImpl implements CardRemoteDataSource {
         'cards.extra.json indisponible sur GitHub, repli sur npm : $e',
       );
     }
-    final npmUri =
+    return _fetchAllCardsFromNpm();
+  }
+
+  /// Repli de [fetchAllCards] sur la version npm : `cards.json` pour la
+  /// liste complète des cartes, croisé par set et numéro avec
+  /// `cards.extra.json` (sans jointure O(n²)) pour le type, l'élément
+  /// et les PV des cartes qui y figurent.
+  Future<List<CardModel>> _fetchAllCardsFromNpm() async {
+    final cardsUri =
+        Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/cards.json');
+    final extraUri =
         Uri.parse('${AppConstants.pocketDatabaseBaseUrl}/cards.extra.json');
-    return jsonDecode((await _get(npmUri)).body) as List<dynamic>;
+    final cardsBody = jsonDecode((await _get(cardsUri)).body) as List<dynamic>;
+    final extraBody = jsonDecode((await _get(extraUri)).body) as List<dynamic>;
+
+    final extraByKey = <String, Map<String, dynamic>>{
+      for (final raw in extraBody.cast<Map<String, dynamic>>())
+        '${raw['set']}-${raw['number']}': raw,
+    };
+
+    return cardsBody.cast<Map<String, dynamic>>().map((raw) {
+      final extra = extraByKey['${raw['set']}-${raw['number']}'];
+      return _cardFromExtra(raw, extra);
+    }).toList();
+  }
+
+  /// Carte construite à partir de ses champs de base ([base] : set,
+  /// numéro, nom, rareté, boosters) et de ses détails ([extra] : type,
+  /// élément, PV), qui viennent de la même entrée quand on lit
+  /// `cards.extra.json` seul. [extra] à `null` laisse ces détails vides.
+  static CardModel _cardFromExtra(
+    Map<String, dynamic> base,
+    Map<String, dynamic>? extra,
+  ) {
+    return CardModel.fromJson(
+      base,
+      category: extra?['type'] as String?,
+      element: extra?['element'] as String?,
+      hp: (extra?['health'] as num?)?.toInt(),
+    );
   }
 
   @override
