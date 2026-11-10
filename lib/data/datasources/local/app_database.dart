@@ -44,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Constructeur utilisé par les tests, pour injecter une
   /// connexion (par exemple en mémoire) sans toucher au disque.
-  AppDatabase.withExecutor(QueryExecutor executor) : super(executor);
+  AppDatabase.withExecutor(super.executor);
 
   @override
   int get schemaVersion => 4;

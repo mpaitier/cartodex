@@ -1,5 +1,7 @@
 # Cartodex
 
+[![CI](https://github.com/mpaitier/cartodex/actions/workflows/ci.yml/badge.svg)](https://github.com/mpaitier/cartodex/actions/workflows/ci.yml)
+
 Application mobile Flutter pour suivre sa collection de cartes Pokémon TCG Pocket, sur un ou plusieurs comptes de jeu, avec synchronisation optionnelle entre appareils.
 
 ## Contexte
@@ -95,7 +97,7 @@ CardGridItem (onTap)
 Quelques règles appliquées partout :
 
 - **Erreurs.** Les datasources lèvent des exceptions (`ServerException`, `CacheException`). Les repositories les convertissent en `Failure`, renvoyées sous forme de `Either` : aucune exception technique ne remonte au domaine ni à l'interface.
-- **Use cases.** Un fichier par action, avec un contrat commun (`UseCase<Type, Params>`). Les calculs de complétion (`GetCollectionStats`, `GetSetsProgress`, `GetSecondaryAccountsExtras`) sont des use cases et non des méthodes de repository, car ce sont des règles métier. `WatchAuthState` fait exception : c'est un flux continu, donc il n'utilise pas le contrat basé sur `Future`.
+- **Use cases.** Un fichier par action, avec un contrat commun (`UseCase<Result, Params>`). Les calculs de complétion (`GetCollectionStats`, `GetSetsProgress`, `GetSecondaryAccountsExtras`) sont des use cases et non des méthodes de repository, car ce sont des règles métier. `WatchAuthState` fait exception : c'est un flux continu, donc il n'utilise pas le contrat basé sur `Future`.
 - **Injection.** Services, datasources, repositories et use cases sont des singletons paresseux. Les Blocs sont enregistrés en factory, une instance par écran, sauf `AuthBloc`, `RarityScopeCubit` et `LanguageCubit` : la connexion, le périmètre de raretés et la langue sont des états de toute l'application, fournis une fois à la racine.
 - **Mises à jour optimistes.** La bascule de possession change l'état immédiatement, puis revient en arrière avec un message si l'écriture locale échoue. L'ajout en masse est tout ou rien.
 - **Composants.** Chaque écran est découpé en petits widgets sans connaissance du Bloc parent : ils reçoivent leurs données et remontent les interactions par callbacks.
@@ -215,7 +217,7 @@ Prérequis : un SDK Flutter compatible avec `pubspec.lock` (Dart 3.13 et Flutter
    ```
 2. Générer le code Drift (les fichiers `*.g.dart` ne sont pas versionnés) :
    ```
-   dart run build_runner build --delete-conflicting-outputs
+   dart run build_runner build
    ```
 3. Configurer Firebase (l'application ne démarre pas sans) :
    1. Créer un projet sur la [console Firebase](https://console.firebase.google.com).
@@ -261,10 +263,28 @@ Sans `android/key.properties`, le build retombe sur la clé de debug avec un ave
 
 Firebase n'est configuré que pour Android.
 
+## Tests et intégration continue
+
+Les tests portent sur la logique sans interface : règles du domaine (progression, raretés, espérance de cartes par booster, limite de synchronisations), use cases (`GetCollectionStats`, `GetSetsProgress`, `SyncWithCloud`, `GetSyncQuota`), modèles de données, utilitaires (`PocketCardsImageSlug`, `PercentFormatter`) et états des Blocs et Cubits. Les dépôts sont remplacés par des faux en mémoire (`test/helpers/fake_repositories.dart`) : aucun test ne touche à Drift, à Firebase ou au réseau.
+
+Pour tout lancer en local, dans cet ordre (le code généré doit exister avant l'analyse) :
+
+```
+flutter pub get
+flutter gen-l10n
+dart run build_runner build
+flutter analyze
+flutter test
+```
+
+`flutter gen-l10n` est à relancer après chaque modification des fichiers ARB, sinon l'analyse signale les nouvelles clés comme inconnues.
+
+La CI GitHub Actions (`.github/workflows/ci.yml`) refait ces étapes à chaque push sur `main` et sur chaque pull request, avec `flutter analyze --fatal-infos` : la moindre remarque du linter fait échouer le run.
+
 ## Limites connues
 
 - **Cloud.** La synchronisation porte sur les comptes et la possession. Le champ `isPrimary` n'est pas réconcilié entre appareils : un compte importé ne devient principal que si aucun compte n'existait en local.
 - **Noms français.** Au 10/11/2026, `cards.fr.json` ne traduit qu'une petite partie du catalogue (environ 90 cartes, surtout des promos B) et ne couvre pas les extensions les plus récentes. Les autres cartes s'affichent en anglais, même avec l'application en français. Les noms se complètent d'eux-mêmes à la synchronisation suivante quand le fichier source est enrichi.
 - **Images.** Le slug des images repose sur un site non officiel. Un nom inhabituel peut donner une image introuvable, auquel cas la tuile affiche le numéro de la carte. Les cas repérés se corrigent dans `_cardSlugOverrides`.
 - **Données de carte.** Les colonnes `hp`, `types` et `illustrator` existent en base mais la source actuelle ne les fournit pas.
-- **Tests.** Il n'y a pas encore de suite de tests automatisés. Les premiers candidats sont les use cases de calcul (`GetCollectionStats`, `GetSetsProgress`), `SyncWithCloud` et `PocketCardsImageSlug`, qui sont de la logique pure.
+- **Tests.** Il n'y a ni tests de widgets ni tests d'intégration : l'interface se vérifie encore à la main.

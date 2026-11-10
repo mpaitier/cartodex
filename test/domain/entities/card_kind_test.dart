@@ -16,7 +16,7 @@ PokemonCard _card(CardCategory category, {List<String> types = const []}) =>
 
 void main() {
   group('CardKind.of', () {
-    test("un Pokémon prend son élément", () {
+    test('un Pokémon prend son élément', () {
       expect(
         CardKind.of(_card(CardCategory.pokemon, types: ['grass'])),
         CardKind.grass,

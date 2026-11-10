@@ -56,19 +56,22 @@ class CloudSyncRepositoryImpl implements CloudSyncRepository {
     required CloudAccount account,
   }) async {
     try {
-      await _accountsCollection(userId).doc(account.id).set({
-        'name': account.name,
-        'gameAccountId': account.gameAccountId,
-        'isPrimary': account.isPrimary,
-        'createdAt': Timestamp.fromDate(account.createdAt),
-        // arrayUnion, jamais un remplacement : une carte déjà
-        // présente côté cloud n'est jamais retirée par cet envoi,
-        // même si `ownedCardIds` ici n'est qu'une différence
-        // partielle (voir SyncWithCloud, qui n'envoie que ce qui
-        // manque au cloud).
-        if (account.ownedCardIds.isNotEmpty)
-          'ownedCardIds': FieldValue.arrayUnion(account.ownedCardIds.toList()),
-      }, SetOptions(merge: true));
+      await _accountsCollection(userId).doc(account.id).set(
+        {
+          'name': account.name,
+          'gameAccountId': account.gameAccountId,
+          'isPrimary': account.isPrimary,
+          'createdAt': Timestamp.fromDate(account.createdAt),
+          // arrayUnion, jamais un remplacement : une carte déjà
+          // présente côté cloud n'est jamais retirée par cet envoi,
+          // même si `ownedCardIds` ici n'est qu'une différence
+          // partielle (voir SyncWithCloud, qui n'envoie que ce qui
+          // manque au cloud).
+          if (account.ownedCardIds.isNotEmpty)
+            'ownedCardIds': FieldValue.arrayUnion(account.ownedCardIds.toList()),
+        },
+        SetOptions(merge: true),
+      );
       return const Right(null);
     } on Exception catch (e) {
       return Left(ServerFailure('Échec de l\'envoi du compte au cloud : $e'));
