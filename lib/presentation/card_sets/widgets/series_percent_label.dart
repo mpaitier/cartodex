@@ -4,16 +4,24 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/percent_formatter.dart';
 import '../../../domain/entities/progress_count.dart';
 
-/// Pourcentages du bandeau de série (ex: "34,28 % +5,71 %").
+/// Pourcentages du bandeau de série (ex: "34,28 % +5,71 % (40,00 %)").
 ///
 /// - le premier, en violet (vert quand la série est complète), est la
 ///   part du compte principal ;
-/// - le second, en jaune et précédé d'un "+", est ce que les comptes
+/// - le deuxième, en jaune et précédé d'un "+", est ce que les comptes
 ///   secondaires ajoutent sans doublon avec le principal (même lecture
-///   que le "(+Y)" de `ProgressCountLabel`). Il est masqué quand les
-///   secondaires n'apportent rien.
+///   que le "(+Y)" de `ProgressCountLabel`) ;
+/// - le dernier, entre parenthèses et en couleur atténuée, est la part
+///   possédée par au moins un compte.
 ///
-/// Deux décimales arrondies vers le bas (voir [PercentFormatter]).
+/// Les deux derniers sont masqués quand les secondaires n'apportent
+/// rien : le total serait alors identique au premier.
+///
+/// Chaque valeur est arrondie vers le bas séparément (voir
+/// [PercentFormatter]) : le total peut donc dépasser de 0,01 la somme
+/// des deux premiers, mais n'affiche 100,00 % que si plus rien ne
+/// manque.
+///
 /// Un tiret quand le périmètre ne contient aucune carte (ex: les
 /// losanges d'une série de promos).
 class SeriesPercentLabel extends StatelessWidget {
@@ -26,9 +34,11 @@ class SeriesPercentLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = style ?? Theme.of(context).textTheme.titleSmall;
+    final theme = Theme.of(context);
+    final baseStyle = style ?? theme.textTheme.titleSmall;
     if (progress.total == 0) return Text('–', style: baseStyle);
 
+    final hasSecondaryExtra = progress.secondaryExtra > 0;
     return Text.rich(
       TextSpan(
         style: baseStyle,
@@ -41,7 +51,7 @@ class SeriesPercentLabel extends StatelessWidget {
                   : AppColors.progressPrimary,
             ),
           ),
-          if (progress.secondaryExtra > 0)
+          if (hasSecondaryExtra) ...[
             TextSpan(
               text: ' +${PercentFormatter.twoDecimals(
                 progress.secondaryExtra,
@@ -49,6 +59,17 @@ class SeriesPercentLabel extends StatelessWidget {
               )}',
               style: const TextStyle(color: AppColors.ownedBySecondaryAccount),
             ),
+            TextSpan(
+              text: ' (${PercentFormatter.twoDecimals(
+                progress.owned + progress.secondaryExtra,
+                progress.total,
+              )})',
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
         ],
       ),
       maxLines: 1,
