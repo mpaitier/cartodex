@@ -48,13 +48,13 @@ void main() {
   };
 
   AccountsState stateWith({
-    String? setFilterId,
+    Set<String> setFilterIds = const {},
     AccountsSortOption sort = AccountsSortOption.creationOrder,
   }) {
     return AccountsState(
       accounts: accounts,
       extrasByAccountId: extras,
-      setFilterId: setFilterId,
+      setFilterIds: setFilterIds,
       sortOption: sort,
     );
   }
@@ -76,43 +76,60 @@ void main() {
     test("ne garde que les secondaires qui ont l'extension, sans le principal",
         () {
       expect(
-        _ids(stateWith(setFilterId: 'A3b').sortedAccounts),
+        _ids(stateWith(setFilterIds: {'A3b'}).sortedAccounts),
         ['bob', 'alice'],
       );
     });
 
-    test("trie sur les cartes en plus de l'extension filtrée", () {
+    test('plusieurs extensions cochées élargissent le filtre', () {
+      expect(
+        _ids(stateWith(setFilterIds: {'A3b', 'A1'}).sortedAccounts),
+        ['bob', 'alice', 'carl'],
+      );
+    });
+
+    test('trie sur les cartes en plus cumulées des extensions filtrées', () {
       final state = stateWith(
-        setFilterId: 'A3b',
+        setFilterIds: {'A3b', 'A1'},
         sort: AccountsSortOption.extraCards,
       );
-      expect(_ids(state.sortedAccounts), ['alice', 'bob']);
+      // bob : 9 + 1, alice : 4 + 1, carl : 2.
+      expect(_ids(state.sortedAccounts), ['bob', 'alice', 'carl']);
     });
 
     test("une extension qui n'est plus proposée n'est plus appliquée", () {
-      final state = stateWith(setFilterId: 'B1');
-      expect(state.activeFilterSet, isNull);
+      final state = stateWith(setFilterIds: {'B1'});
+      expect(state.isSetFiltered, isFalse);
       expect(_ids(state.sortedAccounts), ['main', 'bob', 'alice', 'carl']);
     });
   });
 
-  group('AccountsState.filteredSetExtrasFor', () {
-    test("donne les cartes en plus de l'extension filtrée", () {
-      final state = stateWith(setFilterId: 'A3b');
-      expect(state.filteredSetExtrasFor(accounts[2])?.counts.base, 4);
-      expect(state.filteredSetExtrasFor(accounts[3]), isNull);
+  group('AccountsState.filteredCountsFor', () {
+    test('cumule les cartes en plus des extensions filtrées', () {
+      final state = stateWith(setFilterIds: {'A3b', 'A1'});
+      expect(state.filteredCountsFor(accounts[1])?.base, 10);
+      expect(state.filteredCountsFor(accounts[2])?.alternative, 1);
+    });
+
+    test("vaut null pour un compte qui n'a rien dans ces extensions", () {
+      final state = stateWith(setFilterIds: {'A3b'});
+      expect(state.filteredCountsFor(accounts[3]), isNull);
     });
 
     test('vaut null sans filtre', () {
-      expect(stateWith().filteredSetExtrasFor(accounts[1]), isNull);
+      expect(stateWith().filteredCountsFor(accounts[1]), isNull);
     });
   });
 
-  group('AccountsState.copyWith', () {
-    test('retire le filtre avec null, le garde sans paramètre', () {
-      final filtered = stateWith(setFilterId: 'A3b');
-      expect(filtered.copyWith().setFilterId, 'A3b');
-      expect(filtered.copyWith(setFilterId: null).setFilterId, isNull);
+  group('AccountsState.singleFilteredSetExtrasFor', () {
+    test("donne l'extension quand une seule est cochée", () {
+      final state = stateWith(setFilterIds: {'A3b'});
+      expect(state.singleFilteredSetExtrasFor(accounts[2])?.counts.base, 4);
+    });
+
+    test('vaut null dès que plusieurs extensions sont cochées', () {
+      final state = stateWith(setFilterIds: {'A3b', 'A1'});
+      expect(state.singleFilteredSetExtrasFor(accounts[1]), isNull);
     });
   });
 }

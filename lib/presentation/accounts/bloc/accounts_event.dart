@@ -35,16 +35,17 @@ class AccountsSortChanged extends AccountsEvent {
   List<Object?> get props => [option];
 }
 
-/// Déclenché par le choix d'une extension dans le panneau de tri et
-/// de filtre : n'affiche que les comptes qui y ont des cartes en plus.
-/// `null` retire le filtre.
+/// Déclenché par un changement dans le filtre par extension du
+/// panneau de tri et de filtre (multi-sélection) : n'affiche que les
+/// comptes qui ont des cartes en plus dans au moins l'une des
+/// extensions [setIds]. Un ensemble vide retire le filtre.
 class AccountsSetFilterChanged extends AccountsEvent {
-  const AccountsSetFilterChanged(this.setId);
+  const AccountsSetFilterChanged(this.setIds);
 
-  final String? setId;
+  final Set<String> setIds;
 
   @override
-  List<Object?> get props => [setId];
+  List<Object?> get props => [setIds];
 }
 
 /// Déclenché par la validation du formulaire d'ajout de compte.

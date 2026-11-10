@@ -18,8 +18,9 @@ import 'set_filter_tile.dart';
 /// [FilterChipWrap]) :
 /// - "Trier par" : ordre de création, alphabétique ou cartes en plus ;
 /// - "Extension" : "Toutes", puis le logo de chaque extension où au
-///   moins un secondaire a des cartes en plus ([SetFilterTile]). Un
-///   nouvel appui sur l'extension choisie retire le filtre.
+///   moins un secondaire a des cartes en plus ([SetFilterTile]).
+///   Multi-sélection : chaque appui coche ou décoche une extension, et
+///   "Toutes" retire le filtre.
 ///
 /// Suit l'état de [AccountsBloc] en direct : la liste derrière le
 /// panneau se met à jour à chaque choix. L'appelant doit fournir le
@@ -34,7 +35,9 @@ class AccountsFilterSheet extends StatelessWidget {
       builder: (context, state) {
         final bloc = context.read<AccountsBloc>();
         final sets = state.availableFilterSets;
-        final activeSetId = state.activeFilterSet?.id;
+        final activeSetIds = {
+          for (final set in state.activeFilterSets) set.id,
+        };
 
         return SafeArea(
           child: Column(
@@ -83,25 +86,29 @@ class AccountsFilterSheet extends StatelessWidget {
                             if (index == 0) {
                               return ChoiceChip(
                                 label: const Text('Toutes'),
-                                selected: activeSetId == null,
+                                selected: activeSetIds.isEmpty,
                                 showCheckmark: false,
                                 labelPadding:
                                     const EdgeInsets.symmetric(horizontal: 4),
                                 visualDensity: VisualDensity.compact,
                                 onSelected: (_) => bloc
-                                    .add(const AccountsSetFilterChanged(null)),
+                                    .add(const AccountsSetFilterChanged({})),
                               );
                             }
                             final set = sets[index - 1];
-                            final selected = set.id == activeSetId;
+                            final selected = activeSetIds.contains(set.id);
                             return SetFilterTile(
                               set: set,
                               selected: selected,
-                              onTap: () => bloc.add(
-                                AccountsSetFilterChanged(
-                                  selected ? null : set.id,
-                                ),
-                              ),
+                              onTap: () {
+                                final updated = Set<String>.from(activeSetIds);
+                                if (selected) {
+                                  updated.remove(set.id);
+                                } else {
+                                  updated.add(set.id);
+                                }
+                                bloc.add(AccountsSetFilterChanged(updated));
+                              },
                             );
                           },
                         ),

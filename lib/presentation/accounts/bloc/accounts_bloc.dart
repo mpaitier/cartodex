@@ -113,7 +113,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     AccountsSetFilterChanged event,
     Emitter<AccountsState> emit,
   ) {
-    emit(state.copyWith(setFilterId: event.setId));
+    emit(state.copyWith(setFilterIds: event.setIds));
   }
 
   Future<void> _onAccountAdded(

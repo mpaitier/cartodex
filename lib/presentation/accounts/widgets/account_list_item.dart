@@ -21,15 +21,17 @@ import 'top_extra_sets_preview.dart';
 /// plus ([TopExtraSetsPreview]). [onTap] ouvre le détail par set. Le
 /// compte principal n'a rien de tout cela.
 ///
-/// Avec un filtre par extension actif, [focusedSetExtras] remplace les
-/// totaux sous le nom par les cartes en plus de cette seule extension
-/// (encadrées de vert quand elles complètent le principal).
+/// Avec un filtre par extension actif, [focusedCounts] remplace les
+/// totaux sous le nom par les cartes en plus des extensions filtrées.
+/// Quand une seule extension est filtrée, [focusedSetExtras] fournit
+/// en plus le cadre vert si elles complètent le principal.
 class AccountListItem extends StatelessWidget {
   const AccountListItem({
     required this.account,
     required this.onCrownTap,
     required this.onEditTap,
     this.extras,
+    this.focusedCounts,
     this.focusedSetExtras,
     this.onTap,
     super.key,
@@ -42,7 +44,12 @@ class AccountListItem extends StatelessWidget {
   /// `null` pour le compte principal.
   final AccountExtras? extras;
 
-  /// Cartes en plus dans l'extension du filtre, `null` sans filtre.
+  /// Cartes en plus cumulées sur les extensions du filtre, `null` sans
+  /// filtre.
+  final ExtraCounts? focusedCounts;
+
+  /// Cartes en plus dans l'extension du filtre quand une seule est
+  /// cochée, pour le cadre vert ; `null` sinon.
   final SetExtras? focusedSetExtras;
 
   /// `null` pour le compte principal : la ligne n'est alors pas
@@ -60,6 +67,7 @@ class AccountListItem extends StatelessWidget {
             child: _NameAndTotals(
               name: account.name,
               extras: extras,
+              focusedCounts: focusedCounts,
               focusedSetExtras: focusedSetExtras,
             ),
           ),
@@ -85,17 +93,19 @@ class AccountListItem extends StatelessWidget {
 }
 
 /// Nom du compte, et pour un secondaire ses cartes en plus juste en
-/// dessous : au total, ou dans l'extension du filtre si
-/// [focusedSetExtras] est fourni.
+/// dessous : au total, ou dans les extensions du filtre si
+/// [focusedCounts] est fourni.
 class _NameAndTotals extends StatelessWidget {
   const _NameAndTotals({
     required this.name,
     required this.extras,
+    required this.focusedCounts,
     required this.focusedSetExtras,
   });
 
   final String name;
   final AccountExtras? extras;
+  final ExtraCounts? focusedCounts;
   final SetExtras? focusedSetExtras;
 
   @override
@@ -122,12 +132,13 @@ class _NameAndTotals extends StatelessWidget {
   }
 
   Widget _countsLabel(AccountExtras extras) {
-    final focused = focusedSetExtras;
-    if (focused == null) return ExtraCountsLabel(counts: extras.totals);
+    final counts = focusedCounts;
+    if (counts == null) return ExtraCountsLabel(counts: extras.totals);
+    final single = focusedSetExtras;
     return ExtraCountsLabel(
-      counts: focused.counts,
-      completesBase: focused.completesBase,
-      completesAlternative: focused.completesAlternative,
+      counts: counts,
+      completesBase: single?.completesBase ?? false,
+      completesAlternative: single?.completesAlternative ?? false,
     );
   }
 }

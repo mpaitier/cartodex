@@ -20,11 +20,6 @@ enum AccountsStatus {
   error,
 }
 
-/// Sentinelle de [AccountsState.copyWith] : distingue "ne pas toucher
-/// à [AccountsState.setFilterId]" de "le remettre à `null`" (aucun
-/// filtre), qu'un paramètre nommé nullable ne sait pas porter seul.
-const _unset = Object();
-
 /// État affiché par l'écran de gestion des comptes.
 class AccountsState extends Equatable {
   const AccountsState({
@@ -32,7 +27,7 @@ class AccountsState extends Equatable {
     this.accounts = const [],
     this.extrasByAccountId = const {},
     this.sortOption = AccountsSortOption.creationOrder,
-    this.setFilterId,
+    this.setFilterIds = const {},
     this.errorMessage,
   });
 
@@ -54,10 +49,11 @@ class AccountsState extends Equatable {
   /// rien n'a été choisi.
   final AccountsSortOption sortOption;
 
-  /// Extension choisie dans le filtre : seuls les comptes qui y ont des
-  /// cartes en plus du principal sont affichés. `null` = aucun filtre.
-  /// Purement local à l'écran, non mémorisé d'un lancement à l'autre.
-  final String? setFilterId;
+  /// Extensions cochées dans le filtre (multi-sélection) : seuls les
+  /// comptes qui ont des cartes en plus du principal dans au moins
+  /// l'une d'elles sont affichés. Vide = aucun filtre. Purement local à
+  /// l'écran, non mémorisé d'un lancement à l'autre.
+  final Set<String> setFilterIds;
 
   final String? errorMessage;
 
@@ -75,29 +71,43 @@ class AccountsState extends Equatable {
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
-  /// L'extension du filtre, si elle fait encore partie des choix
-  /// proposés. `null` sans filtre, ou si plus aucun compte n'y a de
-  /// cartes en plus (ex: le principal vient de les obtenir) : le
-  /// filtre ne s'applique alors plus, plutôt que de laisser une liste
-  /// vide sans explication.
-  CardSet? get activeFilterSet {
-    final id = setFilterId;
-    if (id == null) return null;
-    for (final set in availableFilterSets) {
-      if (set.id == id) return set;
-    }
-    return null;
+  /// Extensions du filtre qui font encore partie des choix proposés,
+  /// dans l'ordre de [availableFilterSets]. Une extension où plus aucun
+  /// compte n'a de cartes en plus (ex: le principal vient de les
+  /// obtenir) est ignorée, plutôt que de laisser une liste vide sans
+  /// explication.
+  List<CardSet> get activeFilterSets => availableFilterSets
+      .where((set) => setFilterIds.contains(set.id))
+      .toList();
+
+  /// Vrai quand au moins une extension du filtre s'applique.
+  bool get isSetFiltered => activeFilterSets.isNotEmpty;
+
+  /// Cartes en plus de [account] cumulées sur les extensions du filtre,
+  /// ou `null` sans filtre actif ou pour un compte qui n'a rien dans
+  /// aucune d'elles.
+  ExtraCounts? filteredCountsFor(Account account) {
+    final ids = {for (final set in activeFilterSets) set.id};
+    if (ids.isEmpty) return null;
+    final matching = (extrasByAccountId[account.id]?.bySet ?? const [])
+        .where((setExtras) => ids.contains(setExtras.set.id));
+    if (matching.isEmpty) return null;
+    return matching.fold<ExtraCounts>(
+      const ExtraCounts(),
+      (sum, setExtras) => sum + setExtras.counts,
+    );
   }
 
-  /// Cartes en plus de [account] dans l'extension du filtre, ou `null`
-  /// sans filtre actif (ou pour un compte qui n'y a rien).
-  SetExtras? filteredSetExtrasFor(Account account) {
-    final set = activeFilterSet;
-    if (set == null) return null;
-    final extras = extrasByAccountId[account.id];
-    if (extras == null) return null;
-    for (final setExtras in extras.bySet) {
-      if (setExtras.set.id == set.id) return setExtras;
+  /// Cartes en plus de [account] dans l'extension du filtre quand une
+  /// seule est cochée, `null` sinon. Sert au cadre vert "complète le
+  /// principal", qui n'a de sens que pour une extension précise : sur
+  /// des compteurs cumulés, il ne dirait pas laquelle.
+  SetExtras? singleFilteredSetExtrasFor(Account account) {
+    final sets = activeFilterSets;
+    if (sets.length != 1) return null;
+    for (final setExtras
+        in extrasByAccountId[account.id]?.bySet ?? const <SetExtras>[]) {
+      if (setExtras.set.id == sets.single.id) return setExtras;
     }
     return null;
   }
@@ -105,22 +115,19 @@ class AccountsState extends Equatable {
   /// Comptes à afficher, ordonnés selon [sortOption].
   ///
   /// Sans filtre, le compte principal reste toujours en premier et
-  /// seuls les secondaires sont triés. Avec un filtre d'extension
-  /// ([activeFilterSet]), seuls les secondaires qui y ont des cartes en
-  /// plus restent, sans le principal ; "Cartes en plus" trie alors sur
-  /// les cartes de cette extension. À égalité (même nom, même total),
+  /// seuls les secondaires sont triés. Avec un filtre d'extensions
+  /// ([activeFilterSets]), seuls les secondaires qui ont des cartes en
+  /// plus dans au moins l'une d'elles restent, sans le principal ;
+  /// "Cartes en plus" trie alors sur les cartes de ces extensions. À égalité (même nom, même total),
   /// l'ordre de création départage, pour un résultat déterministe.
   List<Account> get sortedAccounts {
-    final filterSet = activeFilterSet;
-    final primary = filterSet != null
+    final filtered = isSetFiltered;
+    final primary = filtered
         ? const <Account>[]
         : accounts.where((account) => account.isPrimary).toList();
     final secondaries = accounts
         .where((account) => !account.isPrimary)
-        .where(
-          (account) =>
-              filterSet == null || filteredSetExtrasFor(account) != null,
-        )
+        .where((account) => !filtered || filteredCountsFor(account) != null)
         .toList();
 
     switch (sortOption) {
@@ -138,9 +145,7 @@ class AccountsState extends Equatable {
   }
 
   int _extraTotal(Account account) {
-    if (activeFilterSet != null) {
-      return filteredSetExtrasFor(account)?.counts.total ?? 0;
-    }
+    if (isSetFiltered) return filteredCountsFor(account)?.total ?? 0;
     return extrasByAccountId[account.id]?.totals.total ?? 0;
   }
 
@@ -157,7 +162,7 @@ class AccountsState extends Equatable {
     List<Account>? accounts,
     Map<String, AccountExtras>? extrasByAccountId,
     AccountsSortOption? sortOption,
-    Object? setFilterId = _unset,
+    Set<String>? setFilterIds,
     String? errorMessage,
   }) {
     return AccountsState(
@@ -165,9 +170,7 @@ class AccountsState extends Equatable {
       accounts: accounts ?? this.accounts,
       extrasByAccountId: extrasByAccountId ?? this.extrasByAccountId,
       sortOption: sortOption ?? this.sortOption,
-      setFilterId: identical(setFilterId, _unset)
-          ? this.setFilterId
-          : setFilterId as String?,
+      setFilterIds: setFilterIds ?? this.setFilterIds,
       errorMessage: errorMessage,
     );
   }
@@ -178,7 +181,7 @@ class AccountsState extends Equatable {
         accounts,
         extrasByAccountId,
         sortOption,
-        setFilterId,
+        setFilterIds,
         errorMessage,
       ];
 }

@@ -26,8 +26,9 @@ import '../widgets/edit_account_dialog.dart';
 /// nom ou le code ami. Le bouton de la barre du haut ouvre le panneau
 /// de tri et de filtre ([AccountsFilterSheet]) : le tri réordonne les
 /// secondaires (le principal reste en tête) et il est mémorisé d'un
-/// lancement à l'autre ; le filtre par extension ne garde que les
-/// secondaires qui y ont des cartes en plus, rappelé par un bandeau
+/// lancement à l'autre ; le filtre par extension (plusieurs choix
+/// possibles) ne garde que les secondaires qui ont des cartes en plus
+/// dans au moins l'une d'elles, rappelé par un bandeau
 /// ([ActiveSetFilterBanner]).
 class AccountsPage extends StatelessWidget {
   const AccountsPage({super.key});
@@ -65,7 +66,7 @@ class _AccountsView extends StatelessWidget {
             if (state.status == AccountsStatus.loaded &&
                 state.accounts.isNotEmpty)
               AccountsFilterAction(
-                isFiltered: state.activeFilterSet != null,
+                isFiltered: state.isSetFiltered,
                 onPressed: () => _openFilterSheet(context),
               ),
           ],
@@ -101,15 +102,15 @@ class _AccountsView extends StatelessWidget {
     // Principal en tête, secondaires triés selon le critère choisi ;
     // avec un filtre d'extension, seulement les secondaires concernés.
     final accounts = state.sortedAccounts;
-    final filterSet = state.activeFilterSet;
+    final filterSets = state.activeFilterSets;
     return Column(
       children: [
-        if (filterSet != null)
+        if (filterSets.isNotEmpty)
           ActiveSetFilterBanner(
-            set: filterSet,
+            sets: filterSets,
             onClear: () => context
                 .read<AccountsBloc>()
-                .add(const AccountsSetFilterChanged(null)),
+                .add(const AccountsSetFilterChanged({})),
           ),
         Expanded(
           child: ListView.builder(
@@ -122,7 +123,8 @@ class _AccountsView extends StatelessWidget {
                     ? null
                     : state.extrasByAccountId[account.id] ??
                         AccountExtras(accountId: account.id),
-                focusedSetExtras: state.filteredSetExtrasFor(account),
+                focusedCounts: state.filteredCountsFor(account),
+                focusedSetExtras: state.singleFilteredSetExtrasFor(account),
                 onTap: account.isPrimary
                     ? null
                     : () => _openExtras(context, account),
