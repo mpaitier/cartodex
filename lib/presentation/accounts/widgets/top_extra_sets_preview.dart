@@ -12,8 +12,11 @@ import '../../card_sets/widgets/card_set_logo.dart';
 /// plus, puis étoiles en plus — voir `SetExtras.sortedByCounts`). Un
 /// appui long sur une case affiche le nom du set et ses compteurs.
 ///
-/// Rien n'est affiché quand le compte n'a aucune carte en plus ; avec
-/// moins de [maxCount] sets, seules les cases utiles apparaissent.
+/// La zone garde toujours la largeur de [maxCount] cases, et les cases
+/// se rangent depuis la gauche : avec un seul set, sa case est la
+/// première de la zone, ce qui garde l'ordre d'importance lisible d'une
+/// ligne à l'autre, et les noms des comptes restent alignés. Un compte
+/// sans carte en plus garde la zone, vide.
 class TopExtraSetsPreview extends StatelessWidget {
   const TopExtraSetsPreview({
     required this.sets,
@@ -24,18 +27,21 @@ class TopExtraSetsPreview extends StatelessWidget {
   final List<SetExtras> sets;
   final int maxCount;
 
+  static const double _gap = 6;
+
   @override
   Widget build(BuildContext context) {
     final shown = sets.take(maxCount).toList();
-    if (shown.isEmpty) return const SizedBox.shrink();
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < shown.length; i++) ...[
-          if (i > 0) const SizedBox(width: 4),
-          _SetLogoBox(setExtras: shown[i]),
+    return SizedBox(
+      width: maxCount * _SetLogoBox.width + (maxCount - 1) * _gap,
+      child: Row(
+        children: [
+          for (var i = 0; i < shown.length; i++) ...[
+            if (i > 0) const SizedBox(width: _gap),
+            _SetLogoBox(setExtras: shown[i]),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -46,8 +52,8 @@ class _SetLogoBox extends StatelessWidget {
 
   final SetExtras setExtras;
 
-  static const double _width = 44;
-  static const double _height = 30;
+  static const double width = 56;
+  static const double height = 38;
 
   @override
   Widget build(BuildContext context) {
@@ -56,8 +62,8 @@ class _SetLogoBox extends StatelessWidget {
       message: '${setExtras.set.name} : '
           '+${counts.base} ◆, +${counts.alternative} ★',
       child: Container(
-        width: _width,
-        height: _height,
+        width: width,
+        height: height,
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           border: Border.all(
