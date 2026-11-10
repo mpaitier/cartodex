@@ -23,16 +23,17 @@ class CardModel extends PokemonCard {
     super.packs,
   });
 
-  /// `cards.json` ne contient pas le nom du set, ni le type de la
-  /// carte (Pokémon, Supporter, Objet...), ni son élément (Plante,
-  /// Feu...), ni ses PV : le nom est retrouvé après coup via
-  /// [copyWith] (le repository connaît déjà les sets), et [category],
-  /// [element] et [hp] sont passés séparément ici, croisés avec
-  /// `cards.extra.json` par le datasource distant. L'élément brut (ex:
-  /// "grass") devient l'unique valeur de `types` ; une carte sans
-  /// élément (Dresseurs) garde une liste vide.
+  /// [json] est une entrée de `cards.extra.json` (ou de `cards.json`
+  /// lors du repli sur npm) : seuls ses champs de base sont lus ici
+  /// (set, numéro, nom, rareté, boosters). Le nom du set n'y figure
+  /// pas et est retrouvé après coup via [copyWith] (le repository
+  /// connaît déjà les sets). Le type de carte, l'élément et les PV
+  /// sont passés séparément ([category], [element], [hp]) par le
+  /// datasource distant. L'élément brut (ex: "grass") devient l'unique
+  /// valeur de `types` ; une carte sans élément (Dresseurs) garde une
+  /// liste vide.
   ///
-  /// Exemple d'entrée `cards.json` :
+  /// Exemple d'entrée (champs de base) :
   /// ```json
   /// {
   ///   "set": "A1",
