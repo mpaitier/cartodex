@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/card_set.dart';
 import '../../../domain/entities/progress_count.dart';
 import '../../../domain/entities/rarity_scope.dart';
+import '../../../domain/entities/rarity_split_progress.dart';
 import '../../../domain/entities/set_progress.dart';
 import '../../../l10n/l10n.dart';
 import '../bloc/series_tab.dart';
@@ -39,6 +40,7 @@ class SeriesSetsPager extends StatefulWidget {
     required this.onSetTap,
     required this.onSeriesChanged,
     required this.progressForSeries,
+    required this.splitProgressForSeries,
     required this.rarityScope,
     required this.onRarityScopePressed,
     this.progressBySetId = const {},
@@ -61,6 +63,12 @@ class SeriesSetsPager extends StatefulWidget {
   /// (`CardSetsState.seriesProgressFor`), déjà restreinte à
   /// [rarityScope].
   final ProgressCount? Function(String seriesKey) progressForSeries;
+
+  /// La progression d'une série séparée entre losanges et étoiles
+  /// (`CardSetsState.seriesSplitProgressFor`), pour la barre coupée en
+  /// deux du bandeau en périmètre Σ.
+  final RaritySplitProgress? Function(String seriesKey)
+      splitProgressForSeries;
 
   /// Périmètre de raretés global (`RarityScopeCubit`), commun à
   /// toutes les pages : bandeau et tuiles.
@@ -144,6 +152,7 @@ class _SeriesSetsPagerState extends State<SeriesSetsPager> {
               SeriesProgressBanner(
                 title: tab.title(context.l10n),
                 progress: progress,
+                splitProgress: widget.splitProgressForSeries(tab.key),
                 scope: widget.rarityScope,
                 onScopePressed: widget.onRarityScopePressed,
               ),

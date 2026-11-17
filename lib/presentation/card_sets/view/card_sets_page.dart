@@ -182,6 +182,7 @@ class _CardSetsView extends StatelessWidget {
           setsForSeries: state.setsForSeries,
           progressBySetId: state.progressBySetId,
           progressForSeries: (key) => state.seriesProgressFor(key, scope),
+          splitProgressForSeries: state.seriesSplitProgressFor,
           rarityScope: scope,
           onRarityScopePressed: () => context.read<RarityScopeCubit>().cycle(),
           onSetTap: (set) => _onSetTap(context, set),
