@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'card_set.dart';
 import 'progress_count.dart';
+import 'rarity_split_progress.dart';
 
 /// Statistiques de complétion d'un compte, calculées par
 /// `GetCollectionStats` : taux global, détail par série, et
@@ -16,10 +17,16 @@ class CollectionStats extends Equatable {
     required this.overall,
     required this.seriesStats,
     required this.setBoosterProgress,
+    this.overallSplit = RaritySplitProgress.zero,
   });
 
   /// Progression globale, tous sets confondus.
   final ProgressCount overall;
+
+  /// [overall] séparée entre losanges et étoiles, pour la barre coupée
+  /// en deux de l'écran de statistiques. Dans un périmètre losange ou
+  /// étoile, l'autre famille est vide.
+  final RaritySplitProgress overallSplit;
 
   /// Une entrée par série (regroupement identique à
   /// `SeriesFilterBar` : une série lettrée par entrée, puis "Deluxe"
@@ -123,7 +130,8 @@ class CollectionStats extends Equatable {
   }
 
   @override
-  List<Object?> get props => [overall, seriesStats, setBoosterProgress];
+  List<Object?> get props =>
+      [overall, overallSplit, seriesStats, setBoosterProgress];
 }
 
 /// Complétion d'une série (ex: "A", "B", "Deluxe" ou "Promo").
@@ -132,16 +140,21 @@ class SeriesStats extends Equatable {
     required this.seriesKey,
     required this.label,
     required this.progress,
+    this.splitProgress = RaritySplitProgress.zero,
   });
 
   final String seriesKey;
   final String label;
   final ProgressCount progress;
 
+  /// [progress] séparée entre losanges et étoiles (voir
+  /// [CollectionStats.overallSplit]).
+  final RaritySplitProgress splitProgress;
+
   bool get isComplete => progress.isComplete;
 
   @override
-  List<Object?> get props => [seriesKey, label, progress];
+  List<Object?> get props => [seriesKey, label, progress, splitProgress];
 }
 
 /// Progression des boosters d'un set, en tenant compte des

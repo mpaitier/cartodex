@@ -1,12 +1,14 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 
+import '../../core/constants/card_rarities.dart';
 import '../../core/error/failures.dart';
 import '../entities/card_set.dart';
 import '../entities/collection_stats.dart';
 import '../entities/pokemon_card.dart';
 import '../entities/progress_count.dart';
 import '../entities/rarity_scope.dart';
+import '../entities/rarity_split_progress.dart';
 import '../entities/set_category.dart';
 import '../entities/set_pull_rates.dart';
 import '../repositories/card_repository.dart';
@@ -22,7 +24,9 @@ const _deluxeSeriesKey = 'DELUXE';
 const _promoSeriesKey = 'PROMO';
 
 /// Calcule les statistiques de complétion : taux global, par série,
-/// et progression des boosters par set (voir [CollectionStats]).
+/// et progression des boosters par set (voir [CollectionStats]). Le
+/// taux global et celui de chaque série sont aussi donnés séparément
+/// pour les losanges et pour les étoiles ([RaritySplitProgress]).
 ///
 /// Chaque progression est un [ProgressCount] "X (+Y) / Z" :
 /// - X : cartes possédées par le compte principal ;
@@ -141,6 +145,27 @@ class GetCollectionStats
     );
   }
 
+  /// Comme [_countFor], mais séparé entre losanges et étoiles (voir
+  /// [CardRarity.isBase], le même découpage que partout ailleurs).
+  RaritySplitProgress _splitCountFor(
+    List<PokemonCard> cards, {
+    required Set<String> primaryIds,
+    required Set<String> secondaryOnlyIds,
+  }) {
+    return RaritySplitProgress(
+      base: _countFor(
+        cards.where((c) => CardRarity.isBase(c.rarity)).map((c) => c.id),
+        primaryIds: primaryIds,
+        secondaryOnlyIds: secondaryOnlyIds,
+      ),
+      alternative: _countFor(
+        cards.where((c) => !CardRarity.isBase(c.rarity)).map((c) => c.id),
+        primaryIds: primaryIds,
+        secondaryOnlyIds: secondaryOnlyIds,
+      ),
+    );
+  }
+
   /// Clé de regroupement d'un set dans [CollectionStats.seriesStats].
   String _seriesKeyFor(CardSet set) {
     switch (set.category) {
@@ -174,6 +199,7 @@ class GetCollectionStats
     required Set<String> secondaryOnlyIds,
   }) {
     var overall = ProgressCount.zero;
+    var overallSplit = RaritySplitProgress.zero;
     final seriesAccumulators = <String, _SeriesAccumulator>{};
     final setBoosterProgress = <SetBoosterProgress>[];
 
@@ -193,6 +219,12 @@ class GetCollectionStats
         secondaryOnlyIds: secondaryOnlyIds,
       );
       overall += setCount;
+      final setSplit = _splitCountFor(
+        cards,
+        primaryIds: primaryIds,
+        secondaryOnlyIds: secondaryOnlyIds,
+      );
+      overallSplit += setSplit;
 
       final seriesKey = _seriesKeyFor(set);
       final accumulator = seriesAccumulators.putIfAbsent(
@@ -200,6 +232,7 @@ class GetCollectionStats
         () => _SeriesAccumulator(label: _seriesLabelFor(set)),
       );
       accumulator.progress += setCount;
+      accumulator.splitProgress += setSplit;
 
       // Progression par booster : on ignore les sets promotionnels
       // (jamais recommandé d'ouvrir un booster promo) et les sets
@@ -278,11 +311,13 @@ class GetCollectionStats
         seriesKey: key,
         label: accumulator.label,
         progress: accumulator.progress,
+        splitProgress: accumulator.splitProgress,
       );
     }).toList();
 
     return CollectionStats(
       overall: overall,
+      overallSplit: overallSplit,
       seriesStats: seriesStats,
       setBoosterProgress: setBoosterProgress,
     );
@@ -296,6 +331,7 @@ class _SeriesAccumulator {
 
   final String label;
   ProgressCount progress = ProgressCount.zero;
+  RaritySplitProgress splitProgress = RaritySplitProgress.zero;
 }
 
 /// Paramètres attendus par [GetCollectionStats].

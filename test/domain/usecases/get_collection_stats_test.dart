@@ -95,6 +95,29 @@ void main() {
       expect(stats.overall, _count(3, 2, 8));
     });
 
+    test('progression globale séparée entre losanges et étoiles', () async {
+      final stats = await _stats();
+      // Losanges : B1-1, A4b-1, A1-1, A1-2, A1-3.
+      expect(stats.overallSplit.base, _count(2, 1, 5));
+      // Étoiles : B1-2, A1-4 et la promo sans rareté connue.
+      expect(stats.overallSplit.alternative, _count(1, 1, 3));
+      expect(stats.overallSplit.combined, stats.overall);
+    });
+
+    test('chaque série a aussi sa progression séparée', () async {
+      final stats = await _stats();
+      final b = stats.seriesStats.first;
+      expect(b.splitProgress.base, _count(1, 0, 1));
+      expect(b.splitProgress.alternative, _count(0, 0, 1));
+      expect(b.splitProgress.combined, b.progress);
+    });
+
+    test('périmètre losange : la famille étoile reste vide', () async {
+      final stats = await _stats(scope: RarityScope.diamond);
+      expect(stats.overallSplit.base, _count(2, 1, 5));
+      expect(stats.overallSplit.alternative.total, 0);
+    });
+
     test(
         'séries lettrées dans l’ordre du référentiel, '
         'puis Deluxe, puis Promo', () async {

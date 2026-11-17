@@ -1,5 +1,12 @@
 # Analyse statique, tests, puis builds Android et iOS, à chaque push sur
-# main et sur chaque pull request. Aucun secret nécessaire : les builds
+# main et sur chaque pull request.
+#
+# Flutter est installé dans la version exacte de pubspec.yaml
+# (environment > flutter), celle de la machine de dev, recopiée par
+# tool/sync_flutter_version.ps1 : la CI teste le code avec la même
+# version que celle utilisée pour l'écrire, et une nouvelle version
+# stable de Flutter ne casse plus le run du jour au lendemain.
+# Aucun secret nécessaire : les builds
 # ne sont pas signés (APK signé avec la clé de debug, iOS sans signature)
 # et servent seulement à vérifier que l'app compile sur chaque plateforme.
 name: CI
@@ -23,10 +30,10 @@ jobs:
       - name: Récupération du code
         uses: actions/checkout@v6
 
-      - name: Installation de Flutter (stable)
+      - name: Installation de Flutter (version du pubspec)
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version-file: pubspec.yaml
           cache: true
 
       - name: Version de Flutter
@@ -60,7 +67,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version-file: pubspec.yaml
           cache: true
       - run: flutter pub get
       - run: flutter gen-l10n
@@ -80,7 +87,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version-file: pubspec.yaml
           cache: true
       - run: flutter pub get
       - run: flutter gen-l10n

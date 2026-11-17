@@ -1,34 +1,35 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../domain/entities/progress_count.dart';
 import '../../../domain/entities/rarity_split_progress.dart';
 import 'stacked_progress_bar.dart';
 
-/// Barre de progression du périmètre Σ, coupée en deux : une barre
-/// pour les losanges à gauche, une pour les étoiles à droite.
+/// Barre de progression d'un périmètre qui couvre les deux familles de
+/// raretés, d'un seul tenant, dans cet ordre :
+/// 1. losanges du compte principal (violet, vert s'il les a tous) ;
+/// 2. losanges ajoutés par les secondaires (jaune) ;
+/// 3. étoiles du compte principal (violet, vert s'il les a toutes) ;
+/// 4. étoiles ajoutées par les secondaires (jaune) ;
+/// 5. tout ce que personne ne possède, en gris, regroupé à la fin.
 ///
-/// Chaque barre est une [StackedProgressBar] : violet pour le compte
-/// principal, prolongé en jaune par les secondaires, et vert dès que le
-/// principal possède à lui seul toute la famille. Une série dont tous
-/// les losanges sont acquis le montre donc même si les étoiles ne le
-/// sont pas.
+/// Le gris n'apparaît donc jamais entre les deux familles : la partie
+/// remplie reste continue et se lit comme la progression globale, tout
+/// en montrant d'un coup d'œil une famille complète (son segment passe
+/// au vert). Chaque segment est proportionnel à son nombre de cartes.
 ///
-/// La largeur de chaque barre suit le nombre de cartes de sa famille :
-/// mises bout à bout, les deux barres se lisent comme la progression
-/// globale, et une famille plus grande pèse plus. Une famille sans
-/// aucune carte n'a pas de barre ; l'autre prend alors toute la place.
+/// Une famille sans aucune carte (périmètre losange ou étoile, série
+/// d'une seule famille) laisse la place à une [StackedProgressBar]
+/// classique pour l'autre.
 class RaritySplitProgressBar extends StatelessWidget {
   const RaritySplitProgressBar({
     required this.progress,
     this.height = 8,
-    this.gap = 4,
     super.key,
   });
 
   final RaritySplitProgress progress;
   final double height;
-
-  /// Espace entre la barre des losanges et celle des étoiles.
-  final double gap;
 
   @override
   Widget build(BuildContext context) {
@@ -40,18 +41,37 @@ class RaritySplitProgressBar extends StatelessWidget {
         height: height,
       );
     }
-    return Row(
-      children: [
-        Expanded(
-          flex: base.total,
-          child: StackedProgressBar(progress: base, height: height),
+    final segments = [
+      (base.owned, _primaryColor(base)),
+      (base.secondaryExtra, AppColors.ownedBySecondaryAccount),
+      (alternative.owned, _primaryColor(alternative)),
+      (alternative.secondaryExtra, AppColors.ownedBySecondaryAccount),
+      (
+        progress.combined.missing,
+        Theme.of(context).colorScheme.outlineVariant,
+      ),
+    ];
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(height),
+      child: SizedBox(
+        height: height,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Un segment vide n'a pas sa place dans la ligne : Expanded
+            // exige une part strictement positive.
+            for (final (count, color) in segments)
+              if (count > 0)
+                Expanded(flex: count, child: ColoredBox(color: color)),
+          ],
         ),
-        SizedBox(width: gap),
-        Expanded(
-          flex: alternative.total,
-          child: StackedProgressBar(progress: alternative, height: height),
-        ),
-      ],
+      ),
     );
+  }
+
+  /// Vert quand le principal possède toute la famille, violet sinon :
+  /// même règle que [StackedProgressBar].
+  static Color _primaryColor(ProgressCount family) {
+    return family.isComplete ? AppColors.complete : AppColors.progressPrimary;
   }
 }

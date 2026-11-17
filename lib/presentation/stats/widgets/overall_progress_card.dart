@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/progress_count.dart';
+import '../../../domain/entities/rarity_split_progress.dart';
 import '../../../l10n/l10n.dart';
 import 'progress_count_label.dart';
-import 'stacked_progress_bar.dart';
+import 'rarity_split_progress_bar.dart';
 
 /// Carte de progression globale de la collection, tous sets
 /// confondus : barre violette du compte principal prolongée en jaune
-/// par ce que les secondaires ajoutent, le détail "X (+Y) / Z", et le
+/// par ce que les secondaires ajoutent, coupée entre losanges et
+/// étoiles ([RaritySplitProgressBar]), le détail "X (+Y) / Z", et le
 /// pourcentage du compte principal.
 class OverallProgressCard extends StatelessWidget {
-  const OverallProgressCard({required this.progress, super.key});
+  const OverallProgressCard({
+    required this.progress,
+    required this.splitProgress,
+    super.key,
+  });
 
   final ProgressCount progress;
+
+  /// [progress] séparée entre losanges et étoiles, pour la barre.
+  final RaritySplitProgress splitProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +38,7 @@ class OverallProgressCard extends StatelessWidget {
           children: [
             Text(l10n.statsOverallTitle, style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
-            StackedProgressBar(progress: progress, height: 10),
+            RaritySplitProgressBar(progress: splitProgress, height: 10),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
