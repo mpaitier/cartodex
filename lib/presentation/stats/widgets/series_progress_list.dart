@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/collection_stats.dart';
 import '../../../l10n/l10n.dart';
 import 'progress_count_label.dart';
-import 'stacked_progress_bar.dart';
+import 'rarity_split_progress_bar.dart';
 
 /// Une ligne de progression par série ([CollectionStats.seriesStats]),
 /// dans le même ordre que `SeriesFilterBar` de `CardSetsPage`
 /// (séries lettrées les plus récentes en premier, "Promo" en
-/// dernier).
+/// dernier). Chaque barre est coupée entre losanges et étoiles
+/// ([RaritySplitProgressBar]).
 class SeriesProgressList extends StatelessWidget {
   const SeriesProgressList({required this.seriesStats, super.key});
 
@@ -43,7 +44,9 @@ class _SeriesRow extends StatelessWidget {
             width: 56,
             child: Text(series.label, style: theme.textTheme.bodyMedium),
           ),
-          Expanded(child: StackedProgressBar(progress: series.progress)),
+          Expanded(
+            child: RaritySplitProgressBar(progress: series.splitProgress),
+          ),
           const SizedBox(width: 8),
           ProgressCountLabel(progress: series.progress),
         ],

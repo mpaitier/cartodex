@@ -117,7 +117,10 @@ class _StatsView extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        OverallProgressCard(progress: stats.overall),
+        OverallProgressCard(
+          progress: stats.overall,
+          splitProgress: stats.overallSplit,
+        ),
         const SizedBox(height: 24),
         Text(
           l10n.statsBySeries,
