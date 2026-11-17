@@ -47,3 +47,9 @@ class AccountExtrasRefreshRequested extends AccountExtrasEvent {
   @override
   List<Object?> get props => [accountId];
 }
+/// Déclenché par le bouton empreinte de la barre du haut : bascule
+/// entre les cartes en plus du principal et les cartes qu'aucun autre
+/// compte ne possède.
+class AccountExtrasUniqueOnlyToggled extends AccountExtrasEvent {
+  const AccountExtrasUniqueOnlyToggled();
+}

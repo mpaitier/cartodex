@@ -8,7 +8,10 @@ import 'account_extras_event.dart';
 import 'account_extras_state.dart';
 
 /// ViewModel de l'écran des cartes qu'un compte secondaire possède en
-/// plus du compte principal, set par set.
+/// plus du compte principal, set par set. Le bouton empreinte bascule
+/// vers les cartes qu'il est le seul à posséder
+/// ([AccountExtrasUniqueOnlyToggled]) : les deux listes sont calculées
+/// ensemble, la bascule n'a donc rien à recharger.
 ///
 /// S'appuie sur [GetSecondaryAccountsExtras] (qui calcule tous les
 /// secondaires d'un coup) et en extrait le compte concerné : un compte
@@ -28,6 +31,7 @@ class AccountExtrasBloc extends Bloc<AccountExtrasEvent, AccountExtrasState> {
     on<AccountExtrasStarted>(_onStarted);
     on<AccountExtrasRefreshRequested>(_onRefreshRequested);
     on<AccountExtrasAccountEdited>(_onAccountEdited);
+    on<AccountExtrasUniqueOnlyToggled>(_onUniqueOnlyToggled);
   }
 
   final GetSecondaryAccountsExtras _getSecondaryAccountsExtras;
@@ -70,6 +74,13 @@ class AccountExtrasBloc extends Bloc<AccountExtrasEvent, AccountExtrasState> {
         ),
       ),
     );
+  }
+
+  void _onUniqueOnlyToggled(
+    AccountExtrasUniqueOnlyToggled event,
+    Emitter<AccountExtrasState> emit,
+  ) {
+    emit(state.copyWith(uniqueOnly: !state.uniqueOnly));
   }
 
   Future<void> _onRefreshRequested(

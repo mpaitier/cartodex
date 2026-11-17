@@ -19,14 +19,22 @@ abstract class SetDetailEvent extends Equatable {
 /// seules cartes possédées par ce compte (utilisé depuis le détail
 /// des cartes en plus d'un compte secondaire). `null` = aucune
 /// restriction.
+///
+/// [uniqueOnly] coche d'emblée la puce "Uniques" (ouverture depuis le
+/// profil d'un compte en mode cartes uniques).
 class SetDetailStarted extends SetDetailEvent {
-  const SetDetailStarted(this.setId, {this.ownerFilterAccountId});
+  const SetDetailStarted(
+    this.setId, {
+    this.ownerFilterAccountId,
+    this.uniqueOnly = false,
+  });
 
   final String setId;
   final String? ownerFilterAccountId;
+  final bool uniqueOnly;
 
   @override
-  List<Object?> get props => [setId, ownerFilterAccountId];
+  List<Object?> get props => [setId, ownerFilterAccountId, uniqueOnly];
 }
 
 /// Déclenché par un appui simple sur une carte : bascule sa
@@ -105,7 +113,8 @@ class KindFilterChanged extends SetDetailEvent {
 }
 
 /// Déclenché par le bouton "Réinitialiser" du panneau de filtres :
-/// remet booster, rareté, possession (sous-filtre compris) et type à
+/// remet booster, rareté, possession (sous-filtre et puce "Uniques"
+/// compris) et type à
 /// leur valeur par défaut. Ne touche pas à la restriction à un compte
 /// fixée à l'ouverture de l'écran.
 class FiltersCleared extends SetDetailEvent {
@@ -135,4 +144,16 @@ class SecondaryAccountFilterChanged extends SetDetailEvent {
 
   @override
   List<Object?> get props => [accountId];
+}
+/// Déclenché par la puce "Uniques"
+/// ([UniqueCardsFilterChip][../widgets/unique_cards_filter_chip.dart]) :
+/// n'affiche que les cartes que le compte suivi est le seul à posséder
+/// (voir `SetDetailState.uniqueFilterAccountId`).
+class UniqueOnlyChanged extends SetDetailEvent {
+  const UniqueOnlyChanged(this.uniqueOnly);
+
+  final bool uniqueOnly;
+
+  @override
+  List<Object?> get props => [uniqueOnly];
 }

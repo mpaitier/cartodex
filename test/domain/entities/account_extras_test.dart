@@ -59,4 +59,24 @@ void main() {
       expect(_ids(input), ['A1', 'A2']);
     });
   });
+
+  group('AccountExtras', () {
+    test('additionne séparément cartes en plus et cartes uniques', () {
+      final extras = AccountExtras(
+        accountId: 'alice',
+        bySet: [
+          _extras('A1', base: 3, alternative: 1),
+          _extras('A2', base: 2),
+        ],
+        uniqueBySet: [_extras('A1', base: 1)],
+      );
+      expect(extras.totals, const ExtraCounts(base: 5, alternative: 1));
+      expect(extras.uniqueTotals, const ExtraCounts(base: 1));
+    });
+
+    test('sans cartes uniques, le total unique est vide', () {
+      const extras = AccountExtras(accountId: 'alice');
+      expect(extras.uniqueTotals.isEmpty, isTrue);
+    });
+  });
 }

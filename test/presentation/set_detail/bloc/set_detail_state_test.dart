@@ -143,4 +143,94 @@ void main() {
       expect(state.hasContentFilters, isFalse);
     });
   });
+
+  group('SetDetailState : cartes uniques', () {
+    // A1 : le principal a 1, alice a 2 et 3, bob a 3 et 4.
+    // Seule la carte 2 est unique à alice, seule la 4 l'est à bob.
+    final uniqueCards = [
+      _pokemon('1', 'grass'),
+      _pokemon('2', 'grass'),
+      _pokemon('3', 'fire'),
+      _pokemon('4', 'fire'),
+      _pokemon('5', 'fire'),
+    ];
+
+    Account account(String id, {bool isPrimary = false}) => Account(
+          id: id,
+          name: id,
+          gameAccountId: '0000',
+          isPrimary: isPrimary,
+          createdAt: DateTime(2026),
+        );
+
+    SetDetailState stateWith({
+      OwnershipFilter ownership = OwnershipFilter.secondary,
+      String? secondaryAccountId,
+      String? ownerAccountId,
+      bool uniqueOnly = false,
+      Set<CardKind> kinds = const {},
+    }) {
+      return SetDetailState(
+        cards: uniqueCards,
+        accounts: [
+          account('main', isPrimary: true),
+          account('alice'),
+          account('bob'),
+        ],
+        ownershipByAccountId: const {
+          'main': {'A1-1'},
+          'alice': {'A1-2', 'A1-3'},
+          'bob': {'A1-3', 'A1-4'},
+        },
+        ownershipFilter: ownership,
+        secondaryFilterAccountId: secondaryAccountId,
+        ownerFilterAccountId: ownerAccountId,
+        uniqueOnly: uniqueOnly,
+        selectedKinds: kinds,
+      );
+    }
+
+    test("n'est pas proposé sans compte secondaire précis", () {
+      final state = stateWith(uniqueOnly: true);
+      expect(state.isUniqueFilterAvailable, isFalse);
+      expect(state.effectiveUniqueOnly, isFalse);
+      expect(_ids(state.visibleCards), ['A1-2', 'A1-3', 'A1-4']);
+    });
+
+    test('compte les cartes uniques du compte choisi', () {
+      expect(stateWith(secondaryAccountId: 'alice').uniqueCardCount, 1);
+      expect(stateWith(secondaryAccountId: 'bob').uniqueCardCount, 1);
+    });
+
+    test('ne garde que les cartes que ce compte est seul à avoir', () {
+      final alice = stateWith(secondaryAccountId: 'alice', uniqueOnly: true);
+      expect(_ids(alice.visibleCards), ['A1-2']);
+      final bob = stateWith(secondaryAccountId: 'bob', uniqueOnly: true);
+      expect(_ids(bob.visibleCards), ['A1-4']);
+    });
+
+    test("s'applique aussi à un écran restreint à un compte", () {
+      final state = stateWith(
+        ownership: OwnershipFilter.all,
+        ownerAccountId: 'bob',
+        uniqueOnly: true,
+      );
+      expect(state.isUniqueFilterAvailable, isTrue);
+      expect(_ids(state.visibleCards), ['A1-4']);
+      expect(state.activeFilterCount, 1);
+    });
+
+    test('le compteur suit le filtre par type', () {
+      final state = stateWith(
+        secondaryAccountId: 'alice',
+        kinds: const {CardKind.fire},
+      );
+      expect(state.uniqueCardCount, 0);
+    });
+
+    test('compte avec la possession dans les filtres actifs', () {
+      final state = stateWith(secondaryAccountId: 'alice', uniqueOnly: true);
+      expect(state.activeFilterCount, 1);
+    });
+  });
 }

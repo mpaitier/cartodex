@@ -268,6 +268,18 @@
   "@accountExtrasHeader": {
     "description": "En-tête de l'écran des cartes en plus d'un compte."
   },
+  "accountUniquesHeader": "Cartes qu'aucun autre compte ne possède",
+  "@accountUniquesHeader": {
+    "description": "En-tête de l'écran d'un compte secondaire en mode cartes uniques."
+  },
+  "accountUniquesEmpty": "Toutes les cartes de ce compte sont aussi sur un autre compte.",
+  "@accountUniquesEmpty": {
+    "description": "Écran d'un compte secondaire en mode cartes uniques, rien à afficher."
+  },
+  "uniqueCardsTooltip": "Cartes que seul ce compte possède",
+  "@uniqueCardsTooltip": {
+    "description": "Info-bulle du bouton empreinte qui isole les cartes uniques d'un compte."
+  },
   "cardSetsLoading": "Chargement du référentiel…",
   "@cardSetsLoading": {
     "description": "Premier chargement de l'accueil."
@@ -490,6 +502,15 @@
   "ownershipFilterMissing": "Manquantes",
   "@ownershipFilterMissing": {
     "description": "Filtre de possession : cartes que personne ne possède."
+  },
+  "uniqueCardsFilter": "Uniques ({count})",
+  "@uniqueCardsFilter": {
+    "description": "Puce du détail d'un set qui n'affiche que les cartes possédées par ce seul compte, avec leur nombre.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "noSecondaryAccountTitle": "Aucun compte secondaire",
   "@noSecondaryAccountTitle": {

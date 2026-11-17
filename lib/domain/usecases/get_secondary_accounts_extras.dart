@@ -10,9 +10,11 @@ import '../repositories/account_repository.dart';
 import '../repositories/card_repository.dart';
 import '../usecase.dart';
 
-/// Calcule, pour chaque compte secondaire, les cartes qu'il possède
-/// et que le compte principal n'a pas, set par set et séparées entre
-/// losanges et étoiles (voir [AccountExtras]).
+/// Calcule, pour chaque compte secondaire, set par set et séparées
+/// entre losanges et étoiles (voir [AccountExtras]) :
+/// - les cartes qu'il possède et que le compte principal n'a pas ;
+/// - les cartes qu'il est le seul à posséder, aucun autre compte
+///   (principal ou secondaire) ne les ayant.
 ///
 /// La table renvoyée est indexée par identifiant de compte. Chaque
 /// secondaire y figure, même sans aucune carte en plus (liste de sets
@@ -90,34 +92,76 @@ class GetSecondaryAccountsExtras
     final extrasByAccountId = <String, AccountExtras>{};
     for (final account in secondaries) {
       final secondaryIds = ownedBySecondaryId[account.id] ?? const <String>{};
-      final bySet = <SetExtras>[];
-      for (final set in sets) {
-        final setExtras = _setExtras(
-          set: set,
-          cards: cardsBySetId[set.id] ?? const <PokemonCard>[],
-          primaryIds: primaryIds,
-          secondaryIds: secondaryIds,
-        );
-        if (setExtras.counts.isEmpty) continue;
-        bySet.add(setExtras);
-      }
+      final extraIds = secondaryIds.difference(primaryIds);
+      final uniqueIds = extraIds.difference(
+        _ownedByOthers(ownedBySecondaryId, exceptAccountId: account.id),
+      );
       extrasByAccountId[account.id] = AccountExtras(
         accountId: account.id,
-        bySet: SetExtras.sortedByCounts(bySet),
+        bySet: _bySet(
+          sets: sets,
+          cardsBySetId: cardsBySetId,
+          primaryIds: primaryIds,
+          countedIds: extraIds,
+        ),
+        uniqueBySet: _bySet(
+          sets: sets,
+          cardsBySetId: cardsBySetId,
+          primaryIds: primaryIds,
+          countedIds: uniqueIds,
+        ),
       );
     }
     return Right(extrasByAccountId);
   }
 
-  /// Cartes en plus du secondaire dans [set], et si elles complètent
-  /// le principal, côté losanges et côté étoiles : le principal et
-  /// ses cartes en plus couvrent alors tout le groupe (voir
-  /// [SetExtras.completesBase]).
+  /// Union des cartes possédées par les secondaires autres que
+  /// [exceptAccountId]. Le principal n'y figure pas : ses cartes sont
+  /// déjà retirées en amont.
+  Set<String> _ownedByOthers(
+    Map<String, Set<String>> ownedBySecondaryId, {
+    required String exceptAccountId,
+  }) {
+    final result = <String>{};
+    for (final entry in ownedBySecondaryId.entries) {
+      if (entry.key == exceptAccountId) continue;
+      result.addAll(entry.value);
+    }
+    return result;
+  }
+
+  /// Les sets où au moins une carte de [countedIds] apparaît, triés
+  /// (voir [SetExtras.sortedByCounts]).
+  List<SetExtras> _bySet({
+    required List<CardSet> sets,
+    required Map<String, List<PokemonCard>> cardsBySetId,
+    required Set<String> primaryIds,
+    required Set<String> countedIds,
+  }) {
+    final bySet = <SetExtras>[];
+    for (final set in sets) {
+      final setExtras = _setExtras(
+        set: set,
+        cards: cardsBySetId[set.id] ?? const <PokemonCard>[],
+        primaryIds: primaryIds,
+        countedIds: countedIds,
+      );
+      if (setExtras.counts.isEmpty) continue;
+      bySet.add(setExtras);
+    }
+    return SetExtras.sortedByCounts(bySet);
+  }
+
+  /// Cartes de [countedIds] présentes dans [set], et si elles
+  /// complètent le principal, côté losanges et côté étoiles : le
+  /// principal et ces cartes couvrent alors tout le groupe (voir
+  /// [SetExtras.completesBase]). [countedIds] ne doit contenir aucune
+  /// carte du principal, sans quoi elle serait comptée deux fois.
   SetExtras _setExtras({
     required CardSet set,
     required List<PokemonCard> cards,
     required Set<String> primaryIds,
-    required Set<String> secondaryIds,
+    required Set<String> countedIds,
   }) {
     var baseTotal = 0;
     var baseOwnedByPrimary = 0;
@@ -127,7 +171,7 @@ class GetSecondaryAccountsExtras
     var alternativeExtra = 0;
     for (final card in cards) {
       final ownedByPrimary = primaryIds.contains(card.id);
-      final extra = !ownedByPrimary && secondaryIds.contains(card.id);
+      final extra = countedIds.contains(card.id);
       if (CardRarity.isBase(card.rarity)) {
         baseTotal++;
         if (ownedByPrimary) baseOwnedByPrimary++;

@@ -26,8 +26,9 @@ import 'set_detail_state.dart';
 /// mémorisée dans l'état à l'ouverture, et appliquée par
 /// `SetDetailState.visibleCards`.
 ///
-/// Les filtres (booster, rareté, possession et son sous-filtre par
-/// compte secondaire) vivent dans l'état et sont appliqués par
+/// Les filtres (booster, rareté, possession avec son sous-filtre par
+/// compte secondaire et sa puce "Uniques") vivent dans l'état et sont
+/// appliqués par
 /// `SetDetailState.visibleCards`. Un changement de filtre de
 /// possession retire de la sélection de rareté les puces qui ne
 /// correspondent plus à aucune carte, sans quoi la grille se viderait
@@ -60,6 +61,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<FiltersCleared>(_onFiltersCleared);
     on<OwnershipFilterChanged>(_onOwnershipFilterChanged);
     on<SecondaryAccountFilterChanged>(_onSecondaryAccountFilterChanged);
+    on<UniqueOnlyChanged>(_onUniqueOnlyChanged);
   }
 
   final GetCardsBySet _getCardsBySet;
@@ -75,6 +77,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
       state.copyWith(
         status: SetDetailStatus.loading,
         ownerFilterAccountId: event.ownerFilterAccountId,
+        uniqueOnly: event.uniqueOnly,
       ),
     );
 
@@ -270,13 +273,16 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
         selectedKinds: const {},
         ownershipFilter: OwnershipFilter.all,
         secondaryFilterAccountId: null,
+        uniqueOnly: false,
       ),
     );
   }
 
   /// Change le filtre de possession et remet le sous-filtre par
-  /// compte à "tous" : un compte choisi pour un filtre n'a pas de
-  /// sens pour un autre.
+  /// compte à "tous" et la puce "Uniques" à faux : un compte choisi
+  /// pour un filtre n'a pas de sens pour un autre. Sur un écran
+  /// restreint à un compte, la puce "Uniques" ne dépend pas du filtre
+  /// de possession (qui n'y est pas proposé) : elle est conservée.
   Future<void> _onOwnershipFilterChanged(
     OwnershipFilterChanged event,
     Emitter<SetDetailState> emit,
@@ -284,6 +290,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     final next = state.copyWith(
       ownershipFilter: event.filter,
       secondaryFilterAccountId: null,
+      uniqueOnly: state.ownerFilterAccountId != null && state.uniqueOnly,
     );
     emit(_withValidFilters(next));
   }
@@ -296,10 +303,21 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     emit(_withValidFilters(next));
   }
 
+  /// Coche ou décoche la puce "Uniques". Le choix est conservé quand
+  /// on passe d'un compte secondaire à l'autre dans le sous-filtre : on
+  /// compare ainsi les cartes uniques des comptes un par un.
+  Future<void> _onUniqueOnlyChanged(
+    UniqueOnlyChanged event,
+    Emitter<SetDetailState> emit,
+  ) async {
+    emit(_withValidFilters(state.copyWith(uniqueOnly: event.uniqueOnly)));
+  }
+
   /// Retire de [next] les raretés et les types cochés qui ne
   /// correspondent plus à aucune carte après un changement de filtre
   /// de possession, sans quoi la grille se viderait sans qu'aucune
-  /// puce visible ne l'explique. Pour les raretés, on compare au volet
+  /// puce visible ne l'explique (idem après un changement de la puce
+  /// "Uniques"). Pour les raretés, on compare au volet
   /// "tout" : une rareté cochée l'a été sur un volet où elle était
   /// proposée, donc présente dans le volet "tout" exactement quand
   /// elle l'est dans son propre volet.
