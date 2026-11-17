@@ -17,11 +17,16 @@ import '../bloc/account_extras_event.dart';
 import '../bloc/account_extras_state.dart';
 import '../widgets/account_extras_header.dart';
 import '../widgets/set_extras_list_item.dart';
+import '../widgets/unique_cards_action.dart';
 
 /// Écran des cartes qu'un compte secondaire possède en plus du compte
 /// principal : la liste des sets où le principal n'a pas une carte que
 /// le secondaire a. Un appui sur un set ouvre son détail, restreint
 /// aux cartes possédées par ce secondaire (voir [SetDetailPage]).
+///
+/// Le bouton empreinte ([UniqueCardsAction]) restreint la liste aux
+/// cartes qu'aucun autre compte ne possède ; un set ouvert dans ce mode
+/// arrive avec le même filtre déjà appliqué.
 ///
 /// Le crayon de la barre du haut ([AccountEditButton]) ouvre
 /// [EditAccountDialog] pour changer le nom ou le code ami du compte ;
@@ -67,6 +72,13 @@ class _AccountExtrasView extends StatelessWidget {
         return AppScaffold(
           title: account.name,
           actions: [
+            if (state.status == AccountExtrasStatus.loaded)
+              UniqueCardsAction(
+                selected: state.uniqueOnly,
+                onPressed: () => context
+                    .read<AccountExtrasBloc>()
+                    .add(const AccountExtrasUniqueOnlyToggled()),
+              ),
             AccountEditButton(
               onPressed: () => _openEditDialog(context, account),
             ),
@@ -97,13 +109,15 @@ class _AccountExtrasView extends StatelessWidget {
       );
     }
 
-    final extras = state.extras;
-    if (extras == null || extras.bySet.isEmpty) {
+    final sets = state.visibleSets;
+    if (sets.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            l10n.accountExtrasEmpty,
+            state.uniqueOnly
+                ? l10n.accountUniquesEmpty
+                : l10n.accountExtrasEmpty,
             textAlign: TextAlign.center,
           ),
         ),
@@ -112,11 +126,19 @@ class _AccountExtrasView extends StatelessWidget {
 
     return ListView(
       children: [
-        AccountExtrasHeader(totals: extras.totals),
-        for (final setExtras in extras.bySet)
+        AccountExtrasHeader(
+          totals: state.visibleTotals,
+          uniqueOnly: state.uniqueOnly,
+        ),
+        for (final setExtras in sets)
           SetExtrasListItem(
             setExtras: setExtras,
-            onTap: () => _openSet(context, account, setExtras),
+            onTap: () => _openSet(
+              context,
+              account,
+              setExtras,
+              uniqueOnly: state.uniqueOnly,
+            ),
           ),
       ],
     );
@@ -136,15 +158,17 @@ class _AccountExtrasView extends StatelessWidget {
   }
 
   /// Ouvre le détail de [SetExtras.set] restreint aux cartes de
-  /// [account], puis demande au Bloc de recalculer une fois revenu :
+  /// [account] (à ses seules cartes uniques si [uniqueOnly]), puis
+  /// demande au Bloc de recalculer une fois revenu :
   /// la possession a pu changer entre-temps (ex : le principal vient
   /// de cocher une carte du secondaire). Le Bloc est lu avant
   /// l'attente, pour ne pas toucher au `context` après la navigation.
   Future<void> _openSet(
     BuildContext context,
     Account account,
-    SetExtras setExtras,
-  ) async {
+    SetExtras setExtras, {
+    required bool uniqueOnly,
+  }) async {
     final bloc = context.read<AccountExtrasBloc>();
     final CardSet set = setExtras.set;
     await Navigator.of(context).push(
@@ -153,6 +177,7 @@ class _AccountExtrasView extends StatelessWidget {
           set: set,
           ownerFilterAccountId: account.id,
           ownerFilterAccountName: account.name,
+          uniqueOnly: uniqueOnly,
         ),
       ),
     );

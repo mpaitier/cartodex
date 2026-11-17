@@ -43,6 +43,7 @@ class SetDetailState extends Equatable {
     this.ownershipFilter = OwnershipFilter.all,
     this.secondaryFilterAccountId,
     this.ownerFilterAccountId,
+    this.uniqueOnly = false,
     this.errorMessage,
   });
 
@@ -86,6 +87,12 @@ class SetDetailState extends Equatable {
   /// signifie "aucune restriction" (cas normal). Fixé à l'ouverture
   /// de l'écran (voir `SetDetailStarted`), jamais modifié ensuite.
   final String? ownerFilterAccountId;
+
+  /// Vrai quand la puce "Uniques" est cochée : seules les cartes que le
+  /// compte suivi ([uniqueFilterAccountId]) est le seul à posséder
+  /// restent visibles. Pour la valeur réellement appliquée, voir
+  /// [effectiveUniqueOnly].
+  final bool uniqueOnly;
 
   final String? errorMessage;
 
@@ -145,6 +152,53 @@ class SetDetailState extends Equatable {
     ];
   }
 
+  /// Le compte dont on peut isoler les cartes uniques : celui de la
+  /// restriction fixée à l'ouverture ([ownerFilterAccountId]), sinon
+  /// le compte choisi dans le sous-filtre des secondaires. `null`
+  /// quand aucun compte précis n'est suivi : "uniques" n'aurait alors
+  /// pas de sens.
+  String? get uniqueFilterAccountId {
+    final ownerId = ownerFilterAccountId;
+    if (ownerId != null) return ownerId;
+    if (ownershipFilter != OwnershipFilter.secondary) return null;
+    return effectiveSecondaryFilterAccountId;
+  }
+
+  /// Vrai quand la puce "Uniques" a quelque chose à départager : un
+  /// compte est suivi, et il existe au moins un autre compte.
+  bool get isUniqueFilterAvailable =>
+      uniqueFilterAccountId != null && accounts.length > 1;
+
+  /// Le filtre "uniques" réellement appliqué. Retombe à faux quand le
+  /// compte suivi disparaît (ex: retour à "Tous les secondaires"), sans
+  /// effacer le choix : il revient dès qu'un compte est à nouveau
+  /// sélectionné, pour comparer les comptes un par un.
+  bool get effectiveUniqueOnly => uniqueOnly && isUniqueFilterAvailable;
+
+  /// Cartes que [accountId] possède et qu'aucun autre compte, principal
+  /// ou secondaire, ne possède (tous sets confondus, comme
+  /// [ownershipByAccountId]).
+  Set<String> uniqueCardIdsOf(String accountId) {
+    final owned = ownershipByAccountId[accountId] ?? const <String>{};
+    final ownedByOthers = <String>{};
+    for (final entry in ownershipByAccountId.entries) {
+      if (entry.key == accountId) continue;
+      ownedByOthers.addAll(entry.value);
+    }
+    return owned.difference(ownedByOthers);
+  }
+
+  /// Nombre de cartes uniques du compte suivi dans ce set, affiché sur
+  /// la puce "Uniques" même quand elle n'est pas cochée. Suit les
+  /// filtres de booster, de rareté et de type, comme le compteur de la
+  /// barre du haut. 0 quand aucun compte n'est suivi.
+  int get uniqueCardCount {
+    final accountId = uniqueFilterAccountId;
+    if (accountId == null) return 0;
+    final uniqueIds = uniqueCardIdsOf(accountId);
+    return _progressCards.where((card) => uniqueIds.contains(card.id)).length;
+  }
+
   /// Cartes possédées par le compte principal — ce que le tap
   /// simple bascule.
   Set<String> get primaryOwnedCardIds {
@@ -177,15 +231,25 @@ class SetDetailState extends Equatable {
     return cards.where((card) => owned.contains(card.id)).toList();
   }
 
-  /// [_scopedCards] une fois appliqué le filtre de possession. Les
-  /// trois valeurs autres que [OwnershipFilter.all] forment une
-  /// partition, comme les trois états du badge de `CardGridItem` :
+  /// [_scopedCards] une fois appliqués le filtre de possession
+  /// ([_filterByOwnership]) puis, s'il est actif, le filtre "uniques"
+  /// ([effectiveUniqueOnly]).
+  List<PokemonCard> get _ownershipScopedCards {
+    final byOwnership = _filterByOwnership(_scopedCards);
+    final accountId = uniqueFilterAccountId;
+    if (!effectiveUniqueOnly || accountId == null) return byOwnership;
+    final uniqueIds = uniqueCardIdsOf(accountId);
+    return byOwnership.where((card) => uniqueIds.contains(card.id)).toList();
+  }
+
+  /// [base] restreintes par le filtre de possession. Les trois valeurs
+  /// autres que [OwnershipFilter.all] forment une partition, comme les
+  /// trois états du badge de `CardGridItem` :
   /// - principal : possédée par le compte principal ;
   /// - secondaires : possédée par un secondaire (celui du sous-filtre,
   ///   le cas échéant) mais pas par le principal ;
   /// - manquantes : possédée par aucun compte.
-  List<PokemonCard> get _ownershipScopedCards {
-    final base = _scopedCards;
+  List<PokemonCard> _filterByOwnership(List<PokemonCard> base) {
     final primaryIds = primaryOwnedCardIds;
     switch (ownershipFilter) {
       case OwnershipFilter.all:
@@ -256,19 +320,24 @@ class SetDetailState extends Equatable {
   /// Nombre de filtres actifs (booster, rareté, possession, type),
   /// pour la pastille du bouton de filtre de la barre du haut. Chaque
   /// filtre compte pour un, quel que soit le nombre de puces cochées ;
-  /// le sous-filtre par compte secondaire fait partie de la
-  /// possession.
+  /// le sous-filtre par compte secondaire et la puce "Uniques" font
+  /// partie de la possession. Sur un écran restreint à un compte, où
+  /// le filtre de possession n'est pas proposé, la puce "Uniques"
+  /// compte seule.
   int get activeFilterCount {
     var count = 0;
     if (selectedPack != null) count++;
     if (selectedRarities.isNotEmpty) count++;
-    if (ownershipFilter != OwnershipFilter.all) count++;
+    if (ownershipFilter != OwnershipFilter.all || effectiveUniqueOnly) {
+      count++;
+    }
     if (selectedKinds.isNotEmpty) count++;
     return count;
   }
 
   /// Cartes à afficher compte tenu des filtres courants (restriction
-  /// à un compte, possession, booster, rareté et type, cumulatifs).
+  /// à un compte, possession, uniques, booster, rareté et type,
+  /// cumulatifs).
   List<PokemonCard> get visibleCards =>
       _applyContentFilters(_ownershipScopedCards);
 
@@ -394,6 +463,7 @@ class SetDetailState extends Equatable {
     OwnershipFilter? ownershipFilter,
     Object? secondaryFilterAccountId = _unset,
     Object? ownerFilterAccountId = _unset,
+    bool? uniqueOnly,
     String? errorMessage,
   }) {
     return SetDetailState(
@@ -413,6 +483,7 @@ class SetDetailState extends Equatable {
       ownerFilterAccountId: identical(ownerFilterAccountId, _unset)
           ? this.ownerFilterAccountId
           : ownerFilterAccountId as String?,
+      uniqueOnly: uniqueOnly ?? this.uniqueOnly,
       errorMessage: errorMessage,
     );
   }
@@ -429,6 +500,7 @@ class SetDetailState extends Equatable {
         ownershipFilter,
         secondaryFilterAccountId,
         ownerFilterAccountId,
+        uniqueOnly,
         errorMessage,
       ];
 }

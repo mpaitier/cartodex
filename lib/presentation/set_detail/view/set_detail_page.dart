@@ -24,6 +24,7 @@ import '../widgets/secondary_account_picker_dialog.dart';
 import '../widgets/set_detail_filter_action.dart';
 import '../widgets/set_detail_filter_sheet.dart';
 import '../widgets/set_progress_summary.dart';
+import '../widgets/unique_cards_filter_chip.dart';
 
 /// Écran de détail d'un set : ses cartes, filtrables par booster, par
 /// rareté (multi-sélection), par possession (principal, secondaires
@@ -49,12 +50,15 @@ import '../widgets/set_progress_summary.dart';
 /// Quand [ownerFilterAccountId] est fourni (ouverture depuis le
 /// détail des cartes en plus d'un compte secondaire), seules les
 /// cartes possédées par ce compte sont affichées, avec un bandeau
-/// ([OwnerFilterBanner]) qui le rappelle.
+/// ([OwnerFilterBanner]) qui le rappelle. Ce bandeau porte aussi la
+/// puce des cartes uniques du compte ([UniqueCardsFilterChip]), déjà
+/// cochée quand [uniqueOnly] est vrai.
 class SetDetailPage extends StatelessWidget {
   const SetDetailPage({
     required this.set,
     this.ownerFilterAccountId,
     this.ownerFilterAccountName,
+    this.uniqueOnly = false,
     super.key,
   });
 
@@ -71,6 +75,10 @@ class SetDetailPage extends StatelessWidget {
   /// Nom du compte de [ownerFilterAccountId], pour le bandeau.
   final String? ownerFilterAccountName;
 
+  /// Coche d'emblée la puce "Uniques" (ouverture depuis le profil d'un
+  /// compte en mode cartes uniques).
+  final bool uniqueOnly;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -79,12 +87,14 @@ class SetDetailPage extends StatelessWidget {
           SetDetailStarted(
             set.id,
             ownerFilterAccountId: ownerFilterAccountId,
+            uniqueOnly: uniqueOnly,
           ),
         ),
       child: _SetDetailView(
         set: set,
         ownerFilterAccountId: ownerFilterAccountId,
         ownerFilterAccountName: ownerFilterAccountName,
+        uniqueOnly: uniqueOnly,
       ),
     );
   }
@@ -95,11 +105,13 @@ class _SetDetailView extends StatefulWidget {
     required this.set,
     required this.ownerFilterAccountId,
     required this.ownerFilterAccountName,
+    required this.uniqueOnly,
   });
 
   final CardSet set;
   final String? ownerFilterAccountId;
   final String? ownerFilterAccountName;
+  final bool uniqueOnly;
 
   @override
   State<_SetDetailView> createState() => _SetDetailViewState();
@@ -180,12 +192,31 @@ class _SetDetailViewState extends State<_SetDetailView> {
           ],
           body: Column(
             children: [
-              if (ownerName != null) OwnerFilterBanner(accountName: ownerName),
+              if (ownerName != null)
+                OwnerFilterBanner(
+                  accountName: ownerName,
+                  trailing: _uniqueCardsChip(context, state),
+                ),
               Expanded(child: _buildBody(context, state)),
             ],
           ),
         );
       },
+    );
+  }
+
+  /// Puce "Uniques" du bandeau, `null` tant que les cartes ne sont pas
+  /// chargées ou s'il n'existe aucun autre compte à comparer.
+  Widget? _uniqueCardsChip(BuildContext context, SetDetailState state) {
+    if (state.status != SetDetailStatus.loaded ||
+        !state.isUniqueFilterAvailable) {
+      return null;
+    }
+    return UniqueCardsFilterChip(
+      count: state.uniqueCardCount,
+      selected: state.effectiveUniqueOnly,
+      onSelected: (selected) =>
+          context.read<SetDetailBloc>().add(UniqueOnlyChanged(selected)),
     );
   }
 
@@ -220,6 +251,7 @@ class _SetDetailViewState extends State<_SetDetailView> {
               SetDetailStarted(
                 widget.set.id,
                 ownerFilterAccountId: widget.ownerFilterAccountId,
+                uniqueOnly: widget.uniqueOnly,
               ),
             ),
       );

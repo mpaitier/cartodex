@@ -14,13 +14,16 @@ import 'ownership_filter_bar.dart';
 import 'pack_filter_bar.dart';
 import 'rarity_filter_bar.dart';
 import 'secondary_account_filter_bar.dart';
+import 'unique_cards_filter_chip.dart';
 
 /// Panneau de filtres du détail d'un set, ouvert depuis le bouton de
 /// la barre du haut (`SetDetailFilterAction`).
 ///
 /// Regroupe tous les filtres de la grille, rubrique par rubrique
 /// ([FilterSheetSection]) : booster, rareté, possession (avec le
-/// sous-filtre par compte secondaire) et type ([CardKindFilterBar]).
+/// sous-filtre par compte secondaire et, dès qu'un compte y est choisi,
+/// la puce de ses cartes uniques [UniqueCardsFilterChip]) et type
+/// ([CardKindFilterBar]).
 /// Une rubrique sans choix à proposer est masquée. "Réinitialiser"
 /// remet tout à zéro ([FiltersCleared]).
 ///
@@ -121,6 +124,15 @@ class SetDetailFilterSheet extends StatelessWidget {
                                   SecondaryAccountFilterChanged(accountId),
                                 ),
                               ),
+                            if (state.ownershipFilter ==
+                                    OwnershipFilter.secondary &&
+                                state.isUniqueFilterAvailable)
+                              _UniqueCardsRow(
+                                count: state.uniqueCardCount,
+                                selected: state.effectiveUniqueOnly,
+                                onSelected: (selected) =>
+                                    bloc.add(UniqueOnlyChanged(selected)),
+                              ),
                           ],
                         ),
                       ),
@@ -142,6 +154,35 @@ class SetDetailFilterSheet extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Ligne de la puce "Uniques", alignée sur les barres de puces du
+/// panneau (même marge que `FilterChipWrap`).
+class _UniqueCardsRow extends StatelessWidget {
+  const _UniqueCardsRow({
+    required this.count,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final int count;
+  final bool selected;
+  final ValueChanged<bool> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: UniqueCardsFilterChip(
+          count: count,
+          selected: selected,
+          onSelected: onSelected,
+        ),
+      ),
     );
   }
 }

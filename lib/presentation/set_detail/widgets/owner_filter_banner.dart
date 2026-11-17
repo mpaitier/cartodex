@@ -8,10 +8,19 @@ import '../../../l10n/l10n.dart';
 /// `SetDetailState.ownerFilterAccountId`) : rappelle pourquoi seules
 /// certaines cartes sont visibles. Même flèche jaune que le badge de
 /// possession des comptes secondaires.
+///
+/// [trailing], quand fourni, s'affiche à droite du texte : la puce des
+/// cartes uniques du compte (`UniqueCardsFilterChip`), le panneau de
+/// filtres ne proposant pas de filtre de possession sur cet écran.
 class OwnerFilterBanner extends StatelessWidget {
-  const OwnerFilterBanner({required this.accountName, super.key});
+  const OwnerFilterBanner({
+    required this.accountName,
+    this.trailing,
+    super.key,
+  });
 
   final String accountName;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +40,10 @@ class OwnerFilterBanner extends StatelessWidget {
               style: Theme.of(context).textTheme.labelLarge,
             ),
           ),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            trailing!,
+          ],
         ],
       ),
     );
