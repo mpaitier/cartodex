@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/images/app_image_cache_manager.dart';
 import '../../../core/utils/app_logger.dart';
 
 /// Logo du set, avec repli sur une icône générique tant que [url]
@@ -34,6 +35,7 @@ class CardSetLogo extends StatelessWidget {
       color: Colors.black12,
       child: CachedNetworkImage(
         imageUrl: fullUrl,
+        cacheManager: AppImageCacheManager.instance,
         fit: BoxFit.contain,
         placeholder: (context, _) => const Center(
           child: SizedBox(

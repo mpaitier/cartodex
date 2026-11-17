@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/card_rarities.dart';
+import '../../../core/images/card_image_provider.dart';
 import '../../../core/theme/app_color_filters.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_logger.dart';
@@ -136,14 +136,20 @@ class CardGridItem extends StatelessWidget {
 /// générique identique pour toutes les cartes. Le fond est plus
 /// marqué quand la carte est possédée.
 ///
-/// Le grisage est appliqué dans `imageBuilder`, une fois l'image
+/// L'image passe par [CardImageProvider], la même source que le
+/// préchargement du détail d'un set (`CardImagesPreloader`) : une
+/// carte préchargée s'affiche donc tout de suite, sans rond de
+/// chargement. Tant que la première image n'est pas prête, un rond de
+/// chargement occupe la tuile.
+///
+/// Le grisage est appliqué dans `frameBuilder`, une fois l'image
 /// obtenue (voir [_applyOwnershipFilter]) : le chargement, le
 /// placeholder et les logs ne sont faits qu'une seule fois, même
 /// quand [DiagonalGrayscaleSplit] dessine l'image deux fois.
 ///
 /// Chaque URL tentée est loguée (voir [AppLogger]) : en INFO au
-/// moment de la construction, en ERROR si `CachedNetworkImage`
-/// échoue à la charger — le but est de pouvoir vérifier d'un coup
+/// moment de la construction, en ERROR si l'image échoue à se
+/// charger — le but est de pouvoir vérifier d'un coup
 /// d'œil dans la console si le lien reconstruit est correct, sans
 /// devoir copier-coller chaque URL à la main.
 class _CardArt extends StatelessWidget {
@@ -191,34 +197,47 @@ class _CardArt extends StatelessWidget {
       color: owned ? Colors.black12 : Colors.black.withValues(alpha: 0.04),
       child: Padding(
         padding: EdgeInsets.all(compact ? 2 : 4),
-        child: CachedNetworkImage(
-          imageUrl: url,
-          imageBuilder: (context, imageProvider) {
-            final image = Image(
-              image: imageProvider,
-              fit: BoxFit.contain,
-              alignment: Alignment.center,
-            );
-            return _applyOwnershipFilter(image);
+        child: Image(
+          image: CardImageProvider.of(url),
+          fit: BoxFit.contain,
+          alignment: Alignment.center,
+          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+            // Déjà en mémoire (préchargée ou vue récemment) : affichée
+            // tout de suite. Sinon, rond de chargement jusqu'à la
+            // première image.
+            if (frame == null && !wasSynchronouslyLoaded) {
+              return const _LoadingPlaceholder();
+            }
+            return _applyOwnershipFilter(child);
           },
-          placeholder: (context, _) => const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-          errorWidget: (context, failedUrl, error) {
+          errorBuilder: (context, error, stackTrace) {
             // L'URL et l'erreur exacte permettent de tester le lien
             // directement dans un navigateur (voir AppLogger, qui ne
             // s'exécute qu'en debug).
             AppLogger.log(
               'ERROR',
-              'Carte #$number introuvable : $failedUrl ($error)',
+              'Carte #$number introuvable : $url ($error)',
             );
             return _NumberFallback(owned: owned, number: number);
           },
         ),
+      ),
+    );
+  }
+}
+
+/// Rond de chargement affiché dans la tuile tant que l'illustration
+/// n'est pas prête.
+class _LoadingPlaceholder extends StatelessWidget {
+  const _LoadingPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
       ),
     );
   }

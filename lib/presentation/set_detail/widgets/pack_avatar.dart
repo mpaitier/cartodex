@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/images/app_image_cache_manager.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/pocket_cards_image_slug.dart';
 
@@ -50,6 +51,7 @@ class PackAvatar extends StatelessWidget {
       child: ClipOval(
         child: CachedNetworkImage(
           imageUrl: url,
+          cacheManager: AppImageCacheManager.instance,
           width: radius * 2,
           height: radius * 2,
           fit: BoxFit.cover,

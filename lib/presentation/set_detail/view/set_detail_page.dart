@@ -18,6 +18,7 @@ import '../widgets/bulk_add_confirmation_dialog.dart';
 import '../widgets/card_element_logo.dart';
 import '../widgets/card_grid_density.dart';
 import '../widgets/card_grid_pager.dart';
+import '../widgets/card_images_preloader.dart';
 import '../widgets/owner_filter_banner.dart';
 import '../widgets/pinch_gesture_detector.dart';
 import '../widgets/secondary_account_picker_dialog.dart';
@@ -41,6 +42,10 @@ import '../widgets/unique_cards_filter_chip.dart';
 /// deux doigts change la densité de la grille : les doigts qui se
 /// rapprochent passent de 3 à 5 colonnes (sans nom ni rareté sous les
 /// cartes), les doigts qui s'écartent reviennent à 3.
+///
+/// Toutes les illustrations du set sont préchargées dès l'ouverture,
+/// par vagues ([CardImagesPreloader]), en commençant par celles du
+/// volet affiché.
 ///
 /// Le tap simple bascule la possession pour le compte principal ; le
 /// double-tap ouvre un popup pour choisir un compte secondaire ; le
@@ -257,6 +262,26 @@ class _SetDetailViewState extends State<_SetDetailView> {
       );
     }
 
+    return CardImagesPreloader(
+      imageUrls: _imageUrlsToPreload(state),
+      child: _buildGrid(context, state),
+    );
+  }
+
+  /// Illustrations à précharger : d'abord celles du volet affiché,
+  /// filtres compris (ce qu'on verra en premier), puis le reste du set,
+  /// pour que changer de volet ou de filtre soit instantané aussi.
+  List<String> _imageUrlsToPreload(SetDetailState state) {
+    final urls = <String>{
+      for (final card in state.visibleCardsForGroup(_activeGroup))
+        if (card.imageUrl != null) card.imageUrl!,
+      for (final card in state.cards)
+        if (card.imageUrl != null) card.imageUrl!,
+    };
+    return urls.toList();
+  }
+
+  Widget _buildGrid(BuildContext context, SetDetailState state) {
     // Doigts qui se rapprochent = on dézoome = plus de colonnes ;
     // doigts qui s'écartent = on zoome = moins de colonnes.
     return PinchGestureDetector(
