@@ -202,6 +202,14 @@ Pensez à relancer `flutter gen-l10n` après avoir touché aux fichiers ARB, sin
 
 La CI (`.github/workflows/ci.yml`) refait tout ça à chaque push sur `main` et sur chaque pull request, avec `flutter analyze --fatal-infos` : une seule remarque du linter fait échouer le run. Deux jobs compilent ensuite l'app, un APK sur Linux et l'app iOS sans signature sur macOS.
 
+La CI installe la version de Flutter écrite dans `pubspec.yaml` (`environment > flutter`), c'est-à-dire celle de ma machine, et pas la dernière stable. Après un `flutter upgrade`, je la mets à jour avec :
+
+```
+powershell -ExecutionPolicy Bypass -File tool\sync_flutter_version.ps1
+```
+
+puis je committe `pubspec.yaml`. Tant que ce n'est pas fait, `flutter pub get` refuse de tourner avec l'autre version.
+
 ## Limites actuelles
 
 Seul Android est testé et distribué. iOS compile sans avoir été essayé, et le web n'est pas encore pris en charge.

@@ -5,6 +5,9 @@ version: 1.0.0+1
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
+  # Version exacte de Flutter de la machine de dev, reprise par la CI.
+  # Mise à jour : tool\sync_flutter_version.ps1
+  flutter: 3.47.5
 
 dependencies:
   flutter:
