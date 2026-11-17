@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/entities/progress_count.dart';
 import '../../../domain/entities/rarity_scope.dart';
+import '../../../domain/entities/rarity_split_progress.dart';
 import '../../stats/widgets/progress_count_label.dart';
+import '../../stats/widgets/rarity_split_progress_bar.dart';
 import '../../stats/widgets/stacked_progress_bar.dart';
 import 'missing_cards_label.dart';
 import 'series_percent_label.dart';
@@ -17,7 +19,10 @@ import 'series_rarity_scope_button.dart';
 /// 2. barre violette du compte principal prolongée en jaune par ce
 ///    que les secondaires ajoutent (fond gris pour le reste), et à
 ///    droite le bouton de périmètre ([SeriesRarityScopeButton]) qui
-///    restreint le bandeau aux losanges ou aux étoiles ;
+///    restreint le bandeau aux losanges ou aux étoiles. En périmètre
+///    Σ, la barre est coupée en deux, losanges puis étoiles
+///    ([RaritySplitProgressBar]) : chaque famille passe au vert dès que
+///    le principal la possède en entier ;
 /// 3. nombre de cartes que personne ne possède, en rouge pâle
 ///    ([MissingCardsLabel]), et à droite le détail "X (+Y) / Z"
 ///    ([ProgressCountLabel]).
@@ -31,6 +36,7 @@ class SeriesProgressBanner extends StatelessWidget {
     required this.progress,
     required this.scope,
     required this.onScopePressed,
+    this.splitProgress,
     super.key,
   });
 
@@ -38,6 +44,12 @@ class SeriesProgressBanner extends StatelessWidget {
   final String title;
 
   final ProgressCount progress;
+
+  /// La même progression, séparée entre losanges et étoiles. Utilisée
+  /// seulement en périmètre Σ ; sans elle, la barre reste d'un seul
+  /// tenant.
+  final RaritySplitProgress? splitProgress;
+
   final RarityScope scope;
   final VoidCallback onScopePressed;
 
@@ -54,6 +66,7 @@ class SeriesProgressBanner extends StatelessWidget {
             _TitleRow(title: title, progress: progress),
             _BarRow(
               progress: progress,
+              splitProgress: splitProgress,
               scope: scope,
               onScopePressed: onScopePressed,
             ),
@@ -92,23 +105,30 @@ class _TitleRow extends StatelessWidget {
   }
 }
 
-/// Ligne 2 : barre de progression et bouton de périmètre.
+/// Ligne 2 : barre de progression (coupée en deux en Σ) et bouton de
+/// périmètre.
 class _BarRow extends StatelessWidget {
   const _BarRow({
     required this.progress,
+    required this.splitProgress,
     required this.scope,
     required this.onScopePressed,
   });
 
   final ProgressCount progress;
+  final RaritySplitProgress? splitProgress;
   final RarityScope scope;
   final VoidCallback onScopePressed;
 
   @override
   Widget build(BuildContext context) {
+    final split = splitProgress;
+    final bar = scope == RarityScope.all && split != null
+        ? RaritySplitProgressBar(progress: split)
+        : StackedProgressBar(progress: progress);
     return Row(
       children: [
-        Expanded(child: StackedProgressBar(progress: progress)),
+        Expanded(child: bar),
         const SizedBox(width: 8),
         SeriesRarityScopeButton(scope: scope, onPressed: onScopePressed),
       ],

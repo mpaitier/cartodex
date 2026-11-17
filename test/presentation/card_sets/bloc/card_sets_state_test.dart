@@ -254,4 +254,64 @@ void main() {
       expect(state.seriesProgressFor('B', RarityScope.all), isNull);
     });
   });
+
+  group('CardSetsState.seriesSplitProgressFor', () {
+    final sets = [_set('C2', 'C'), _set('C1', 'C'), _set('D1', 'D')];
+    const progress = {
+      'C2': SetProgress(
+        setId: 'C2',
+        base: RarityGroupProgress(
+          primaryOwned: 20,
+          allAccountsOwned: 20,
+          total: 20,
+        ),
+        alternative: RarityGroupProgress(
+          primaryOwned: 2,
+          allAccountsOwned: 4,
+          total: 10,
+        ),
+      ),
+      'C1': SetProgress(
+        setId: 'C1',
+        base: RarityGroupProgress(
+          primaryOwned: 30,
+          allAccountsOwned: 30,
+          total: 30,
+        ),
+        alternative: RarityGroupProgress(
+          primaryOwned: 0,
+          allAccountsOwned: 1,
+          total: 6,
+        ),
+      ),
+    };
+
+    test('additionne losanges et étoiles séparément', () {
+      final state = CardSetsState(sets: sets, progressBySetId: progress);
+      final split = state.seriesSplitProgressFor('C')!;
+      expect(
+        split.base,
+        const ProgressCount(owned: 50, secondaryExtra: 0, total: 50),
+      );
+      expect(split.base.isComplete, isTrue);
+      expect(
+        split.alternative,
+        const ProgressCount(owned: 2, secondaryExtra: 3, total: 16),
+      );
+      expect(split.alternative.isComplete, isFalse);
+    });
+
+    test('la somme des deux familles redonne le périmètre Σ', () {
+      final state = CardSetsState(sets: sets, progressBySetId: progress);
+      expect(
+        state.seriesSplitProgressFor('C')!.combined,
+        state.seriesProgressFor('C', RarityScope.all),
+      );
+    });
+
+    test('sans progression connue pour la série, rien à afficher', () {
+      final state = CardSetsState(sets: sets, progressBySetId: progress);
+      expect(state.seriesSplitProgressFor('D'), isNull);
+    });
+  });
 }

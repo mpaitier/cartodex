@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../../domain/entities/card_set.dart';
 import '../../../domain/entities/progress_count.dart';
 import '../../../domain/entities/rarity_scope.dart';
+import '../../../domain/entities/rarity_split_progress.dart';
 import '../../../domain/entities/set_category.dart';
 import '../../../domain/entities/set_progress.dart';
 import 'series_overview.dart';
@@ -196,6 +197,24 @@ class CardSetsState extends Equatable {
       final progress = progressBySetId[set.id];
       if (progress == null) continue;
       sum = (sum ?? ProgressCount.zero) + _scopedProgress(progress, scope);
+    }
+    return sum;
+  }
+
+  /// Progression d'une série séparée entre losanges et étoiles, pour la
+  /// barre coupée en deux du bandeau en périmètre Σ
+  /// (`RaritySplitProgressBar`). Même source et même règle de `null`
+  /// que [seriesProgressFor].
+  RaritySplitProgress? seriesSplitProgressFor(String seriesKey) {
+    RaritySplitProgress? sum;
+    for (final set in setsForSeries(seriesKey)) {
+      final progress = progressBySetId[set.id];
+      if (progress == null) continue;
+      sum = (sum ?? RaritySplitProgress.zero) +
+          RaritySplitProgress(
+            base: _countOf(progress.base),
+            alternative: _countOf(progress.alternative),
+          );
     }
     return sum;
   }
