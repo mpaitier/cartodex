@@ -51,6 +51,10 @@ dependencies:
 
   # Affichage des images distantes (logos de sets, illustrations)
   cached_network_image: ^4.0.2
+  # Cache disque des images, réglé pour garder tout le référentiel
+  # (voir AppImageCacheManager). Déjà tiré par cached_network_image,
+  # déclaré ici car l'app l'importe directement.
+  flutter_cache_manager: ^3.4.1
 
   # Réglages gardés sur l'appareil (tri des comptes, langue,
   # historique des synchronisations)

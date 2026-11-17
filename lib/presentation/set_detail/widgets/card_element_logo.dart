@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/images/app_image_cache_manager.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/card_kind.dart';
 
@@ -47,7 +48,10 @@ class CardElementLogo extends StatelessWidget {
   static void precacheAll(BuildContext context) {
     for (final kind in CardKind.values.where((k) => k.isElement)) {
       precacheImage(
-        CachedNetworkImageProvider(_urlFor(kind)),
+        CachedNetworkImageProvider(
+          _urlFor(kind),
+          cacheManager: AppImageCacheManager.instance,
+        ),
         context,
         onError: (_, __) {},
       );
@@ -58,6 +62,7 @@ class CardElementLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     return CachedNetworkImage(
       imageUrl: _urlFor(kind),
+      cacheManager: AppImageCacheManager.instance,
       height: size,
       fit: BoxFit.contain,
       fadeInDuration: Duration.zero,
