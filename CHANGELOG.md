@@ -2,6 +2,15 @@
 
 Toutes les évolutions notables de Cartodex sont consignées ici. Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [Unreleased]
+
+### Ajouté
+- Écran des paramètres qui regroupe les comptes TCG Pocket, la synchronisation du référentiel, la synchronisation cloud, le compte cloud et la langue.
+- Réinitialisation du mot de passe par email : « Mot de passe oublié ? » sur l'écran de connexion, « Changer le mot de passe » dans les paramètres pour un compte email.
+
+### Modifié
+- L'AppBar de l'accueil ne garde que les statistiques et les paramètres : les boutons comptes, référentiel, cloud et langue sont passés dans les paramètres.
+
 ## [1.0.0] - 2026-11-10
 
 Première version publique.
@@ -36,4 +45,5 @@ Première version publique.
 - Projet iOS compilable (iOS 15 minimum), vérifié par la CI mais pas encore testé sur appareil.
 - Tests unitaires du domaine, des use cases et des Blocs, et CI GitHub Actions (analyse, tests, builds Android et iOS).
 
+[Unreleased]: https://github.com/mpaitier/cartodex/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/mpaitier/cartodex/releases/tag/v1.0.0
