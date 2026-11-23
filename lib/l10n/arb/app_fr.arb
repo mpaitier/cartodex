@@ -60,6 +60,51 @@
   "@settingsSetPasswordSubtitle": {
     "description": "Sous-titre de l'entrée « Définir un mot de passe »."
   },
+  "settingsDeleteAccount": "Supprimer le compte cloud",
+  "@settingsDeleteAccount": {
+    "description": "Entrée des paramètres qui ouvre la suppression du compte cloud."
+  },
+  "settingsDeleteAccountSubtitle": "Efface ton compte et tes données du cloud",
+  "@settingsDeleteAccountSubtitle": {
+    "description": "Sous-titre de l'entrée « Supprimer le compte cloud »."
+  },
+  "deleteAccountTitle": "Supprimer le compte cloud ?",
+  "@deleteAccountTitle": {
+    "description": "Titre de la popup de suppression du compte."
+  },
+  "deleteAccountMessage": "Le compte {email} et les comptes de jeu et cartes enregistrés dans le cloud seront supprimés définitivement.",
+  "@deleteAccountMessage": {
+    "description": "Explication de la popup de suppression. email est l'adresse du compte connecté.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountLocalData": "Effacer aussi ce téléphone",
+  "@deleteAccountLocalData": {
+    "description": "Case à cocher : supprimer aussi la collection locale."
+  },
+  "deleteAccountLocalDataSubtitle": "Comptes de jeu et cartes cochées. Sinon, ta collection reste sur le téléphone.",
+  "@deleteAccountLocalDataSubtitle": {
+    "description": "Sous-titre de la case « Effacer aussi ce téléphone »."
+  },
+  "deleteAccountPasswordHint": "Saisis ton mot de passe pour confirmer.",
+  "@deleteAccountPasswordHint": {
+    "description": "Consigne au-dessus du champ mot de passe de la popup de suppression."
+  },
+  "deleteAccountGoogleHint": "Google te demandera de confirmer ton compte.",
+  "@deleteAccountGoogleHint": {
+    "description": "Consigne de la popup de suppression pour un compte sans mot de passe."
+  },
+  "deleteAccountConfirm": "Supprimer définitivement",
+  "@deleteAccountConfirm": {
+    "description": "Bouton rouge de confirmation de la suppression du compte."
+  },
+  "deleteAccountDone": "Compte cloud supprimé.",
+  "@deleteAccountDone": {
+    "description": "Confirmation après la suppression du compte."
+  },
   "commonRetry": "Réessayer",
   "@commonRetry": {
     "description": "Bouton de nouvelle tentative sous un message d'erreur."

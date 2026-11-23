@@ -77,4 +77,23 @@ class CloudSyncRepositoryImpl implements CloudSyncRepository {
       return Left(ServerFailure('Échec de l\'envoi du compte au cloud : $e'));
     }
   }
+
+  /// Un seul lot d'écriture : un utilisateur a quelques comptes, très
+  /// loin de la limite de 500 opérations par lot de Firestore.
+  @override
+  Future<Either<Failure, void>> deleteAllAccounts(String userId) async {
+    try {
+      final snapshot = await _accountsCollection(userId).get();
+      final batch = _firestore.batch();
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(
+        ServerFailure('Échec de la suppression des données cloud : $e'),
+      );
+    }
+  }
 }

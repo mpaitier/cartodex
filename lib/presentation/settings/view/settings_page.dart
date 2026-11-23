@@ -18,8 +18,8 @@ import '../widgets/tcgp_accounts_tile.dart';
 /// - les comptes TCG Pocket ([TcgpAccountsTile]) ;
 /// - la synchronisation du référentiel ([CatalogSyncTile]) ;
 /// - la synchronisation cloud ([CloudSyncTile]) et le compte cloud
-///   ([CloudAccountSection] : connexion, changement de mot de passe,
-///   déconnexion) ;
+///   ([CloudAccountSection] : connexion, mot de passe, déconnexion,
+///   suppression du compte) ;
 /// - la langue ([LanguageTile]).
 ///
 /// N'a pas de Bloc propre : il réutilise ceux de l'accueil

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../l10n/l10n.dart';
+import '../../l10n/l10n.dart';
 
 /// Champ de mot de passe masqué, avec un bouton œil pour l'afficher le
 /// temps de vérifier ce qu'on a tapé.

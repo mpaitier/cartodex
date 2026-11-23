@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/widgets/form_error_text.dart';
+import '../../../core/widgets/password_field.dart';
 import '../../../l10n/l10n.dart';
 import '../bloc/password_update_cubit.dart';
 import '../bloc/password_update_state.dart';
-import 'password_field.dart';
 
 /// Popup des paramètres pour le mot de passe du compte cloud connecté.
 ///

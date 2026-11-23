@@ -50,4 +50,14 @@ abstract class AuthRepository {
     required String currentPassword,
     required String newPassword,
   });
+
+  /// Confirme l'identité de l'utilisateur connecté avant une opération
+  /// sensible (suppression du compte) : avec [password] s'il est
+  /// fourni, sinon en repassant par Google.
+  Future<Either<Failure, void>> reauthenticate({String? password});
+
+  /// Supprime définitivement le compte connecté. Suppose une
+  /// confirmation récente ([reauthenticate]). [authStateChanges] émet
+  /// ensuite `null`.
+  Future<Either<Failure, void>> deleteCurrentUser();
 }

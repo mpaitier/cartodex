@@ -31,7 +31,7 @@ Le filtre de raretés (Σ, ◆ ou ★) est partagé par tous les écrans : le ch
 
 L'écran des paramètres, ouvert par la roue crantée de l'accueil, regroupe ce qui ne sert pas tous les jours : les comptes TCG Pocket, la synchronisation du référentiel, la synchronisation et le compte cloud, et la langue.
 
-Côté cloud, on se connecte par email ou avec Google, et la synchronisation fusionne les comptes et les cartes avec Firestore. Un mot de passe oublié se réinitialise depuis l'écran de connexion, avec un lien envoyé par email dans la langue de l'app. Une fois connecté, le mot de passe se change directement dans les paramètres. Un compte créé avec Google peut aussi s'en définir un : il est lié au même compte, qui se connecte alors par Google ou par email. Elle est limitée à 4 par compte sur 24 heures glissantes, ce qui suffit largement et évite de vider le quota gratuit de Firestore.
+Côté cloud, on se connecte par email ou avec Google, et la synchronisation fusionne les comptes et les cartes avec Firestore. Un mot de passe oublié se réinitialise depuis l'écran de connexion, avec un lien envoyé par email dans la langue de l'app. Une fois connecté, le mot de passe se change directement dans les paramètres. Un compte créé avec Google peut aussi s'en définir un : il est lié au même compte, qui se connecte alors par Google ou par email. Le compte cloud se supprime aussi depuis les paramètres, après confirmation par mot de passe ou par Google : ses données Firestore sont effacées avec lui, et on choisit de garder ou non sa collection sur le téléphone. Elle est limitée à 4 par compte sur 24 heures glissantes, ce qui suffit largement et évite de vider le quota gratuit de Firestore.
 
 ## Stack
 

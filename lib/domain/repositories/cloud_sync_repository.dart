@@ -18,4 +18,8 @@ abstract class CloudSyncRepository {
     required String userId,
     required CloudAccount account,
   });
+
+  /// Efface du cloud tous les comptes de l'utilisateur [userId], avec
+  /// leurs cartes possédées.
+  Future<Either<Failure, void>> deleteAllAccounts(String userId);
 }

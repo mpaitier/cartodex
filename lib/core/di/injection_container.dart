@@ -23,6 +23,7 @@ import '../../domain/repositories/cloud_sync_repository.dart';
 import '../../domain/repositories/user_preferences_repository.dart';
 import '../../domain/usecases/add_account.dart';
 import '../../domain/usecases/change_password.dart';
+import '../../domain/usecases/delete_cloud_account.dart';
 import '../../domain/usecases/get_accounts.dart';
 import '../../domain/usecases/get_accounts_sort_option.dart';
 import '../../domain/usecases/get_app_language.dart';
@@ -51,6 +52,7 @@ import '../../presentation/account_extras/bloc/account_extras_bloc.dart';
 import '../../presentation/accounts/bloc/accounts_bloc.dart';
 import '../../presentation/auth/bloc/auth_bloc.dart';
 import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
+import '../../presentation/delete_account/bloc/delete_account_cubit.dart';
 import '../../presentation/language/bloc/language_cubit.dart';
 import '../../presentation/password_reset/bloc/password_reset_cubit.dart';
 import '../../presentation/password_update/bloc/password_update_cubit.dart';
@@ -165,6 +167,14 @@ Future<void> init() async {
   sl.registerLazySingleton(() => LinkPassword(sl()));
   sl.registerLazySingleton(() => ChangePassword(sl()));
   sl.registerLazySingleton(
+    () => DeleteCloudAccount(
+      authRepository: sl(),
+      cloudSyncRepository: sl(),
+      userPreferencesRepository: sl(),
+      accountRepository: sl(),
+    ),
+  );
+  sl.registerLazySingleton(
     () => SyncWithCloud(
       accountRepository: sl(),
       cardRepository: sl(),
@@ -229,6 +239,10 @@ Future<void> init() async {
   // Une instance par formulaire de mot de passe des paramètres.
   sl.registerFactory(
     () => PasswordUpdateCubit(linkPassword: sl(), changePassword: sl()),
+  );
+  // Une instance par popup de suppression du compte cloud.
+  sl.registerFactory(
+    () => DeleteAccountCubit(deleteCloudAccount: sl()),
   );
   // Singleton, pas factory : un seul état de connexion pour toute
   // l'app, fourni une fois à la racine (voir CartodexApp) plutôt que

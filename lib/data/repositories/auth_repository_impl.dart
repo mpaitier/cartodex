@@ -12,7 +12,7 @@ import '../models/app_user_model.dart';
 /// Implémentation de [AuthRepository] au-dessus de Firebase Auth
 /// (email/mot de passe et Google, réinitialisation du mot de passe
 /// par email, ajout et changement du mot de passe d'un compte
-/// connecté).
+/// connecté, suppression du compte).
 ///
 /// NOTE : l'API `google_sign_in` (Credential Manager côté Android)
 /// est récente et évolue vite ; si le code d'erreur exact renvoyé
@@ -105,12 +105,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, AppUser>> signInWithGoogle() async {
     try {
-      if (!_googleSignInInitialized) {
-        await _googleSignIn.initialize();
-        _googleSignInInitialized = true;
-      }
-      final account = await _googleSignIn.authenticate();
-      final idToken = account.authentication.idToken;
+      final idToken = await _authenticateWithGoogle();
       if (idToken == null) {
         return const Left(AuthFailure('Connexion Google incomplète.'));
       }
@@ -229,6 +224,87 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Exception {
       return const Left(AuthFailure('Impossible de changer le mot de passe.'));
     }
+  }
+
+  @override
+  Future<Either<Failure, void>> reauthenticate({String? password}) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      return const Left(AuthFailure('Aucun compte connecté.'));
+    }
+    try {
+      final firebase_auth.AuthCredential credential;
+      if (password != null) {
+        final email = user.email;
+        if (email == null) {
+          return const Left(AuthFailure('Aucun email sur ce compte.'));
+        }
+        credential = firebase_auth.EmailAuthProvider.credential(
+          email: email,
+          password: password,
+        );
+      } else {
+        final idToken = await _authenticateWithGoogle();
+        if (idToken == null) {
+          return const Left(AuthFailure('Confirmation Google incomplète.'));
+        }
+        credential = firebase_auth.GoogleAuthProvider.credential(
+          idToken: idToken,
+        );
+      }
+      await user.reauthenticateWithCredential(credential);
+      return const Right(null);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      final isWrongPassword = password != null &&
+          (e.code == 'wrong-password' || e.code == 'invalid-credential');
+      if (isWrongPassword) {
+        return const Left(AuthFailure('Mot de passe incorrect.'));
+      }
+      if (e.code == 'user-mismatch') {
+        return const Left(
+          AuthFailure('Ce compte Google ne correspond pas au compte connecté.'),
+        );
+      }
+      return Left(AuthFailure(_messageFor(e)));
+    } on Exception catch (e) {
+      // Couvre l'annulation du flux Google par l'utilisateur.
+      return Left(AuthFailure('Confirmation interrompue : $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteCurrentUser() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      return const Left(AuthFailure('Aucun compte connecté.'));
+    }
+    try {
+      await user.delete();
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      return Left(AuthFailure(_messageFor(e)));
+    } on Exception {
+      return const Left(AuthFailure('Échec de la suppression du compte.'));
+    }
+    // Le compte est supprimé : un échec ici ne change rien pour
+    // l'utilisateur, la prochaine connexion Google redemandera
+    // simplement le compte à utiliser.
+    try {
+      if (_googleSignInInitialized) await _googleSignIn.signOut();
+    } on Exception {
+      // Ignoré, voir ci-dessus.
+    }
+    return const Right(null);
+  }
+
+  /// Ouvre le choix du compte Google et renvoie son jeton d'identité.
+  /// `initialize()` n'est appelé qu'une fois sur toute la vie de l'app.
+  Future<String?> _authenticateWithGoogle() async {
+    if (!_googleSignInInitialized) {
+      await _googleSignIn.initialize();
+      _googleSignInInitialized = true;
+    }
+    final account = await _googleSignIn.authenticate();
+    return account.authentication.idToken;
   }
 
   /// Traduit les codes d'erreur Firebase Auth les plus courants en
