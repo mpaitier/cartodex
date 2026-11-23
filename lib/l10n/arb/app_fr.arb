@@ -4,6 +4,58 @@
   "@appTitle": {
     "description": "Nom de l'application (titre de la tâche et de l'accueil)."
   },
+  "settingsTitle": "Paramètres",
+  "@settingsTitle": {
+    "description": "Titre de l'écran des paramètres et tooltip de son bouton sur l'accueil."
+  },
+  "settingsSectionCollection": "Collection",
+  "@settingsSectionCollection": {
+    "description": "Rubrique des paramètres : comptes de jeu."
+  },
+  "settingsSectionCatalog": "Référentiel",
+  "@settingsSectionCatalog": {
+    "description": "Rubrique des paramètres : référentiel de cartes."
+  },
+  "settingsSectionCloud": "Cloud",
+  "@settingsSectionCloud": {
+    "description": "Rubrique des paramètres : synchronisation et compte cloud."
+  },
+  "settingsTcgpAccounts": "Comptes TCG Pocket",
+  "@settingsTcgpAccounts": {
+    "description": "Entrée des paramètres qui ouvre l'écran des comptes de jeu."
+  },
+  "settingsTcgpAccountsSubtitle": "Compte principal et comptes secondaires",
+  "@settingsTcgpAccountsSubtitle": {
+    "description": "Sous-titre de l'entrée « Comptes TCG Pocket »."
+  },
+  "settingsCatalogSubtitle": "Récupère les nouvelles extensions et cartes",
+  "@settingsCatalogSubtitle": {
+    "description": "Sous-titre de l'entrée « Synchroniser le référentiel »."
+  },
+  "settingsCatalogUpToDate": "Référentiel à jour.",
+  "@settingsCatalogUpToDate": {
+    "description": "Confirmation après une synchronisation du référentiel réussie."
+  },
+  "settingsCloudSyncSignedOut": "Connecte-toi pour synchroniser tes comptes",
+  "@settingsCloudSyncSignedOut": {
+    "description": "Sous-titre de « Synchroniser maintenant » quand aucun compte cloud n'est connecté."
+  },
+  "settingsCloudSignInSubtitle": "Retrouve tes comptes et ta collection sur un autre téléphone",
+  "@settingsCloudSignInSubtitle": {
+    "description": "Sous-titre de l'entrée de connexion au compte cloud."
+  },
+  "settingsCloudSignedIn": "Compte cloud connecté",
+  "@settingsCloudSignedIn": {
+    "description": "Sous-titre de la ligne qui affiche l'email du compte cloud connecté."
+  },
+  "settingsChangePassword": "Changer le mot de passe",
+  "@settingsChangePassword": {
+    "description": "Entrée des paramètres qui envoie un lien de réinitialisation au compte connecté."
+  },
+  "settingsChangePasswordSubtitle": "Reçois un lien par email",
+  "@settingsChangePasswordSubtitle": {
+    "description": "Sous-titre de l'entrée « Changer le mot de passe »."
+  },
   "commonRetry": "Réessayer",
   "@commonRetry": {
     "description": "Bouton de nouvelle tentative sous un message d'erreur."
@@ -57,9 +109,9 @@
   "@decimalSeparator": {
     "description": "Séparateur décimal des nombres affichés (pourcentages, cartes par ouverture)."
   },
-  "languageMenuTooltip": "Langue",
-  "@languageMenuTooltip": {
-    "description": "Tooltip du menu de choix de la langue."
+  "languageTitle": "Langue",
+  "@languageTitle": {
+    "description": "Titre de la rubrique et de la popup de choix de la langue (paramètres)."
   },
   "languageSystem": "Langue du téléphone",
   "@languageSystem": {
@@ -147,9 +199,34 @@
   "@loginContinueWithGoogle": {
     "description": "Bouton de connexion Google."
   },
+  "loginForgotPassword": "Mot de passe oublié ?",
+  "@loginForgotPassword": {
+    "description": "Lien de l'écran de connexion qui ouvre la réinitialisation du mot de passe."
+  },
+  "passwordResetTitle": "Réinitialiser le mot de passe",
+  "@passwordResetTitle": {
+    "description": "Titre de la popup de réinitialisation du mot de passe."
+  },
+  "passwordResetMessage": "Un lien pour choisir un nouveau mot de passe sera envoyé à cette adresse.",
+  "@passwordResetMessage": {
+    "description": "Explication en tête de la popup de réinitialisation."
+  },
+  "passwordResetSubmit": "Envoyer le lien",
+  "@passwordResetSubmit": {
+    "description": "Bouton d'envoi de la popup de réinitialisation."
+  },
+  "passwordResetSent": "Si un compte existe pour {email}, un email de réinitialisation vient d'être envoyé.",
+  "@passwordResetSent": {
+    "description": "Confirmation après l'envoi du lien. Prudente : Firebase ne dit pas si l'adresse est inscrite.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "accountsTitle": "Comptes",
   "@accountsTitle": {
-    "description": "Titre de l'écran des comptes et tooltip de son bouton sur l'accueil."
+    "description": "Titre de l'écran des comptes de jeu."
   },
   "accountsAddTooltip": "Ajouter un compte",
   "@accountsAddTooltip": {
@@ -290,7 +367,7 @@
   },
   "syncCatalog": "Synchroniser le référentiel",
   "@syncCatalog": {
-    "description": "Bouton et tooltip de synchronisation du référentiel de cartes."
+    "description": "Entrée des paramètres qui synchronise le référentiel de cartes."
   },
   "allSeries": "Toutes les séries",
   "@allSeries": {
@@ -341,21 +418,13 @@
       }
     }
   },
-  "signInToSyncTooltip": "Se connecter pour synchroniser",
-  "@signInToSyncTooltip": {
-    "description": "Tooltip du bouton cloud quand personne n'est connecté."
-  },
-  "syncMenuTooltip": "Synchronisation",
-  "@syncMenuTooltip": {
-    "description": "Tooltip du menu cloud quand un compte est connecté."
-  },
   "syncNow": "Synchroniser maintenant",
   "@syncNow": {
-    "description": "Entrée du menu cloud."
+    "description": "Entrée des paramètres qui lance la synchronisation cloud."
   },
   "signOut": "Se déconnecter",
   "@signOut": {
-    "description": "Entrée du menu cloud."
+    "description": "Entrée des paramètres qui déconnecte le compte cloud."
   },
   "syncUpToDate": "Déjà à jour.",
   "@syncUpToDate": {

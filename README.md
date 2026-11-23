@@ -1,11 +1,56 @@
+<p align="center">
+  <img src="docs/screenshots/banner.png" alt="Cartodex : suivi de collection TCG Pocket sur plusieurs comptes" width="100%">
+</p>
+
 # Cartodex
 
 [![CI](https://github.com/mpaitier/cartodex/actions/workflows/ci.yml/badge.svg)](https://github.com/mpaitier/cartodex/actions/workflows/ci.yml)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![Dernière version](https://img.shields.io/github/v/release/mpaitier/cartodex?label=APK)](https://github.com/mpaitier/cartodex/releases/latest)
+![Flutter](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter)
 
 Je joue à Pokémon TCG Pocket sur plusieurs comptes, et le jeu ne permet pas de savoir facilement quelles cartes il me manque, ni sur quel compte se trouve telle ou telle carte. Cartodex est l'application Flutter que j'ai écrite pour ça : on coche ses cartes compte par compte, et l'app calcule ce qui manque, set par set et booster par booster.
 
-L'APK Android de la dernière version est sur la page [Releases](https://github.com/mpaitier/cartodex/releases). L'interface existe en français et en anglais.
+L'APK Android de la dernière version est sur la page [Releases](https://github.com/mpaitier/cartodex/releases). L'interface existe en français et en anglais, et tout fonctionne sans compte.
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/01_accueil.png" alt="Accueil : progression de chaque set"></td>
+    <td><img src="docs/screenshots/02_set.png" alt="Détail d'un set : cartes cochées par compte"></td>
+    <td><img src="docs/screenshots/03_filtres.png" alt="Filtres par booster, rareté, possession ou type"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/04_comptes.png" alt="Gestion des comptes principal et secondaires"></td>
+    <td><img src="docs/screenshots/05_stats.png" alt="Statistiques et boosters à ouvrir en priorité"></td>
+    <td><img src="docs/screenshots/06_cloud.png" alt="Synchronisation entre téléphones"></td>
+  </tr>
+</table>
+
+## Ce que fait l'app
+
+Les couleurs veulent dire la même chose partout. Le violet correspond au compte principal, le jaune à ce que les comptes secondaires ajoutent, le rouge pâle aux cartes manquantes, et le vert apparaît quand le principal a tout. La plupart des compteurs se lisent « X (+Y) / Z » : X cartes au principal, Y de plus chez les secondaires, Z au total.
+
+### Accueil
+
+L'accueil range les sets par série : les séries lettrées (A, B…), puis une section Deluxe et une section Promo. On passe d'une série à l'autre au swipe, par la barre du bas ou par la feuille « Toutes les séries ». En haut de chaque série, un bandeau donne les pourcentages, une barre de progression et le nombre de cartes que personne n'a encore. Sur chaque tuile de set, la bordure est coupée en deux : la moitié gauche suit les cartes losange (◆), la moitié droite les cartes alternatives (★).
+
+### Détail d'un set
+
+Un tap coche une carte pour le compte principal et un double-tap ouvre le choix d'un compte secondaire. L'illustration change selon la possession : en couleur pour le principal, moitié haute grisée quand seul un secondaire l'a, grisée quand personne ne l'a. Trois volets se suivent au swipe (losanges, tout, alternatives), et un panneau de filtres permet de trier par booster, rareté, possession ou type. On peut aussi pincer pour passer de 3 à 5 colonnes, ou tout cocher d'un coup avec le bouton « + ».
+
+### Comptes
+
+L'app gère un compte principal et autant de secondaires qu'on veut. Pour chaque secondaire, on voit les cartes qu'il a et que le principal n'a pas, et un écran les détaille set par set. La liste se trie et se filtre par extension.
+
+### Statistiques
+
+Les statistiques donnent la progression globale et par série, et surtout une liste de boosters à ouvrir en priorité. Le classement se fait sur le nombre moyen de cartes manquantes qu'une ouverture rapporte, calculé avec les taux de tirage du jeu.
+
+### Réglages et synchronisation
+
+Le filtre de raretés (Σ, ◆ ou ★) est partagé par tous les écrans : le changer sur l'accueil le change aussi dans les statistiques. La langue suit celle du téléphone par défaut, et un menu permet d'imposer le français ou l'anglais.
+
+Côté cloud, on se connecte par email ou avec Google, et la synchronisation fusionne les comptes et les cartes avec Firestore. Elle est limitée à 4 par compte sur 24 heures glissantes, ce qui suffit largement et évite de vider le quota gratuit de Firestore.
 
 ## D'où viennent les données
 
@@ -14,22 +59,6 @@ Le jeu n'a pas d'API publique pour lire la collection d'un joueur, donc la posse
 Le catalogue vient de [pokemon-tcg-pocket-database](https://github.com/flibustier/pokemon-tcg-pocket-database), un jeu de fichiers JSON servis par jsDelivr. L'app télécharge `sets.json`, `cards.extra.json`, `cards.fr.json` (noms français) et `pullRates.json` (taux de tirage) quand on le lui demande, puis tout fonctionne hors ligne. J'avais commencé avec TCGdex, mais son modèle ne sait pas dans quel booster d'un set se trouve chaque carte, alors que c'est justement l'information dont j'avais besoin.
 
 Un compte Firebase reste facultatif. Il sert à retrouver ses comptes et sa possession sur un autre téléphone.
-
-## Ce que fait l'app
-
-L'accueil range les sets par série : les séries lettrées (A, B…), puis une section Deluxe et une section Promo. On passe d'une série à l'autre au swipe, par la barre du bas ou par la feuille « Toutes les séries ». En haut de chaque série, un bandeau donne les pourcentages, une barre de progression et le nombre de cartes que personne n'a encore. Sur chaque tuile de set, la bordure est coupée en deux : la moitié gauche suit les cartes losange (◆), la moitié droite les cartes alternatives (★).
-
-Les couleurs veulent dire la même chose partout. Le violet correspond au compte principal, le jaune à ce que les comptes secondaires ajoutent, le rouge pâle aux cartes manquantes, et le vert apparaît quand le principal a tout. La plupart des compteurs se lisent « X (+Y) / Z » : X cartes au principal, Y de plus chez les secondaires, Z au total.
-
-Dans le détail d'un set, un tap coche une carte pour le compte principal et un double-tap ouvre le choix d'un compte secondaire. L'illustration change selon la possession : en couleur pour le principal, moitié haute grisée quand seul un secondaire l'a, grisée quand personne ne l'a. Trois volets se suivent au swipe (losanges, tout, alternatives), et un panneau de filtres permet de trier par booster, rareté, possession ou type. On peut aussi pincer pour passer de 3 à 5 colonnes, ou tout cocher d'un coup avec le bouton « + ».
-
-L'écran des comptes gère un compte principal et autant de secondaires qu'on veut. Pour chaque secondaire, on voit les cartes qu'il a et que le principal n'a pas, et un écran les détaille set par set. La liste se trie et se filtre par extension.
-
-Les statistiques donnent la progression globale et par série, et surtout une liste de boosters à ouvrir en priorité. Le classement se fait sur le nombre moyen de cartes manquantes qu'une ouverture rapporte, calculé avec les taux de tirage du jeu.
-
-Le filtre de raretés (Σ, ◆ ou ★) est partagé par tous les écrans : le changer sur l'accueil le change aussi dans les statistiques. La langue suit celle du téléphone par défaut, et un menu permet d'imposer le français ou l'anglais.
-
-Côté cloud, on se connecte par email ou avec Google, et la synchronisation fusionne les comptes et les cartes avec Firestore. Elle est limitée à 4 par compte sur 24 heures glissantes, ce qui suffit largement et évite de vider le quota gratuit de Firestore.
 
 ## Stack
 
@@ -185,6 +214,17 @@ Sans `key.properties`, Gradle signe avec la clé de debug et affiche un avertiss
 ### iOS
 
 Le projet iOS compile (iOS 15 minimum, imposé par Firebase), et la CI le vérifie sur macOS à chaque pull request. Je ne l'ai jamais lancé sur un iPhone, faute de Mac. La connexion Google y demandera en plus l'identifiant client OAuth iOS dans `Info.plist`.
+
+### Visuels du README
+
+Les images de ce README sont générées par `tool/store_screenshots/generate.py`, à partir de captures brutes du téléphone rangées dans `docs/screenshots/raw/` (noms et conseils dans le `README.md` de ce dossier). Le script ajoute le cadre de téléphone, le dégradé et les légendes, qui se modifient dans `tool/store_screenshots/screens.json`. Il produit aussi `banner.png`, au format 1280 × 640 attendu par GitHub pour l'aperçu social du dépôt.
+
+```
+pip install pillow
+python tool/store_screenshots/generate.py
+```
+
+La police Inter est fournie dans `tool/store_screenshots/fonts/` (licence SIL OFL), pour un rendu identique sur toutes les machines.
 
 ## Tests
 
