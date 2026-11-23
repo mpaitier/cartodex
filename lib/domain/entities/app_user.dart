@@ -19,9 +19,9 @@ class AppUser extends Equatable {
   final String? displayName;
 
   /// `true` quand le compte peut se connecter par email et mot de
-  /// passe. Un compte créé uniquement avec Google n'a pas de mot de
-  /// passe à changer : l'écran des paramètres masque alors l'entrée
-  /// « Changer le mot de passe ».
+  /// passe. Un compte créé uniquement avec Google n'en a pas encore :
+  /// l'écran des paramètres propose alors « Définir un mot de passe »
+  /// au lieu de « Changer le mot de passe ».
   final bool hasPasswordSignIn;
 
   @override

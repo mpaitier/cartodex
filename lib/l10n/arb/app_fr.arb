@@ -56,6 +56,14 @@
   "@settingsChangePasswordSubtitle": {
     "description": "Sous-titre de l'entrée « Changer le mot de passe »."
   },
+  "settingsSetPassword": "Définir un mot de passe",
+  "@settingsSetPassword": {
+    "description": "Entrée des paramètres pour un compte créé avec Google, qui envoie un lien pour ajouter un mot de passe."
+  },
+  "settingsSetPasswordSubtitle": "Pour te connecter aussi par email",
+  "@settingsSetPasswordSubtitle": {
+    "description": "Sous-titre de l'entrée « Définir un mot de passe »."
+  },
   "commonRetry": "Réessayer",
   "@commonRetry": {
     "description": "Bouton de nouvelle tentative sous un message d'erreur."

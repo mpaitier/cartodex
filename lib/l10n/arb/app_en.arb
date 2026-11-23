@@ -14,6 +14,8 @@
   "settingsCloudSignedIn": "Cloud account signed in",
   "settingsChangePassword": "Change password",
   "settingsChangePasswordSubtitle": "Get a link by email",
+  "settingsSetPassword": "Set a password",
+  "settingsSetPasswordSubtitle": "To also sign in with your email",
   "commonRetry": "Retry",
   "commonCancel": "Cancel",
   "commonAdd": "Add",

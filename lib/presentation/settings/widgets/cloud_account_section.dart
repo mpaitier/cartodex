@@ -11,8 +11,9 @@ import 'sign_out_tile.dart';
 /// Lignes du compte cloud, selon l'état de connexion ([AuthBloc]) :
 ///
 /// - personne de connecté : une ligne pour se connecter ;
-/// - connecté : l'adresse du compte, « Changer le mot de passe » (pour
-///   un compte email / mot de passe seulement) et la déconnexion.
+/// - connecté : l'adresse du compte, « Changer le mot de passe » (ou
+///   « Définir un mot de passe » pour un compte créé avec Google) et la
+///   déconnexion.
 class CloudAccountSection extends StatelessWidget {
   const CloudAccountSection({super.key});
 
@@ -28,8 +29,11 @@ class CloudAccountSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         CloudAccountTile(user: user),
-        if (user.hasPasswordSignIn && email != null)
-          ChangePasswordTile(email: email),
+        if (email != null)
+          ChangePasswordTile(
+            email: email,
+            hasPassword: user.hasPasswordSignIn,
+          ),
         const SignOutTile(),
       ],
     );
