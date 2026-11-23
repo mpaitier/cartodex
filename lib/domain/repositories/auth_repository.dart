@@ -25,4 +25,15 @@ abstract class AuthRepository {
   Future<Either<Failure, AppUser>> signInWithGoogle();
 
   Future<Either<Failure, void>> signOut();
+
+  /// Envoie à [email] un lien pour choisir un nouveau mot de passe.
+  ///
+  /// [languageCode] (ex: `fr`, `en`) fixe la langue de l'email ;
+  /// `null` laisse le service choisir. Un succès ne garantit pas
+  /// qu'un compte existe pour cette adresse : le service peut taire
+  /// cette information pour ne pas révéler quels emails sont inscrits.
+  Future<Either<Failure, void>> sendPasswordResetEmail({
+    required String email,
+    String? languageCode,
+  });
 }

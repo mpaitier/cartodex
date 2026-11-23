@@ -8,7 +8,8 @@ import '../../domain/repositories/auth_repository.dart';
 import '../models/app_user_model.dart';
 
 /// Implémentation de [AuthRepository] au-dessus de Firebase Auth
-/// (email/mot de passe et Google).
+/// (email/mot de passe et Google, réinitialisation du mot de passe
+/// par email).
 ///
 /// NOTE : l'API `google_sign_in` (Credential Manager côté Android)
 /// est récente et évolue vite ; si le code d'erreur exact renvoyé
@@ -114,13 +115,44 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> sendPasswordResetEmail({
+    required String email,
+    String? languageCode,
+  }) async {
+    try {
+      // Langue de l'email envoyé par Firebase. Réglée juste avant
+      // l'envoi, puisqu'elle a pu changer depuis le dernier appel.
+      await _firebaseAuth.setLanguageCode(languageCode);
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      return const Right(null);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      return Left(AuthFailure(_messageFor(e)));
+    } on Exception {
+      return const Left(
+        AuthFailure("Impossible d'envoyer l'email de réinitialisation."),
+      );
+    }
+  }
+
   /// Traduit les codes d'erreur Firebase Auth les plus courants en
   /// messages compréhensibles ; retombe sur un message générique
   /// (avec le code brut) pour les autres.
+  ///
+  /// Avec la protection contre l'énumération des emails (activée par
+  /// défaut sur les projets Firebase récents), `user-not-found` n'est
+  /// plus renvoyé à l'envoi d'un lien de réinitialisation : il reste
+  /// géré pour les projets où elle est désactivée.
   String _messageFor(firebase_auth.FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
         return 'Adresse email invalide.';
+      case 'missing-email':
+        return 'Adresse email manquante.';
+      case 'too-many-requests':
+        return 'Trop de tentatives. Réessaie dans quelques minutes.';
+      case 'user-disabled':
+        return 'Ce compte a été désactivé.';
       case 'user-not-found':
       case 'wrong-password':
       case 'invalid-credential':

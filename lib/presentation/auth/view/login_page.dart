@@ -3,15 +3,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../l10n/l10n.dart';
+import '../../password_reset/widgets/password_reset_flow.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../widgets/forgot_password_button.dart';
 import '../widgets/google_sign_in_button.dart';
 
 /// Écran de connexion au compte applicatif (email/mot de passe ou
 /// Google) — distinct des comptes Pokémon suivis par l'app (voir
 /// `AccountsPage`). Se ferme automatiquement dès que la connexion
 /// aboutit.
+///
+/// En mode connexion, « Mot de passe oublié ? » ouvre la popup de
+/// réinitialisation ([PasswordResetFlow]), pré-remplie avec l'email
+/// déjà saisi.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -82,7 +88,16 @@ class _LoginPageState extends State<LoginPage> {
                     enabled: !isLoading,
                     validator: _passwordValidator,
                   ),
-                  const SizedBox(height: 20),
+                  if (_isSignUp)
+                    const SizedBox(height: 20)
+                  else
+                    ForgotPasswordButton(
+                      enabled: !isLoading,
+                      onPressed: () => PasswordResetFlow.start(
+                        context,
+                        initialEmail: _emailController.text,
+                      ),
+                    ),
                   FilledButton(
                     onPressed: isLoading ? null : _submit,
                     child: isLoading
