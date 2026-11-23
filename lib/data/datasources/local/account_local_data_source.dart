@@ -51,6 +51,10 @@ abstract class AccountLocalDataSource {
     required String gameAccountId,
     required DateTime createdAt,
   });
+
+  /// Supprime tous les comptes et toute la possession, dans une même
+  /// transaction. Les tables du référentiel ne sont pas touchées.
+  Future<void> deleteAllLocalData();
 }
 
 class AccountLocalDataSourceImpl implements AccountLocalDataSource {
@@ -196,6 +200,18 @@ class AccountLocalDataSourceImpl implements AccountLocalDataSource {
     }
   }
 
+  @override
+  Future<void> deleteAllLocalData() async {
+    try {
+      await _database.transaction(() async {
+        await _database.delete(_database.ownedCards).go();
+        await _database.delete(_database.accounts).go();
+      });
+    } on Exception catch (e) {
+      throw CacheException('Échec de la suppression des données locales : $e');
+    }
+  }
+
   AccountModel _fromRow(AccountRow row) {
     return AccountModel(
       id: row.id,
@@ -205,4 +221,5 @@ class AccountLocalDataSourceImpl implements AccountLocalDataSource {
       createdAt: row.createdAt,
     );
   }
+
 }

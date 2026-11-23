@@ -4,6 +4,107 @@
   "@appTitle": {
     "description": "Nom de l'application (titre de la tâche et de l'accueil)."
   },
+  "settingsTitle": "Paramètres",
+  "@settingsTitle": {
+    "description": "Titre de l'écran des paramètres et tooltip de son bouton sur l'accueil."
+  },
+  "settingsSectionCollection": "Collection",
+  "@settingsSectionCollection": {
+    "description": "Rubrique des paramètres : comptes de jeu."
+  },
+  "settingsSectionCatalog": "Référentiel",
+  "@settingsSectionCatalog": {
+    "description": "Rubrique des paramètres : référentiel de cartes."
+  },
+  "settingsSectionCloud": "Cloud",
+  "@settingsSectionCloud": {
+    "description": "Rubrique des paramètres : synchronisation et compte cloud."
+  },
+  "settingsTcgpAccounts": "Comptes TCG Pocket",
+  "@settingsTcgpAccounts": {
+    "description": "Entrée des paramètres qui ouvre l'écran des comptes de jeu."
+  },
+  "settingsTcgpAccountsSubtitle": "Compte principal et comptes secondaires",
+  "@settingsTcgpAccountsSubtitle": {
+    "description": "Sous-titre de l'entrée « Comptes TCG Pocket »."
+  },
+  "settingsCatalogSubtitle": "Récupère les nouvelles extensions et cartes",
+  "@settingsCatalogSubtitle": {
+    "description": "Sous-titre de l'entrée « Synchroniser le référentiel »."
+  },
+  "settingsCatalogUpToDate": "Référentiel à jour.",
+  "@settingsCatalogUpToDate": {
+    "description": "Confirmation après une synchronisation du référentiel réussie."
+  },
+  "settingsCloudSyncSignedOut": "Connecte-toi pour synchroniser tes comptes",
+  "@settingsCloudSyncSignedOut": {
+    "description": "Sous-titre de « Synchroniser maintenant » quand aucun compte cloud n'est connecté."
+  },
+  "settingsCloudSignInSubtitle": "Retrouve tes comptes et ta collection sur un autre téléphone",
+  "@settingsCloudSignInSubtitle": {
+    "description": "Sous-titre de l'entrée de connexion au compte cloud."
+  },
+  "settingsCloudSignedIn": "Compte cloud connecté",
+  "@settingsCloudSignedIn": {
+    "description": "Sous-titre de la ligne qui affiche l'email du compte cloud connecté."
+  },
+  "settingsChangePassword": "Changer le mot de passe",
+  "@settingsChangePassword": {
+    "description": "Entrée des paramètres et titre de la popup pour changer le mot de passe du compte connecté."
+  },
+  "settingsSetPassword": "Définir un mot de passe",
+  "@settingsSetPassword": {
+    "description": "Entrée des paramètres et titre de la popup pour ajouter un mot de passe à un compte créé avec Google."
+  },
+  "settingsSetPasswordSubtitle": "Pour te connecter aussi par email",
+  "@settingsSetPasswordSubtitle": {
+    "description": "Sous-titre de l'entrée « Définir un mot de passe »."
+  },
+  "settingsDeleteAccount": "Supprimer le compte cloud",
+  "@settingsDeleteAccount": {
+    "description": "Entrée des paramètres qui ouvre la suppression du compte cloud."
+  },
+  "settingsDeleteAccountSubtitle": "Efface ton compte et tes données du cloud",
+  "@settingsDeleteAccountSubtitle": {
+    "description": "Sous-titre de l'entrée « Supprimer le compte cloud »."
+  },
+  "deleteAccountTitle": "Supprimer le compte cloud ?",
+  "@deleteAccountTitle": {
+    "description": "Titre de la popup de suppression du compte."
+  },
+  "deleteAccountMessage": "Le compte {email} et les comptes de jeu et cartes enregistrés dans le cloud seront supprimés définitivement.",
+  "@deleteAccountMessage": {
+    "description": "Explication de la popup de suppression. email est l'adresse du compte connecté.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountLocalData": "Effacer aussi ce téléphone",
+  "@deleteAccountLocalData": {
+    "description": "Case à cocher : supprimer aussi la collection locale."
+  },
+  "deleteAccountLocalDataSubtitle": "Comptes de jeu et cartes cochées. Sinon, ta collection reste sur le téléphone.",
+  "@deleteAccountLocalDataSubtitle": {
+    "description": "Sous-titre de la case « Effacer aussi ce téléphone »."
+  },
+  "deleteAccountPasswordHint": "Saisis ton mot de passe pour confirmer.",
+  "@deleteAccountPasswordHint": {
+    "description": "Consigne au-dessus du champ mot de passe de la popup de suppression."
+  },
+  "deleteAccountGoogleHint": "Google te demandera de confirmer ton compte.",
+  "@deleteAccountGoogleHint": {
+    "description": "Consigne de la popup de suppression pour un compte sans mot de passe."
+  },
+  "deleteAccountConfirm": "Supprimer définitivement",
+  "@deleteAccountConfirm": {
+    "description": "Bouton rouge de confirmation de la suppression du compte."
+  },
+  "deleteAccountDone": "Compte cloud supprimé.",
+  "@deleteAccountDone": {
+    "description": "Confirmation après la suppression du compte."
+  },
   "commonRetry": "Réessayer",
   "@commonRetry": {
     "description": "Bouton de nouvelle tentative sous un message d'erreur."
@@ -57,9 +158,9 @@
   "@decimalSeparator": {
     "description": "Séparateur décimal des nombres affichés (pourcentages, cartes par ouverture)."
   },
-  "languageMenuTooltip": "Langue",
-  "@languageMenuTooltip": {
-    "description": "Tooltip du menu de choix de la langue."
+  "languageTitle": "Langue",
+  "@languageTitle": {
+    "description": "Titre de la rubrique et de la popup de choix de la langue (paramètres)."
   },
   "languageSystem": "Langue du téléphone",
   "@languageSystem": {
@@ -147,9 +248,84 @@
   "@loginContinueWithGoogle": {
     "description": "Bouton de connexion Google."
   },
+  "loginForgotPassword": "Mot de passe oublié ?",
+  "@loginForgotPassword": {
+    "description": "Lien de l'écran de connexion qui ouvre la réinitialisation du mot de passe."
+  },
+  "passwordResetTitle": "Réinitialiser le mot de passe",
+  "@passwordResetTitle": {
+    "description": "Titre de la popup de réinitialisation du mot de passe."
+  },
+  "passwordResetMessage": "Un lien pour choisir un nouveau mot de passe sera envoyé à cette adresse.",
+  "@passwordResetMessage": {
+    "description": "Explication en tête de la popup de réinitialisation."
+  },
+  "passwordResetSubmit": "Envoyer le lien",
+  "@passwordResetSubmit": {
+    "description": "Bouton d'envoi de la popup de réinitialisation."
+  },
+  "passwordResetSent": "Si un compte existe pour {email}, un email de réinitialisation vient d'être envoyé.",
+  "@passwordResetSent": {
+    "description": "Confirmation après l'envoi du lien. Prudente : Firebase ne dit pas si l'adresse est inscrite.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordCurrentLabel": "Mot de passe actuel",
+  "@passwordCurrentLabel": {
+    "description": "Champ du mot de passe actuel (changement de mot de passe)."
+  },
+  "passwordNewLabel": "Nouveau mot de passe",
+  "@passwordNewLabel": {
+    "description": "Champ du nouveau mot de passe."
+  },
+  "passwordConfirmLabel": "Confirmer le mot de passe",
+  "@passwordConfirmLabel": {
+    "description": "Champ de confirmation du nouveau mot de passe."
+  },
+  "passwordMismatch": "Les mots de passe ne correspondent pas",
+  "@passwordMismatch": {
+    "description": "Erreur quand la confirmation diffère du nouveau mot de passe."
+  },
+  "passwordSameAsCurrent": "Identique au mot de passe actuel",
+  "@passwordSameAsCurrent": {
+    "description": "Erreur quand le nouveau mot de passe est le même que l'actuel."
+  },
+  "passwordShow": "Afficher le mot de passe",
+  "@passwordShow": {
+    "description": "Tooltip de l'œil d'un champ de mot de passe masqué."
+  },
+  "passwordHide": "Masquer le mot de passe",
+  "@passwordHide": {
+    "description": "Tooltip de l'œil d'un champ de mot de passe affiché."
+  },
+  "passwordSetMessage": "Tu pourras te connecter avec {email} et ce mot de passe, en plus de Google.",
+  "@passwordSetMessage": {
+    "description": "Explication en tête de la popup « Définir un mot de passe ».",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordSet": "Mot de passe défini. Tu peux aussi te connecter avec {email}.",
+  "@passwordSet": {
+    "description": "Confirmation après l'ajout d'un mot de passe à un compte Google.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordChanged": "Mot de passe modifié.",
+  "@passwordChanged": {
+    "description": "Confirmation après un changement de mot de passe."
+  },
   "accountsTitle": "Comptes",
   "@accountsTitle": {
-    "description": "Titre de l'écran des comptes et tooltip de son bouton sur l'accueil."
+    "description": "Titre de l'écran des comptes de jeu."
   },
   "accountsAddTooltip": "Ajouter un compte",
   "@accountsAddTooltip": {
@@ -290,7 +466,7 @@
   },
   "syncCatalog": "Synchroniser le référentiel",
   "@syncCatalog": {
-    "description": "Bouton et tooltip de synchronisation du référentiel de cartes."
+    "description": "Entrée des paramètres qui synchronise le référentiel de cartes."
   },
   "allSeries": "Toutes les séries",
   "@allSeries": {
@@ -341,21 +517,13 @@
       }
     }
   },
-  "signInToSyncTooltip": "Se connecter pour synchroniser",
-  "@signInToSyncTooltip": {
-    "description": "Tooltip du bouton cloud quand personne n'est connecté."
-  },
-  "syncMenuTooltip": "Synchronisation",
-  "@syncMenuTooltip": {
-    "description": "Tooltip du menu cloud quand un compte est connecté."
-  },
   "syncNow": "Synchroniser maintenant",
   "@syncNow": {
-    "description": "Entrée du menu cloud."
+    "description": "Entrée des paramètres qui lance la synchronisation cloud."
   },
   "signOut": "Se déconnecter",
   "@signOut": {
-    "description": "Entrée du menu cloud."
+    "description": "Entrée des paramètres qui déconnecte le compte cloud."
   },
   "syncUpToDate": "Déjà à jour.",
   "@syncUpToDate": {

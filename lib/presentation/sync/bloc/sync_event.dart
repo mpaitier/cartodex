@@ -8,8 +8,8 @@ abstract class SyncEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Déclenché par "Synchroniser maintenant" ([SyncFirebaseAction]),
-/// pour l'utilisateur connecté [userId].
+/// Déclenché par "Synchroniser maintenant" dans les paramètres
+/// (`CloudSyncTile`), pour l'utilisateur connecté [userId].
 class SyncRequested extends SyncEvent {
   const SyncRequested(this.userId);
 
@@ -20,9 +20,8 @@ class SyncRequested extends SyncEvent {
 }
 
 /// Demande de (re)calcul du quota de synchronisations de [userId] :
-/// à la connexion, à l'ouverture de l'accueil et à chaque ouverture du
-/// menu de synchronisation, pour que le menu affiche un nombre restant
-/// à jour.
+/// à la connexion, à l'ouverture de l'accueil et à chaque ouverture des
+/// paramètres, pour que ceux-ci affichent un nombre restant à jour.
 class SyncQuotaRequested extends SyncEvent {
   const SyncQuotaRequested(this.userId);
 

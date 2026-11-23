@@ -1,0 +1,46 @@
+{
+  "raw_dir": "docs/screenshots/raw",
+  "output_dir": "docs/screenshots",
+  "size": [1080, 1920],
+  "background": ["#2A0A5E", "#7E57C2"],
+  "accent": "#FBC02D",
+  "banner": {
+    "file": "banner.png",
+    "size": [1280, 640],
+    "title": "Cartodex",
+    "subtitle": "Sa collection TCG\u00a0Pocket, compte par compte",
+    "screens": ["01_accueil.png", "02_set.png", "05_stats.png"]
+  },
+  "screens": [
+    {
+      "raw": "01_accueil.png",
+      "title": "Chaque set en un coup d’œil",
+      "subtitle": "Losanges à gauche, étoiles à droite"
+    },
+    {
+      "raw": "02_set.png",
+      "title": "Un tap et la carte est cochée",
+      "subtitle": "Violet pour le principal, jaune pour les secondaires"
+    },
+    {
+      "raw": "03_filtres.png",
+      "title": "Retrouver ce qui manque",
+      "subtitle": "Par booster, rareté, possession ou type"
+    },
+    {
+      "raw": "04_comptes.png",
+      "title": "Plusieurs comptes, une seule vue",
+      "subtitle": "Ce que chaque secondaire apporte au principal"
+    },
+    {
+      "raw": "05_stats.png",
+      "title": "Quel booster ouvrir ?",
+      "subtitle": "Classés selon les cartes manquantes et les taux de tirage"
+    },
+    {
+      "raw": "06_cloud.png",
+      "title": "D’un téléphone à l’autre",
+      "subtitle": "Synchronisation facultative, par Google ou par email"
+    }
+  ]
+}

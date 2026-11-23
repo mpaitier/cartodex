@@ -8,11 +8,12 @@ import 'sync_event.dart';
 import 'sync_state.dart';
 
 /// ViewModel de la synchronisation avec le compte applicatif
-/// (Firebase) — voir [SyncFirebaseAction][../../card_sets/widgets/sync_firebase_action.dart].
+/// (Firebase), lancée depuis les paramètres — voir
+/// [CloudSyncTile][../../settings/widgets/cloud_sync_tile.dart].
 ///
 /// Tient aussi le quota de synchronisations restant ([SyncState.quota]),
-/// recalculé après chaque synchronisation pour que le menu le reflète
-/// aussitôt.
+/// recalculé après chaque synchronisation pour que les paramètres le
+/// reflètent aussitôt.
 class SyncBloc extends Bloc<SyncEvent, SyncState> {
   SyncBloc({
     required SyncWithCloud syncWithCloud,

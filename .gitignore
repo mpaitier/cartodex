@@ -59,3 +59,5 @@ Thumbs.db
 
 # Réglages de build locaux (voir dart_defines.json.example)
 dart_defines.json
+# Python (tool/store_screenshots)
+__pycache__/

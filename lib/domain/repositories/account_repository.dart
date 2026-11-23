@@ -48,4 +48,8 @@ abstract class AccountRepository {
     required String gameAccountId,
     required DateTime createdAt,
   });
+
+  /// Efface de ce téléphone tous les comptes et toute la possession.
+  /// Le référentiel de cartes, lui, est gardé.
+  Future<Either<Failure, void>> deleteAllLocalData();
 }

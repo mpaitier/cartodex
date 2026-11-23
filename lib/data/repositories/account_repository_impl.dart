@@ -100,4 +100,14 @@ class AccountRepositoryImpl implements AccountRepository {
       return Left(CacheFailure(e.message));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> deleteAllLocalData() async {
+    try {
+      await _localDataSource.deleteAllLocalData();
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    }
+  }
 }
