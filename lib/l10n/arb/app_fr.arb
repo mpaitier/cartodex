@@ -50,15 +50,11 @@
   },
   "settingsChangePassword": "Changer le mot de passe",
   "@settingsChangePassword": {
-    "description": "Entrée des paramètres qui envoie un lien de réinitialisation au compte connecté."
-  },
-  "settingsChangePasswordSubtitle": "Reçois un lien par email",
-  "@settingsChangePasswordSubtitle": {
-    "description": "Sous-titre de l'entrée « Changer le mot de passe »."
+    "description": "Entrée des paramètres et titre de la popup pour changer le mot de passe du compte connecté."
   },
   "settingsSetPassword": "Définir un mot de passe",
   "@settingsSetPassword": {
-    "description": "Entrée des paramètres pour un compte créé avec Google, qui envoie un lien pour ajouter un mot de passe."
+    "description": "Entrée des paramètres et titre de la popup pour ajouter un mot de passe à un compte créé avec Google."
   },
   "settingsSetPasswordSubtitle": "Pour te connecter aussi par email",
   "@settingsSetPasswordSubtitle": {
@@ -231,6 +227,56 @@
         "type": "String"
       }
     }
+  },
+  "passwordCurrentLabel": "Mot de passe actuel",
+  "@passwordCurrentLabel": {
+    "description": "Champ du mot de passe actuel (changement de mot de passe)."
+  },
+  "passwordNewLabel": "Nouveau mot de passe",
+  "@passwordNewLabel": {
+    "description": "Champ du nouveau mot de passe."
+  },
+  "passwordConfirmLabel": "Confirmer le mot de passe",
+  "@passwordConfirmLabel": {
+    "description": "Champ de confirmation du nouveau mot de passe."
+  },
+  "passwordMismatch": "Les mots de passe ne correspondent pas",
+  "@passwordMismatch": {
+    "description": "Erreur quand la confirmation diffère du nouveau mot de passe."
+  },
+  "passwordSameAsCurrent": "Identique au mot de passe actuel",
+  "@passwordSameAsCurrent": {
+    "description": "Erreur quand le nouveau mot de passe est le même que l'actuel."
+  },
+  "passwordShow": "Afficher le mot de passe",
+  "@passwordShow": {
+    "description": "Tooltip de l'œil d'un champ de mot de passe masqué."
+  },
+  "passwordHide": "Masquer le mot de passe",
+  "@passwordHide": {
+    "description": "Tooltip de l'œil d'un champ de mot de passe affiché."
+  },
+  "passwordSetMessage": "Tu pourras te connecter avec {email} et ce mot de passe, en plus de Google.",
+  "@passwordSetMessage": {
+    "description": "Explication en tête de la popup « Définir un mot de passe ».",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordSet": "Mot de passe défini. Tu peux aussi te connecter avec {email}.",
+  "@passwordSet": {
+    "description": "Confirmation après l'ajout d'un mot de passe à un compte Google.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordChanged": "Mot de passe modifié.",
+  "@passwordChanged": {
+    "description": "Confirmation après un changement de mot de passe."
   },
   "accountsTitle": "Comptes",
   "@accountsTitle": {

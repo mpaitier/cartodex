@@ -6,7 +6,8 @@ Toutes les évolutions notables de Cartodex sont consignées ici. Le format suit
 
 ### Ajouté
 - Écran des paramètres qui regroupe les comptes TCG Pocket, la synchronisation du référentiel, la synchronisation cloud, le compte cloud et la langue.
-- Réinitialisation du mot de passe par email : « Mot de passe oublié ? » sur l'écran de connexion, « Changer le mot de passe » dans les paramètres, ou « Définir un mot de passe » pour un compte créé avec Google.
+- « Mot de passe oublié ? » sur l'écran de connexion, qui envoie un lien de réinitialisation par email.
+- « Changer le mot de passe » dans les paramètres, directement dans l'app, et « Définir un mot de passe » pour qu'un compte créé avec Google puisse aussi se connecter par email.
 
 ### Modifié
 - L'AppBar de l'accueil ne garde que les statistiques et les paramètres : les boutons comptes, référentiel, cloud et langue sont passés dans les paramètres.

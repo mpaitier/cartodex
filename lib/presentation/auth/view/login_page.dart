@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../l10n/l10n.dart';
 import '../../password_reset/widgets/password_reset_flow.dart';
@@ -34,9 +35,6 @@ class _LoginPageState extends State<LoginPage> {
   /// de compte — même écran, un seul bouton texte pour passer de
   /// l'un à l'autre plutôt que deux pages distinctes.
   bool _isSignUp = false;
-
-  /// Longueur minimale du mot de passe, imposée par Firebase Auth.
-  static const int _minPasswordLength = 6;
 
   @override
   void dispose() {
@@ -158,8 +156,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   String? _passwordValidator(String? value) {
-    if (value == null || value.length < _minPasswordLength) {
-      return context.l10n.loginPasswordTooShort(_minPasswordLength);
+    if (value == null || value.length < AppConstants.minPasswordLength) {
+      return context.l10n.loginPasswordTooShort(AppConstants.minPasswordLength);
     }
     return null;
   }

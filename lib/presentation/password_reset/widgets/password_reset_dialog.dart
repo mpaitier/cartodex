@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/di/injection_container.dart';
+import '../../../core/widgets/form_error_text.dart';
 import '../../../l10n/l10n.dart';
 import '../bloc/password_reset_cubit.dart';
 import '../bloc/password_reset_state.dart';
 import 'password_reset_email_field.dart';
-import 'password_reset_error_text.dart';
 
-/// Popup qui demande l'email du compte et y envoie un lien de
-/// réinitialisation du mot de passe.
+/// Popup « Mot de passe oublié ? » : demande l'email du compte et y
+/// envoie un lien de réinitialisation du mot de passe. Un compte déjà
+/// connecté passe plutôt par le formulaire des paramètres
+/// (`PasswordUpdateDialog`), sans email.
 ///
 /// Se ferme d'elle-même une fois le lien envoyé, en renvoyant
 /// l'adresse utilisée ; `null` si l'utilisateur annule. Un échec
@@ -17,31 +19,15 @@ import 'password_reset_error_text.dart';
 /// ou réessayer. Pour enchaîner avec le message de confirmation, passer
 /// par `PasswordResetFlow`.
 class PasswordResetDialog extends StatelessWidget {
-  const PasswordResetDialog({
-    this.initialEmail,
-    this.emailLocked = false,
-    super.key,
-  });
+  const PasswordResetDialog({this.initialEmail, super.key});
 
-  /// Email pré-rempli (celui saisi sur l'écran de connexion, ou celui
-  /// du compte connecté).
+  /// Email pré-rempli, celui déjà saisi sur l'écran de connexion.
   final String? initialEmail;
 
-  /// Empêche de modifier l'email : utilisé depuis les paramètres, où
-  /// le lien part forcément à l'adresse du compte connecté.
-  final bool emailLocked;
-
-  static Future<String?> show(
-    BuildContext context, {
-    String? initialEmail,
-    bool emailLocked = false,
-  }) {
+  static Future<String?> show(BuildContext context, {String? initialEmail}) {
     return showDialog<String>(
       context: context,
-      builder: (_) => PasswordResetDialog(
-        initialEmail: initialEmail,
-        emailLocked: emailLocked,
-      ),
+      builder: (_) => PasswordResetDialog(initialEmail: initialEmail),
     );
   }
 
@@ -49,22 +35,15 @@ class PasswordResetDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<PasswordResetCubit>(),
-      child: _PasswordResetView(
-        initialEmail: initialEmail,
-        emailLocked: emailLocked,
-      ),
+      child: _PasswordResetView(initialEmail: initialEmail),
     );
   }
 }
 
 class _PasswordResetView extends StatefulWidget {
-  const _PasswordResetView({
-    required this.initialEmail,
-    required this.emailLocked,
-  });
+  const _PasswordResetView({required this.initialEmail});
 
   final String? initialEmail;
-  final bool emailLocked;
 
   @override
   State<_PasswordResetView> createState() => _PasswordResetViewState();
@@ -104,11 +83,10 @@ class _PasswordResetViewState extends State<_PasswordResetView> {
                 PasswordResetEmailField(
                   controller: _emailController,
                   enabled: !isSending,
-                  readOnly: widget.emailLocked,
                   onSubmitted: _submit,
                 ),
                 if (state.status == PasswordResetStatus.failure)
-                  PasswordResetErrorText(
+                  FormErrorText(
                     message: state.errorMessage ?? l10n.genericError,
                   ),
               ],

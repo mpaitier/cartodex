@@ -8,8 +8,8 @@ import '../entities/app_user.dart';
 /// savoir qu'il s'agit de Firebase Auth.
 abstract class AuthRepository {
   /// Émet l'utilisateur courant à chaque changement (connexion,
-  /// déconnexion, session restaurée au lancement de l'app). `null`
-  /// signifie "déconnecté".
+  /// déconnexion, session restaurée au lancement de l'app, mot de passe
+  /// ajouté au compte). `null` signifie "déconnecté".
   Stream<AppUser?> get authStateChanges;
 
   Future<Either<Failure, AppUser>> signInWithEmail({
@@ -35,5 +35,19 @@ abstract class AuthRepository {
   Future<Either<Failure, void>> sendPasswordResetEmail({
     required String email,
     String? languageCode,
+  });
+
+  /// Ajoute un mot de passe au compte connecté, qui n'en a pas encore
+  /// (compte créé avec Google). Le compte pourra ensuite se connecter
+  /// aussi par son email et ce mot de passe. Renvoie l'utilisateur mis
+  /// à jour, également émis par [authStateChanges].
+  Future<Either<Failure, AppUser>> linkPassword({required String password});
+
+  /// Remplace le mot de passe du compte connecté. [currentPassword] est
+  /// redemandé pour confirmer l'identité, ce que le service exige pour
+  /// une opération sensible si la connexion n'est pas toute récente.
+  Future<Either<Failure, void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
   });
 }

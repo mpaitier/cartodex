@@ -9,7 +9,6 @@ class PasswordResetEmailField extends StatelessWidget {
     required this.controller,
     required this.onSubmitted,
     this.enabled = true,
-    this.readOnly = false,
     super.key,
   });
 
@@ -20,9 +19,6 @@ class PasswordResetEmailField extends StatelessWidget {
 
   final bool enabled;
 
-  /// Email affiché mais non modifiable (compte déjà connecté).
-  final bool readOnly;
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -31,9 +27,8 @@ class PasswordResetEmailField extends StatelessWidget {
       decoration: InputDecoration(labelText: l10n.loginEmailLabel),
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.send,
-      autofocus: !readOnly && controller.text.isEmpty,
+      autofocus: controller.text.isEmpty,
       enabled: enabled,
-      readOnly: readOnly,
       onFieldSubmitted: (_) => onSubmitted(),
       validator: (value) {
         if (value == null || value.trim().isEmpty) return l10n.commonRequired;

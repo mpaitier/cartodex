@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
-import '../../password_reset/widgets/password_reset_flow.dart';
+import '../../password_update/widgets/password_update_flow.dart';
 
 /// Ligne du compte cloud connecté pour changer ou définir le mot de
-/// passe.
-///
-/// Firebase ne permet de changer un mot de passe sans le ressaisir que
-/// par un lien envoyé par email : la ligne ouvre donc la même popup que
-/// « Mot de passe oublié ? », avec l'adresse du compte verrouillée.
+/// passe, directement dans l'app ([PasswordUpdateFlow]).
 ///
 /// Un compte créé avec Google n'a pas encore de mot de passe : la ligne
-/// devient « Définir un mot de passe ». Le lien en ajoute un au même
-/// compte (les comptes Firebase sont associés par adresse email), qui
-/// peut ensuite se connecter par Google ou par email.
+/// devient « Définir un mot de passe », et le mot de passe saisi est lié
+/// au même compte, qui peut ensuite se connecter par Google ou par
+/// email. Un lien de réinitialisation par email ne marche pas dans ce
+/// cas : Firebase le refuse pour un compte sans mot de passe.
 class ChangePasswordTile extends StatelessWidget {
   const ChangePasswordTile({
     required this.email,
@@ -21,7 +18,8 @@ class ChangePasswordTile extends StatelessWidget {
     super.key,
   });
 
-  /// Adresse du compte connecté, à laquelle le lien sera envoyé.
+  /// Adresse du compte connecté, qui servira d'identifiant avec le mot
+  /// de passe.
   final String email;
 
   /// `true` si le compte a déjà un mot de passe (voir
@@ -36,15 +34,11 @@ class ChangePasswordTile extends StatelessWidget {
       title: Text(
         hasPassword ? l10n.settingsChangePassword : l10n.settingsSetPassword,
       ),
-      subtitle: Text(
-        hasPassword
-            ? l10n.settingsChangePasswordSubtitle
-            : l10n.settingsSetPasswordSubtitle,
-      ),
-      onTap: () => PasswordResetFlow.start(
+      subtitle: hasPassword ? null : Text(l10n.settingsSetPasswordSubtitle),
+      onTap: () => PasswordUpdateFlow.start(
         context,
-        initialEmail: email,
-        emailLocked: true,
+        email: email,
+        hasPassword: hasPassword,
       ),
     );
   }

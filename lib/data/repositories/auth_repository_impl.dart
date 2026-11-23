@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart' as google_sign_in;
@@ -9,7 +11,8 @@ import '../models/app_user_model.dart';
 
 /// Implémentation de [AuthRepository] au-dessus de Firebase Auth
 /// (email/mot de passe et Google, réinitialisation du mot de passe
-/// par email).
+/// par email, ajout et changement du mot de passe d'un compte
+/// connecté).
 ///
 /// NOTE : l'API `google_sign_in` (Credential Manager côté Android)
 /// est récente et évolue vite ; si le code d'erreur exact renvoyé
@@ -31,11 +34,36 @@ class AuthRepositoryImpl implements AuthRepository {
   /// refaire à chaque tentative de connexion Google.
   bool _googleSignInInitialized = false;
 
+  /// Utilisateur mis à jour sans connexion ni déconnexion (mot de passe
+  /// ajouté au compte) : `authStateChanges` de Firebase ne l'émet pas,
+  /// alors que l'app doit le savoir pour changer ses libellés.
+  final StreamController<AppUser?> _userUpdates =
+      StreamController<AppUser?>.broadcast();
+
+  /// Fusion des changements de connexion de Firebase et des mises à
+  /// jour de [_userUpdates].
   @override
   Stream<AppUser?> get authStateChanges {
-    return _firebaseAuth.authStateChanges().map(
-          (user) => user == null ? null : AppUserModel.fromFirebaseUser(user),
-        );
+    StreamSubscription<AppUser?>? firebaseSubscription;
+    StreamSubscription<AppUser?>? updatesSubscription;
+    late final StreamController<AppUser?> controller;
+    controller = StreamController<AppUser?>(
+      onListen: () {
+        firebaseSubscription = _firebaseAuth
+            .authStateChanges()
+            .map(
+              (user) =>
+                  user == null ? null : AppUserModel.fromFirebaseUser(user),
+            )
+            .listen(controller.add, onError: controller.addError);
+        updatesSubscription = _userUpdates.stream.listen(controller.add);
+      },
+      onCancel: () async {
+        await firebaseSubscription?.cancel();
+        await updatesSubscription?.cancel();
+      },
+    );
+    return controller.stream;
   }
 
   @override
@@ -135,6 +163,74 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, AppUser>> linkPassword({
+    required String password,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null) {
+      return const Left(AuthFailure('Aucun compte connecté.'));
+    }
+    try {
+      await user.linkWithCredential(
+        firebase_auth.EmailAuthProvider.credential(
+          email: email,
+          password: password,
+        ),
+      );
+      // Relu pour que la liste des fournisseurs contienne bien le mot
+      // de passe tout juste ajouté.
+      await user.reload();
+      final updated =
+          AppUserModel.fromFirebaseUser(_firebaseAuth.currentUser ?? user);
+      _userUpdates.add(updated);
+      return Right(updated);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      return Left(AuthFailure(_messageFor(e)));
+    } on Exception {
+      return const Left(AuthFailure("Impossible d'ajouter le mot de passe."));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null) {
+      return const Left(AuthFailure('Aucun compte connecté.'));
+    }
+    try {
+      await user.reauthenticateWithCredential(
+        firebase_auth.EmailAuthProvider.credential(
+          email: email,
+          password: currentPassword,
+        ),
+      );
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'wrong-password':
+        case 'invalid-credential':
+          return const Left(AuthFailure('Mot de passe actuel incorrect.'));
+        default:
+          return Left(AuthFailure(_messageFor(e)));
+      }
+    } on Exception {
+      return const Left(AuthFailure('Mot de passe actuel incorrect.'));
+    }
+    try {
+      await user.updatePassword(newPassword);
+      return const Right(null);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      return Left(AuthFailure(_messageFor(e)));
+    } on Exception {
+      return const Left(AuthFailure('Impossible de changer le mot de passe.'));
+    }
+  }
+
   /// Traduit les codes d'erreur Firebase Auth les plus courants en
   /// messages compréhensibles ; retombe sur un message générique
   /// (avec le code brut) pour les autres.
@@ -153,6 +249,12 @@ class AuthRepositoryImpl implements AuthRepository {
         return 'Trop de tentatives. Réessaie dans quelques minutes.';
       case 'user-disabled':
         return 'Ce compte a été désactivé.';
+      case 'requires-recent-login':
+        return 'Reconnecte-toi au compte cloud, puis réessaie.';
+      case 'provider-already-linked':
+        return 'Ce compte a déjà un mot de passe.';
+      case 'credential-already-in-use':
+        return 'Cette adresse est déjà utilisée par un autre compte.';
       case 'user-not-found':
       case 'wrong-password':
       case 'invalid-credential':

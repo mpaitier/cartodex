@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Message d'échec affiché sous le champ email de la popup de
-/// réinitialisation. Gardé dans la popup plutôt qu'en SnackBar, qui
-/// s'afficherait derrière elle.
-class PasswordResetErrorText extends StatelessWidget {
-  const PasswordResetErrorText({required this.message, super.key});
+/// Message d'échec affiché en bas d'un formulaire de popup (mot de
+/// passe oublié, mot de passe des paramètres). Gardé dans la popup
+/// plutôt qu'en SnackBar, qui s'afficherait derrière elle.
+class FormErrorText extends StatelessWidget {
+  const FormErrorText({required this.message, super.key});
 
   final String message;
 

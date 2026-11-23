@@ -38,4 +38,9 @@ abstract class AppConstants {
       'https://pocketcards.net/images/boosters';
 
   static const String databaseFileName = 'cartodex.sqlite';
+
+  /// Longueur minimale d'un mot de passe, imposée par Firebase Auth.
+  /// Partagée par l'écran de connexion et le formulaire de mot de passe
+  /// des paramètres.
+  static const int minPasswordLength = 6;
 }

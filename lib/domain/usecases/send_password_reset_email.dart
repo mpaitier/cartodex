@@ -8,9 +8,11 @@ import '../usecase.dart';
 /// Envoie un email de réinitialisation du mot de passe du compte
 /// applicatif.
 ///
-/// Sert aux deux entrées de l'app : « Mot de passe oublié ? » sur
-/// l'écran de connexion, et « Changer le mot de passe » dans les
-/// paramètres une fois connecté.
+/// Sert à « Mot de passe oublié ? » sur l'écran de connexion. Un compte
+/// connecté change ou ajoute son mot de passe dans l'app
+/// ([ChangePassword][change_password.dart],
+/// [LinkPassword][link_password.dart]) : un lien envoyé à un compte
+/// sans mot de passe est refusé par Firebase.
 class SendPasswordResetEmail
     implements UseCase<void, SendPasswordResetEmailParams> {
   const SendPasswordResetEmail(this._repository);

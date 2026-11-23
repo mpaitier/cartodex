@@ -22,6 +22,7 @@ import '../../domain/repositories/card_repository.dart';
 import '../../domain/repositories/cloud_sync_repository.dart';
 import '../../domain/repositories/user_preferences_repository.dart';
 import '../../domain/usecases/add_account.dart';
+import '../../domain/usecases/change_password.dart';
 import '../../domain/usecases/get_accounts.dart';
 import '../../domain/usecases/get_accounts_sort_option.dart';
 import '../../domain/usecases/get_app_language.dart';
@@ -32,6 +33,7 @@ import '../../domain/usecases/get_owned_cards_id.dart';
 import '../../domain/usecases/get_secondary_accounts_extras.dart';
 import '../../domain/usecases/get_sets_progress.dart';
 import '../../domain/usecases/get_sync_quota.dart';
+import '../../domain/usecases/link_password.dart';
 import '../../domain/usecases/save_accounts_sort_option.dart';
 import '../../domain/usecases/save_app_language.dart';
 import '../../domain/usecases/send_password_reset_email.dart';
@@ -51,6 +53,7 @@ import '../../presentation/auth/bloc/auth_bloc.dart';
 import '../../presentation/card_sets/bloc/card_sets_bloc.dart';
 import '../../presentation/language/bloc/language_cubit.dart';
 import '../../presentation/password_reset/bloc/password_reset_cubit.dart';
+import '../../presentation/password_update/bloc/password_update_cubit.dart';
 import '../../presentation/rarity_scope/bloc/rarity_scope_cubit.dart';
 import '../../presentation/set_detail/bloc/set_detail_bloc.dart';
 import '../../presentation/stats/bloc/stats_bloc.dart';
@@ -159,6 +162,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SignInWithGoogle(sl()));
   sl.registerLazySingleton(() => SignOut(sl()));
   sl.registerLazySingleton(() => SendPasswordResetEmail(sl()));
+  sl.registerLazySingleton(() => LinkPassword(sl()));
+  sl.registerLazySingleton(() => ChangePassword(sl()));
   sl.registerLazySingleton(
     () => SyncWithCloud(
       accountRepository: sl(),
@@ -220,6 +225,10 @@ Future<void> init() async {
   // Une instance par popup de réinitialisation du mot de passe.
   sl.registerFactory(
     () => PasswordResetCubit(sendPasswordResetEmail: sl()),
+  );
+  // Une instance par formulaire de mot de passe des paramètres.
+  sl.registerFactory(
+    () => PasswordUpdateCubit(linkPassword: sl(), changePassword: sl()),
   );
   // Singleton, pas factory : un seul état de connexion pour toute
   // l'app, fourni une fois à la racine (voir CartodexApp) plutôt que
