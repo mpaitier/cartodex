@@ -11,7 +11,7 @@ Les noms attendus sont fixés dans `tool/store_screenshots/screens.json` :
 | `03_filtres.png` | Panneau de filtres ouvert dans le détail d'un set |
 | `04_comptes.png` | Écran des comptes, avec un principal et au moins deux secondaires |
 | `05_stats.png` | Statistiques, avec la liste des boosters prioritaires visible |
-| `06_cloud.png` | Écran de connexion ou de synchronisation |
+| `06_parametres.png` | Écran des paramètres (roue crantée de l'accueil), si possible connecté au compte cloud pour que toute la section soit visible |
 
 Quelques conseils pour un rendu propre :
 
